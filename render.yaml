@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: mj-verwaltung-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://mj_verwaltung_user:6GbwDKko6XOHLNa4LvINEyOTbnyvM1YW@dpg-d7ts0njeo5us73brs8d0-a/mj_verwaltung
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://mj-verwaltung-frontend.onrender.com
+
+  - type: web
+    name: mj-verwaltung-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://mj-verwaltung-backend.onrender.com
