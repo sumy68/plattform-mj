@@ -21,7 +21,7 @@ export default function ProfilEinrichten() {
     }
     setLoading(true);
     try {
-      await axios.put('http://localhost:5001/api/profil', form);
+      await axios.put('/api/profil', form);
       navigate('/meine-stunden');
     } catch (err) {
       setError(err.response?.data?.error || 'Fehler beim Speichern');

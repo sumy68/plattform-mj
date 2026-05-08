@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await axios.post('http://localhost:5001/api/auth/login', { email, password });
+    const res = await axios.post('https://plattform-mj.onrender.com/api/auth/login', { email, password });
     const token = res.data.token;
     const userData = res.data.user;
 
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
     if (userData.role === 'honorarkraft') {
       try {
-        const profil = await axios.get('http://localhost:5001/api/profil', {
+        const profil = await axios.get('https://plattform-mj.onrender.com/api/profil', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!profil.data.profil_komplett) {

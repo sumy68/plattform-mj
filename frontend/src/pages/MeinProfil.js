@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
-const API = 'http://localhost:5001';
+const API = 'https://plattform-mj.onrender.com';
 
 const SPRACHEN = ['Deutsch', 'Englisch', 'Arabisch', 'Türkisch', 'Albanisch', 'Kurdisch', 'Bosnisch/Kroatisch/Serbisch', 'Französisch', 'Russisch', 'Spanisch', 'Sonstiges'];
 const GESCHLECHT = ['Männlich', 'Weiblich', 'Divers'];

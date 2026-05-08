@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://localhost:5001';
+const API = 'https://plattform-mj.onrender.com';
 
 export default function Abrechnung() {
   const { user } = useAuth();

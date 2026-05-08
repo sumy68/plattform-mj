@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API = 'http://localhost:5001';
+const API = 'https://plattform-mj.onrender.com';
 const emptyForm = { name:'', email:'', password:'', role:'lehrkraft', stundensatz:'' };
 
 export default function Lehrkraefte() {

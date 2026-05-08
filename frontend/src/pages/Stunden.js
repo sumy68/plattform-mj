@@ -3,7 +3,7 @@ import axios from 'axios';
 import SignatureCanvas from 'react-signature-canvas';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://localhost:5001';
+const API = 'https://plattform-mj.onrender.com';
 const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'' };
 
 export default function Stunden({ adminView }) {

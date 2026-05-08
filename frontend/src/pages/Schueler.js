@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://localhost:5001';
+const API = 'https://plattform-mj.onrender.com';
 const DIAGNOSEN = ['LRS', 'Dyskalkulie', 'ADHS', 'Autismus-Spektrum', 'Lernblockaden'];
 const FAECHER = ['Mathe', 'Deutsch', 'Englisch', 'Französisch', 'Latein', 'Physik', 'Chemie', 'Biologie', 'Geschichte', 'Sonstiges'];
 const SPRACHEN = ['Deutsch', 'Englisch', 'Arabisch', 'Türkisch', 'Albanisch', 'Kurdisch', 'Bosnisch/Kroatisch/Serbisch', 'Französisch', 'Russisch', 'Spanisch', 'Sonstiges'];
