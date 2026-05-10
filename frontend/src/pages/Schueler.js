@@ -107,7 +107,7 @@ export default function Schueler() {
                   <td>{s.eltern_name}<br/><small style={{color:'var(--text-light)'}}>{s.eltern_tel}</small></td>
                   {isAdmin && <td>
                     <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                      <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>✏️</button>
+                      <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)} style={{padding:'6px 10px'}}>✏️ Bearbeiten</button>
                       <button className="btn btn-primary btn-sm" onClick={()=>openZuweisung(s)}>👩‍🏫 Zuweisen</button>
                     </div>
                   </td>}
