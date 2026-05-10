@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import Notifications from './Notifications';
 
-const API = 'http://localhost:5001';
+const API = 'https://plattform-mj.onrender.com';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
