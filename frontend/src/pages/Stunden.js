@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import SignatureCanvas from 'react-signature-canvas';
 import { useAuth } from '../context/AuthContext';
+import MonatsPicker from '../components/MonatsPicker';
 
 const API = 'https://plattform-mj.onrender.com';
 const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'' };
@@ -81,8 +82,7 @@ export default function Stunden({ adminView }) {
           {adminView ? 'Alle Stunden' : 'Meine Stunden'}
         </h2>
         <div style={{display:'flex',gap:12,alignItems:'center'}}>
-          <input type="month" value={monat} onChange={e=>setMonat(e.target.value)}
-            style={{padding:'8px 12px',border:'2px solid var(--lavender)',borderRadius:8,fontSize:14,fontFamily:'Nunito,sans-serif'}}/>
+            <MonatsPicker value={monat} onChange={setMonat}/>
           <button className="btn btn-primary" onClick={()=>setModal(true)}>+ Stunde eintragen</button>
         </div>
       </div>

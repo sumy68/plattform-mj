@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import MonatsPicker from '../components/MonatsPicker';
 
 const API = 'https://plattform-mj.onrender.com';
 
@@ -99,8 +100,7 @@ export default function Abrechnung() {
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24,flexWrap:'wrap',gap:12}}>
           <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:32,color:'var(--text-dark)'}}>Finanzübersicht</h2>
           <div style={{display:'flex',gap:12,alignItems:'center'}}>
-            <input type="month" value={monat} onChange={e=>setMonat(e.target.value)}
-              style={{padding:'8px 12px',border:'2px solid var(--lavender)',borderRadius:8,fontSize:14,fontFamily:'Nunito,sans-serif'}}/>
+            <MonatsPicker value={monat} onChange={setMonat}/>
             <button className="btn btn-ghost" onClick={()=>{
               const token = localStorage.getItem('token');
               window.open(`${API}/api/abrechnung/export/csv/${monat}?token=${token}`, '_blank');
@@ -232,8 +232,7 @@ export default function Abrechnung() {
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:12}}>
           <div className="card-title" style={{margin:0}}>Stunden abrechnen</div>
           <div style={{display:'flex',gap:12,alignItems:'center'}}>
-            <input type="month" value={monat} onChange={e=>setMonat(e.target.value)}
-              style={{padding:'8px 12px',border:'2px solid var(--lavender)',borderRadius:8,fontSize:14,fontFamily:'Nunito,sans-serif'}}/>
+            <MonatsPicker value={monat} onChange={setMonat}/>
             <button className="btn btn-ghost" onClick={downloadPDF}>📄 PDF Export</button>
             {selected.length > 0 && (
               <button className="btn btn-primary" onClick={abrechnen}>
