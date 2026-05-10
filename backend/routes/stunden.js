@@ -60,7 +60,7 @@ router.post('/', auth, async (req, res) => {
       const butRes = await pool.query(
         `SELECT * FROM but_antraege 
          WHERE schueler_id=$1 AND aktiv=true 
-         AND CURRENT_DATE BETWEEN gueltig_von AND gueltig_bis
+         AND NOW() BETWEEN gueltig_von AND gueltig_bis + INTERVAL '1 day'
          AND gutscheine_verbraucht < gutscheine_gesamt
          ORDER BY gueltig_bis ASC LIMIT 1`,
         [schueler_id]
