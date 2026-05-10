@@ -1,23 +1,25 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+const API = 'https://plattform-mj.onrender.com';
+
 export default function Freischaltung() {
   const [pending, setPending] = useState([]);
 
   const load = async () => {
-    const res = await axios.get('/api/auth/pending');
+    const res = await axios.get(`${API}/api/auth/pending`);
     setPending(res.data);
   };
   useEffect(() => { load(); }, []);
 
   const freischalten = async (id) => {
-    await axios.patch(`/api/auth/freischalten/${id}`);
+    await axios.patch(`${API}/api/auth/freischalten/${id}`);
     load();
   };
 
   const ablehnen = async (id) => {
     if (!window.confirm('Account ablehnen und löschen?')) return;
-    await axios.delete(`/api/auth/ablehnen/${id}`);
+    await axios.delete(`${API}/api/auth/ablehnen/${id}`);
     load();
   };
 
@@ -61,12 +63,8 @@ export default function Freischaltung() {
                     </td>
                     <td>{new Date(u.created_at).toLocaleDateString('de-DE')}</td>
                     <td style={{ display: 'flex', gap: 8 }}>
-                      <button className="btn btn-success btn-sm" onClick={() => freischalten(u.id)}>
-                        ✅ Freischalten
-                      </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => ablehnen(u.id)}>
-                        ❌ Ablehnen
-                      </button>
+                      <button className="btn btn-success btn-sm" onClick={() => freischalten(u.id)}>✅ Freischalten</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => ablehnen(u.id)}>❌ Ablehnen</button>
                     </td>
                   </tr>
                 ))}
