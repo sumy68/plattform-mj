@@ -30,6 +30,7 @@ export default function Sidebar() {
 
   const adminLinks = [
     { path: '/dashboard', icon: '📊', label: 'Dashboard' },
+    { path: '/kalender', icon: '🗓️', label: 'Kalender' },
     { path: '/schueler', icon: '👧', label: 'Schüler' },
     { path: '/lehrkraefte', icon: '👩‍🏫', label: 'Lehrkräfte' },
     { path: '/stunden', icon: '📅', label: 'Alle Stunden' },
@@ -41,6 +42,7 @@ export default function Sidebar() {
 
   const lehrkraftLinks = [
     { path: '/meine-stunden', icon: '📅', label: 'Meine Stunden' },
+    { path: '/kalender', icon: '🗓️', label: 'Kalender' },
     { path: '/meine-schueler', icon: '👧', label: 'Meine Schüler' },
     { path: '/but', icon: '📋', label: 'BuT Anträge', badge: butWarnungen, badgeColor: 'var(--warning)' },
     { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten' },
