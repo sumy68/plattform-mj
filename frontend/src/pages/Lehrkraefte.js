@@ -8,6 +8,8 @@ export default function Lehrkraefte() {
   const [users, setUsers] = useState([]);
   const [modal, setModal] = useState(false);
   const [detailUser, setDetailUser] = useState(null);
+  const [editStundensatz, setEditStundensatz] = useState(null);
+  const [newStundensatz, setNewStundensatz] = useState('');
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
@@ -26,6 +28,12 @@ export default function Lehrkraefte() {
 
   const toggleAktiv = async (u) => {
     await axios.patch(`${API}/api/auth/users/${u.id}`, { aktiv: !u.aktiv });
+    load();
+  };
+
+  const saveStundensatz = async (id) => {
+    await axios.patch(`${API}/api/auth/users/${id}`, { stundensatz: parseFloat(newStundensatz) });
+    setEditStundensatz(null);
     load();
   };
 
@@ -58,8 +66,26 @@ export default function Lehrkraefte() {
                   <td><strong>{u.name}</strong></td>
                   <td>{u.email}</td>
                   <td>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
-                  <td style={{fontSize:12}}>{(u.sprachen||[]).slice(0,2).join(', ')}{(u.sprachen||[]).length > 2 ? '...' : ''}</td>
-                  <td>{u.stundensatz} €/Std.</td>
+                  <td style={{fontSize:12}}>{(u.sprachen||[]).slice(0,2).join(', ') || '–'}</td>
+                  <td>
+                    {editStundensatz === u.id ? (
+                      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                        <input
+                          type="number" step="0.01" value={newStundensatz}
+                          onChange={e=>setNewStundensatz(e.target.value)}
+                          style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}}
+                          autoFocus
+                        />
+                        <button className="btn btn-success btn-sm" onClick={()=>saveStundensatz(u.id)}>✓</button>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>setEditStundensatz(null)}>✕</button>
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span>{u.stundensatz} €/Std.</span>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>{setEditStundensatz(u.id); setNewStundensatz(u.stundensatz);}}>✏️</button>
+                      </div>
+                    )}
+                  </td>
                   <td><span className="badge" style={{background:u.aktiv?'#e8f5e9':'#fdecea',color:u.aktiv?'#2e7d32':'#c62828'}}>{u.aktiv?'Aktiv':'Inaktiv'}</span></td>
                   <td style={{display:'flex',gap:8}}>
                     <button className="btn btn-ghost btn-sm" onClick={()=>openDetail(u)}>👁️ Details</button>
@@ -83,7 +109,6 @@ export default function Lehrkraefte() {
               <div className="modal-title" style={{margin:0}}>{detailUser.name}</div>
               <button className="btn btn-ghost btn-sm" onClick={()=>setDetailUser(null)}>✕</button>
             </div>
-
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:20}}>
               {[
                 ['E-Mail', detailUser.email],
@@ -102,8 +127,6 @@ export default function Lehrkraefte() {
                 </div>
               ))}
             </div>
-
-            {/* Sprachen */}
             <div style={{marginBottom:20}}>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text-mid)',marginBottom:8}}>Sprachen</div>
               <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
@@ -113,8 +136,6 @@ export default function Lehrkraefte() {
                 }
               </div>
             </div>
-
-            {/* Dokumente */}
             <div>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text-mid)',marginBottom:8}}>Dokumente</div>
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
@@ -124,7 +145,7 @@ export default function Lehrkraefte() {
                     <div key={key} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--purple-pale)',borderRadius:8,padding:'8px 14px'}}>
                       <span style={{fontSize:13,fontWeight:600}}>{label}</span>
                       {dok
-                        ? <a href={`${API}/api/dokumente/${dok.id}/download`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">⬇️ Download</a>
+                        ? <a href={`${API}/api/dokumente/${dok.id}/download?token=${localStorage.getItem('token')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">⬇️ Download</a>
                         : <span style={{fontSize:12,color:'var(--text-light)'}}>Nicht hochgeladen</span>
                       }
                     </div>

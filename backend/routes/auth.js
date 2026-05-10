@@ -114,7 +114,11 @@ router.get('/users', auth, adminOnly, async (req, res) => {
 
 router.patch('/users/:id', auth, adminOnly, async (req, res) => {
   try {
-    await pool.query('UPDATE users SET aktiv=$1 WHERE id=$2', [req.body.aktiv, req.params.id]);
+    if (req.body.stundensatz !== undefined) {
+      await pool.query('UPDATE users SET stundensatz=$1 WHERE id=$2', [req.body.stundensatz, req.params.id]);
+    } else {
+      await pool.query('UPDATE users SET aktiv=$1 WHERE id=$2', [req.body.aktiv, req.params.id]);
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -131,3 +135,4 @@ router.get('/me', auth, async (req, res) => {
 });
 
 module.exports = router;
+
