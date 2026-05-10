@@ -38,6 +38,7 @@ export default function Sidebar() {
     { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten' },
     { path: '/abrechnung', icon: '💰', label: 'Finanzen' },
     { path: '/freischaltung', icon: '🔓', label: 'Freischaltung', badge: pendingCount, badgeColor: 'var(--danger)' },
+    { path: '/admin-profil', icon: '👤', label: 'Mein Profil' },
   ];
 
   const lehrkraftLinks = [

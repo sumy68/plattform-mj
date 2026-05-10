@@ -11,6 +11,7 @@ import Abrechnung from './pages/Abrechnung';
 import Freischaltung from './pages/Freischaltung';
 import ProfilEinrichten from './pages/ProfilEinrichten';
 import MeinProfil from './pages/MeinProfil';
+import AdminProfil from './pages/AdminProfil';
 import BUTAntraege from './pages/BUTAntraege';
 import Abwesenheiten from './pages/Abwesenheiten';
 import Kalender from './pages/Kalender';
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/meine-stunden" element={<PrivateRoute><AppLayout><Stunden/></AppLayout></PrivateRoute>}/>
           <Route path="/meine-schueler" element={<PrivateRoute><AppLayout><Schueler readOnly/></AppLayout></PrivateRoute>}/>
           <Route path="/mein-guthaben" element={<PrivateRoute><AppLayout><Abrechnung/></AppLayout></PrivateRoute>}/>
+          <Route path="/admin-profil" element={<PrivateRoute adminOnly><AppLayout><AdminProfil/></AppLayout></PrivateRoute>}/>
           <Route path="/mein-profil" element={<PrivateRoute><AppLayout><MeinProfil/></AppLayout></PrivateRoute>}/>
           <Route path="*" element={<Navigate to="/login"/>}/>
         </Routes>
