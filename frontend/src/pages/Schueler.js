@@ -93,7 +93,7 @@ export default function Schueler() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>Name</th><th>Klasse</th><th>Schule</th><th>Sprachen</th><th>BuT</th><th>Diagnose</th><th>Eltern</th><th>Aktionen</th>
+              <th>Name</th><th>Klasse</th><th>Schule</th><th>Sprachen</th><th>BuT</th><th>Diagnose</th><th>Eltern</th>{isAdmin && <th>Aktionen</th>}
             </tr></thead>
             <tbody>
               {filtered.map(s => (
@@ -105,12 +105,10 @@ export default function Schueler() {
                   <td>{s.but_status ? <span className="badge badge-but">BuT</span> : <span className="badge badge-no-but">Nein</span>}</td>
                   <td>{(s.diagnose||[]).join(', ') || '–'}</td>
                   <td>{s.eltern_name}<br/><small style={{color:'var(--text-light)'}}>{s.eltern_tel}</small></td>
-                  <td style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                    {isAdmin && <>
-                      <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>✏️</button>
-                      <button className="btn btn-primary btn-sm" onClick={()=>openZuweisung(s)}>👩‍🏫 Zuweisen</button>
-                    </>}
-                  </td>
+                  {isAdmin && <td style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>✏️</button>
+                    <button className="btn btn-primary btn-sm" onClick={()=>openZuweisung(s)}>👩‍🏫 Zuweisen</button>
+                  </td>}
                 </tr>
               ))}
               {filtered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Schüler gefunden</td></tr>}
@@ -210,7 +208,7 @@ export default function Schueler() {
               </div>
               <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:16}}>
                 <div className="form-group" style={{marginBottom:8}}>
-                  <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
+                  <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:14,fontWeight:600}}>
                     <input type="checkbox" checked={form.but_status} onChange={e=>setForm({...form,but_status:e.target.checked})}/>
                     BuT-Förderung aktiv
                   </label>
