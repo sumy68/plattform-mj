@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-const API = 'https://plattform-mj.onrender.com';
+const API = 'http://localhost:5001';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -32,6 +32,7 @@ export default function Sidebar() {
     { path: '/lehrkraefte', icon: '👩‍🏫', label: 'Lehrkräfte' },
     { path: '/stunden', icon: '📅', label: 'Alle Stunden' },
     { path: '/but', icon: '📋', label: 'BuT Anträge', badge: butWarnungen, badgeColor: 'var(--warning)' },
+    { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten' },
     { path: '/abrechnung', icon: '💰', label: 'Finanzen' },
     { path: '/freischaltung', icon: '🔓', label: 'Freischaltung', badge: pendingCount, badgeColor: 'var(--danger)' },
   ];
@@ -40,6 +41,7 @@ export default function Sidebar() {
     { path: '/meine-stunden', icon: '📅', label: 'Meine Stunden' },
     { path: '/meine-schueler', icon: '👧', label: 'Meine Schüler' },
     { path: '/but', icon: '📋', label: 'BuT Anträge', badge: butWarnungen, badgeColor: 'var(--warning)' },
+    { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten' },
     { path: '/mein-guthaben', icon: '💰', label: 'Guthaben' },
     { path: '/mein-profil', icon: '👤', label: 'Mein Profil' },
   ];

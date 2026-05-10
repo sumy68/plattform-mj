@@ -27,3 +27,4 @@ initDB().then(() => {
   console.error('❌ DB Fehler:', err);
   process.exit(1);
 });
+app.use('/api/abwesenheiten', require('./routes/abwesenheiten'));
