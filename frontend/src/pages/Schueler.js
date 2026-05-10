@@ -17,14 +17,21 @@ export default function Schueler() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [schueler, setSchueler] = useState([]);
+  const [lehrkraefte, setLehrkraefte] = useState([]);
   const [modal, setModal] = useState(false);
+  const [zuweisungModal, setZuweisungModal] = useState(null);
+  const [zuweisungen, setZuweisungen] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [search, setSearch] = useState('');
 
   const load = async () => {
-    const res = await axios.get(`${API}/api/schueler`);
-    setSchueler(res.data);
+    const [sRes, lRes] = await Promise.all([
+      axios.get(`${API}/api/schueler`),
+      isAdmin ? axios.get(`${API}/api/auth/users`) : Promise.resolve({ data: [] })
+    ]);
+    setSchueler(sRes.data);
+    setLehrkraefte(lRes.data.filter(u => u.role !== 'admin'));
   };
   useEffect(() => { load(); }, []);
 
@@ -32,6 +39,12 @@ export default function Schueler() {
   const openEdit = (s) => {
     setForm({...s, faecher: s.faecher||[], diagnose: s.diagnose||[], sprachen: s.sprachen||[], but_zeitraum_von: s.but_zeitraum_von?.split('T')[0]||'', but_zeitraum_bis: s.but_zeitraum_bis?.split('T')[0]||''});
     setEditId(s.id); setModal(true);
+  };
+
+  const openZuweisung = async (s) => {
+    const res = await axios.get(`${API}/api/schueler/${s.id}/zuweisungen`);
+    setZuweisungen(res.data);
+    setZuweisungModal(s);
   };
 
   const toggleArr = (field, val) => {
@@ -46,9 +59,23 @@ export default function Schueler() {
     setModal(false); load();
   };
 
+  const addZuweisung = async (lehrkraft_id) => {
+    await axios.post(`${API}/api/schueler/${zuweisungModal.id}/zuweisung`, { lehrkraft_id });
+    const res = await axios.get(`${API}/api/schueler/${zuweisungModal.id}/zuweisungen`);
+    setZuweisungen(res.data);
+  };
+
+  const removeZuweisung = async (lehrkraft_id) => {
+    await axios.delete(`${API}/api/schueler/${zuweisungModal.id}/zuweisung/${lehrkraft_id}`);
+    const res = await axios.get(`${API}/api/schueler/${zuweisungModal.id}/zuweisungen`);
+    setZuweisungen(res.data);
+  };
+
   const filtered = schueler.filter(s =>
     `${s.vorname} ${s.nachname} ${s.schule} ${s.klasse}`.toLowerCase().includes(search.toLowerCase())
   );
+
+  const zugewieseneIds = zuweisungen.map(z => z.lehrkraft_id);
 
   return (
     <div>
@@ -78,7 +105,12 @@ export default function Schueler() {
                   <td>{s.but_status ? <span className="badge badge-but">BuT</span> : <span className="badge badge-no-but">Nein</span>}</td>
                   <td>{(s.diagnose||[]).join(', ') || '–'}</td>
                   <td>{s.eltern_name}<br/><small style={{color:'var(--text-light)'}}>{s.eltern_tel}</small></td>
-                  <td>{isAdmin && <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>✏️ Bearbeiten</button>}</td>
+                  <td style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {isAdmin && <>
+                      <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>✏️</button>
+                      <button className="btn btn-primary btn-sm" onClick={()=>openZuweisung(s)}>👩‍🏫 Zuweisen</button>
+                    </>}
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Schüler gefunden</td></tr>}
@@ -87,6 +119,50 @@ export default function Schueler() {
         </div>
       </div>
 
+      {/* Zuweisung Modal */}
+      {zuweisungModal && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setZuweisungModal(null)}>
+          <div className="modal" style={{maxWidth:560}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <div className="modal-title" style={{margin:0}}>Lehrkräfte zuweisen — {zuweisungModal.vorname} {zuweisungModal.nachname}</div>
+              <button className="btn btn-ghost btn-sm" onClick={()=>setZuweisungModal(null)}>✕</button>
+            </div>
+
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:13,fontWeight:700,color:'var(--text-mid)',marginBottom:10}}>Aktuell zugewiesen:</div>
+              {zuweisungen.length === 0 ? (
+                <div style={{fontSize:13,color:'var(--text-light)'}}>Noch keine Lehrkraft zugewiesen</div>
+              ) : (
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {zuweisungen.map(z => (
+                    <div key={z.lehrkraft_id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--purple-pale)',borderRadius:8,padding:'8px 14px'}}>
+                      <span style={{fontWeight:600}}>{z.name} <small style={{color:'var(--text-light)'}}>({z.role})</small></span>
+                      <button className="btn btn-danger btn-sm" onClick={()=>removeZuweisung(z.lehrkraft_id)}>🗑️ Entfernen</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:'var(--text-mid)',marginBottom:10}}>Lehrkraft hinzufügen:</div>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                {lehrkraefte.filter(l => !zugewieseneIds.includes(l.id)).map(l => (
+                  <div key={l.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--lavender)',borderRadius:8,padding:'8px 14px'}}>
+                    <span style={{fontWeight:600}}>{l.name} <small style={{color:'var(--text-light)'}}>({l.role})</small></span>
+                    <button className="btn btn-success btn-sm" onClick={()=>addZuweisung(l.id)}>+ Zuweisen</button>
+                  </div>
+                ))}
+                {lehrkraefte.filter(l => !zugewieseneIds.includes(l.id)).length === 0 && (
+                  <div style={{fontSize:13,color:'var(--text-light)'}}>Alle Lehrkräfte sind bereits zugewiesen</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schüler anlegen/bearbeiten Modal */}
       {modal && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setModal(false)}>
           <div className="modal">
@@ -102,7 +178,6 @@ export default function Schueler() {
               </div>
               <div className="form-group"><label>Schule</label><input value={form.schule} onChange={e=>setForm({...form,schule:e.target.value})}/></div>
               <div className="form-group"><label>Adresse</label><input value={form.adresse} onChange={e=>setForm({...form,adresse:e.target.value})}/></div>
-
               <div className="form-group">
                 <label>Sprachen des Kindes</label>
                 <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
@@ -113,7 +188,6 @@ export default function Schueler() {
                   ))}
                 </div>
               </div>
-
               <div className="form-group">
                 <label>Fächer</label>
                 <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
@@ -124,7 +198,6 @@ export default function Schueler() {
                   ))}
                 </div>
               </div>
-
               <div className="form-group">
                 <label>Diagnose / Förderbedarf</label>
                 <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
@@ -135,7 +208,6 @@ export default function Schueler() {
                   ))}
                 </div>
               </div>
-
               <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:16}}>
                 <div className="form-group" style={{marginBottom:8}}>
                   <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
@@ -150,14 +222,12 @@ export default function Schueler() {
                   </div>
                 )}
               </div>
-
               <div className="form-row">
                 <div className="form-group"><label>Eltern Name</label><input value={form.eltern_name} onChange={e=>setForm({...form,eltern_name:e.target.value})}/></div>
                 <div className="form-group"><label>Eltern Telefon</label><input value={form.eltern_tel} onChange={e=>setForm({...form,eltern_tel:e.target.value})}/></div>
               </div>
               <div className="form-group"><label>Eltern E-Mail</label><input type="email" value={form.eltern_email} onChange={e=>setForm({...form,eltern_email:e.target.value})}/></div>
-              <div className="form-group"><label>Lernfortschritt / Notizen</label><textarea rows={3} value={form.notizen} onChange={e=>setForm({...form,notizen:e.target.value})} placeholder="Allgemeine Notizen zum Schüler, Lernstand, Besonderheiten..."/></div>
-
+              <div className="form-group"><label>Lernfortschritt / Notizen</label><textarea rows={3} value={form.notizen} onChange={e=>setForm({...form,notizen:e.target.value})}/></div>
               <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
                 <button type="button" className="btn btn-ghost" onClick={()=>setModal(false)}>Abbrechen</button>
                 <button type="submit" className="btn btn-primary">Speichern</button>
