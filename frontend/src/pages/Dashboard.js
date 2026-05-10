@@ -35,7 +35,9 @@ export default function Dashboard() {
           return { monat: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: MONATE_KURZ[d.getMonth()] };
         });
 
-        const chartPromises = monate.map(m => axios.get(`${API}/api/stunden?monat=${m.monat}`));
+        const chartPromises = monate.map(m => 
+          axios.get(`${API}/api/stunden?monat=${m.monat}`).catch(() => ({ data: [] }))
+        );
         const chartResults = await Promise.all(chartPromises);
         
         setChartData(monate.map((m, i) => {
