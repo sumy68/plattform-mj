@@ -213,8 +213,8 @@ export default function ButAntraege() {
                     </td>
                     {isAdmin && (
                       <td style={{ display: 'flex', gap: 6 }}>
-                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(a)}>✏️</button>
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a.id)}>🗑️</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(a)}>✏️ Bearbeiten</button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a.id)}>🗑️ Löschen</button>
                       </td>
                     )}
                   </tr>
