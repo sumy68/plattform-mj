@@ -28,3 +28,4 @@ initDB().then(() => {
   process.exit(1);
 });
 app.use('/api/abwesenheiten', require('./routes/abwesenheiten'));
+app.use('/api/notifications', require('./routes/notifications'));

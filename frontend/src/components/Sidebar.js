@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import Notifications from './Notifications';
 
 const API = 'http://localhost:5001';
 
@@ -16,6 +17,7 @@ export default function Sidebar() {
     if (!user) return;
     if (user.role === 'admin') {
       axios.get(`${API}/api/auth/pending`).then(res => setPendingCount(res.data.length)).catch(() => {});
+      axios.get(`${API}/api/abwesenheiten/pending-urlaub`).then(res => setPendingCount(c => c + res.data.length)).catch(() => {});
     }
     axios.get(`${API}/api/but`).then(res => {
       const warnungen = res.data.filter(a => {
@@ -77,11 +79,14 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="sidebar-user">
-        <strong>{user?.name}</strong>
-        <span style={{fontSize:11,opacity:0.6,display:'block'}}>{user?.role === 'admin' ? 'Administrator' : user?.role}</span>
-        <div style={{marginTop:8}}>
-          <button className="logout-btn" onClick={() => { logout(); navigate('/login'); }}>Abmelden</button>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+          <div>
+            <strong>{user?.name}</strong>
+            <span style={{fontSize:11,opacity:0.6,display:'block'}}>{user?.role === 'admin' ? 'Administrator' : user?.role}</span>
+          </div>
+          <Notifications/>
         </div>
+        <button className="logout-btn" onClick={() => { logout(); navigate('/login'); }}>Abmelden</button>
       </div>
     </div>
   );
