@@ -12,9 +12,9 @@ export default function Dashboard() {
     const load = async () => {
       try {
         const [sc, lk, st] = await Promise.all([
-          axios.get('/api/schueler'),
-          axios.get('/api/auth/users'),
-          axios.get(`/api/stunden?monat=${heute}`)
+          axios.get('https://plattform-mj.onrender.com/api/schueler'),
+          axios.get('https://plattform-mj.onrender.com/api/auth/users'),
+          axios.get(`https://plattform-mj.onrender.com/api/stunden?monat=${heute}`)
         ]);
         setStats({
           schueler: sc.data.length,
