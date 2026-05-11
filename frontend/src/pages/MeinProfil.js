@@ -138,6 +138,7 @@ export default function MeinProfil() {
             <div className="form-group"><label>Vorname *</label><input required value={form.vorname} onChange={e => setForm({ ...form, vorname: e.target.value })} placeholder="Vorname"/></div>
             <div className="form-group"><label>Nachname *</label><input required value={form.nachname} onChange={e => setForm({ ...form, nachname: e.target.value })} placeholder="Nachname"/></div>
           </div>
+          <div className="form-group"><label>E-Mail</label><input type="email" value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="deine@email.de"/></div>
           <div className="form-row">
             <div className="form-group"><label>Geschlecht</label><select value={form.geschlecht} onChange={e => setForm({ ...form, geschlecht: e.target.value })}><option value="">Bitte wählen</option>{GESCHLECHT.map(g => <option key={g} value={g}>{g}</option>)}</select></div>
             <div className="form-group"><label>Geburtsdatum</label><input type="date" value={form.geburtsdatum} onChange={e => setForm({ ...form, geburtsdatum: e.target.value })}/></div>
