@@ -116,7 +116,7 @@ export default function Abwesenheiten() {
                 const typ = TYPEN[a.typ] || TYPEN.sonstiges;
                 return (
                   <tr key={a.id}>
-                    {isAdmin && <td><strong>{a.user_name}</strong><br/><small style={{color:'var(--text-light)'}}>{a.user_role}</small></td>}
+                    {isAdmin && <td><strong>{a.user_name}</strong><br/><small style={{color:'var(--text-light)'}}>{a.user_role === 'honorarkraft' ? 'Honorarkraft' : a.user_role === 'lehrkraft' ? 'Lehrkraft' : 'Administrator'}</small></td>}
                     <td><span className="badge" style={{background:typ.bg,color:typ.color}}>{typ.icon} {typ.label}</span></td>
                     <td>{new Date(a.datum_von).toLocaleDateString('de-DE')}</td>
                     <td>{new Date(a.datum_bis).toLocaleDateString('de-DE')}</td>
