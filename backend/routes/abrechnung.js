@@ -311,3 +311,16 @@ router.post('/abrechnen', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+// Eigene Rechnungen abrufen
+router.get('/meine-rechnungen', auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, rechnungsnummer, betrag, pdf_data, erstellt_am FROM rechnungen WHERE user_id=$1 ORDER BY erstellt_am DESC',
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

@@ -1,51 +1,47 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const API = 'https://plattform-mj.onrender.com';
 
 const SPRACHEN = ['Deutsch', 'Englisch', 'Arabisch', 'Türkisch', 'Albanisch', 'Kurdisch', 'Bosnisch/Kroatisch/Serbisch', 'Französisch', 'Russisch', 'Spanisch', 'Sonstiges'];
 const GESCHLECHT = ['Männlich', 'Weiblich', 'Divers'];
-const DOKUMENT_TYPEN = [
-  { key: 'lebenslauf', label: 'Lebenslauf', icon: '📄' },
-  { key: 'fuehrungszeugnis', label: 'Führungszeugnis', icon: '🪪' },
-  { key: 'immatrikulation', label: 'Immatrikulationsbescheinigung', icon: '🎓' },
-  { key: 'vertrag', label: 'Vertrag', icon: '📋' },
-];
 
 export default function MeinProfil() {
   const [profil, setProfil] = useState(null);
   const [form, setForm] = useState({});
-  const [dokumente, setDokumente] = useState([]);
   const [pwForm, setPwForm] = useState({ altes_passwort: '', neues_passwort: '', neues_passwort2: '' });
+  const [rechnungen, setRechnungen] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
-  const [uploadLoading, setUploadLoading] = useState({});
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwError, setPwError] = useState('');
-  const fileRefs = useRef({});
 
   const load = async () => {
-    const [profilRes, dokRes] = await Promise.all([
-      axios.get(`${API}/api/profil`),
-      axios.get(`${API}/api/dokumente`)
-    ]);
-    setProfil(profilRes.data);
-    setDokumente(dokRes.data);
+    const res = await axios.get(`${API}/api/profil`);
+    setProfil(res.data);
     setForm({
-      vorname: profilRes.data.vorname || '',
-      nachname: profilRes.data.nachname || '',
-      geschlecht: profilRes.data.geschlecht || '',
-      telefon: profilRes.data.telefon || '',
-      adresse: profilRes.data.adresse || '',
-      plz: profilRes.data.plz || '',
-      ort: profilRes.data.ort || '',
-      iban: profilRes.data.iban || '',
-      steuernummer: profilRes.data.steuernummer || '',
-      geburtsdatum: profilRes.data.geburtsdatum ? profilRes.data.geburtsdatum.split('T')[0] : '',
-      sprachen: profilRes.data.sprachen || [],
+      vorname: res.data.vorname || '',
+      nachname: res.data.nachname || '',
+      email: res.data.email || '',
+      geschlecht: res.data.geschlecht || '',
+      telefon: res.data.telefon || '',
+      adresse: res.data.adresse || '',
+      plz: res.data.plz || '',
+      ort: res.data.ort || '',
+      iban: res.data.iban || '',
+      steuernummer: res.data.steuernummer || '',
+      geburtsdatum: res.data.geburtsdatum ? res.data.geburtsdatum.split('T')[0] : '',
+      sprachen: res.data.sprachen || [],
     });
+    // Rechnungen laden wenn Honorarkraft
+    if (res.data.role === 'honorarkraft') {
+      try {
+        const rRes = await axios.get(`${API}/api/abrechnung/meine-rechnungen`);
+        setRechnungen(rRes.data);
+      } catch(e) {}
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -76,10 +72,7 @@ export default function MeinProfil() {
     if (pwForm.neues_passwort.length < 6) return setPwError('Mindestens 6 Zeichen');
     setPwLoading(true);
     try {
-      await axios.put(`${API}/api/profil/passwort`, {
-        altes_passwort: pwForm.altes_passwort,
-        neues_passwort: pwForm.neues_passwort
-      });
+      await axios.put(`${API}/api/profil/passwort`, { altes_passwort: pwForm.altes_passwort, neues_passwort: pwForm.neues_passwort });
       setPwSuccess('Passwort geändert ✅');
       setPwForm({ altes_passwort: '', neues_passwort: '', neues_passwort2: '' });
     } catch (err) {
@@ -89,31 +82,15 @@ export default function MeinProfil() {
     }
   };
 
-  const handleUpload = async (typ, file) => {
-    if (!file) return;
-    setUploadLoading(l => ({ ...l, [typ]: true }));
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        await axios.post(`${API}/api/dokumente`, { typ, datei_name: file.name, datei_data: e.target.result });
-        await load();
-        if (fileRefs.current[typ]) fileRefs.current[typ].value = '';
-      } catch (err) {
-        alert('Fehler: ' + (err.response?.data?.error || err.message));
-      } finally {
-        setUploadLoading(l => ({ ...l, [typ]: false }));
-      }
-    };
-    reader.readAsDataURL(file);
+  const downloadRechnung = (r) => {
+    const blob = new Blob([Uint8Array.from(atob(r.pdf_data), c => c.charCodeAt(0))], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Rechnung_${r.rechnungsnummer}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Dokument löschen?')) return;
-    await axios.delete(`${API}/api/dokumente/${id}`);
-    load();
-  };
-
-  const getDok = (typ) => dokumente.find(d => d.typ === typ);
 
   if (!profil) return <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-light)' }}>Lädt...</div>;
 
@@ -131,28 +108,37 @@ export default function MeinProfil() {
             <div style={{ fontSize: 13, color: 'var(--text-light)' }}>{profil.email} · {profil.role === 'honorarkraft' ? 'Honorarkraft' : profil.role === 'lehrkraft' ? 'Lehrkraft' : 'Administrator'}</div>
           </div>
         </div>
+
         <form onSubmit={handleSave}>
           {success && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{success}</div>}
           {error && <div className="error-msg">{error}</div>}
+
           <div className="form-row">
             <div className="form-group"><label>Vorname *</label><input required value={form.vorname} onChange={e => setForm({ ...form, vorname: e.target.value })} placeholder="Vorname"/></div>
             <div className="form-group"><label>Nachname *</label><input required value={form.nachname} onChange={e => setForm({ ...form, nachname: e.target.value })} placeholder="Nachname"/></div>
           </div>
-          <div className="form-group"><label>E-Mail</label><input type="email" value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="deine@email.de"/></div>
+
+          <div className="form-group"><label>E-Mail</label><input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="deine@email.de"/></div>
+
           <div className="form-row">
             <div className="form-group"><label>Geschlecht</label><select value={form.geschlecht} onChange={e => setForm({ ...form, geschlecht: e.target.value })}><option value="">Bitte wählen</option>{GESCHLECHT.map(g => <option key={g} value={g}>{g}</option>)}</select></div>
             <div className="form-group"><label>Geburtsdatum</label><input type="date" value={form.geburtsdatum} onChange={e => setForm({ ...form, geburtsdatum: e.target.value })}/></div>
           </div>
+
           <div className="form-row">
             <div className="form-group"><label>Telefon</label><input value={form.telefon} onChange={e => setForm({ ...form, telefon: e.target.value })} placeholder="0152 1234567"/></div>
             <div className="form-group"><label>IBAN</label><input value={form.iban} onChange={e => setForm({ ...form, iban: e.target.value.toUpperCase() })} placeholder="DE12 3456 7890..."/></div>
           </div>
-          <div className="form-group"><label>Straße und Hausnummer</label><input value={form.adresse} onChange={e => setForm({ ...form, adresse: e.target.value })} placeholder="Musterstraße 12"/></div>
+
+          <div className="form-group"><label>Straße & Hausnummer</label><input value={form.adresse} onChange={e => setForm({ ...form, adresse: e.target.value })} placeholder="Musterstraße 12"/></div>
+
           <div className="form-row">
             <div className="form-group"><label>PLZ</label><input value={form.plz} onChange={e => setForm({ ...form, plz: e.target.value })} placeholder="30159"/></div>
             <div className="form-group"><label>Ort</label><input value={form.ort} onChange={e => setForm({ ...form, ort: e.target.value })} placeholder="Hannover"/></div>
           </div>
+
           <div className="form-group"><label>Steuernummer <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>(optional)</span></label><input value={form.steuernummer} onChange={e => setForm({ ...form, steuernummer: e.target.value })} placeholder="12/345/67890"/></div>
+
           <div className="form-group">
             <label>Sprachen</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
@@ -163,50 +149,38 @@ export default function MeinProfil() {
               ))}
             </div>
           </div>
+
           <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Speichert...' : 'Profil speichern'}</button>
         </form>
       </div>
 
-      <div className="card" style={{ marginBottom: 24, background: 'var(--purple-pale)', border: '2px solid var(--purple-light)' }}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>💰 Mein Stundensatz</div>
-        <div style={{ fontFamily: 'Cormorant Garamond,serif', fontSize: 36, fontWeight: 700, color: 'var(--purple)' }}>
-          {profil.stundensatz} €<span style={{ fontSize: 16, color: 'var(--text-light)', fontWeight: 400 }}>/Std.</span>
+      {/* Gesendete Rechnungen - nur für Honorarkräfte */}
+      {profil.role === 'honorarkraft' && (
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div className="card-title">📄 Meine Rechnungen</div>
+          {rechnungen.length === 0 ? (
+            <div style={{ textAlign: 'center', color: 'var(--text-light)', padding: 24 }}>Noch keine Rechnungen gestellt</div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Rechnungsnummer</th><th>Datum</th><th>Betrag</th><th>Download</th></tr></thead>
+                <tbody>
+                  {rechnungen.map(r => (
+                    <tr key={r.id}>
+                      <td><strong>{r.rechnungsnummer}</strong></td>
+                      <td>{new Date(r.erstellt_am).toLocaleDateString('de-DE')}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--purple)' }}>{parseFloat(r.betrag).toFixed(2)} €</td>
+                      <td><button className="btn btn-ghost btn-sm" onClick={() => downloadRechnung(r)}>⬇️ PDF</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-        <p style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 8 }}>Der Stundensatz wird von der Verwaltung festgelegt.</p>
-      </div>
+      )}
 
-      <div className="card" style={{ marginBottom: 24 }}>
-        <div className="card-title">📁 Meine Dokumente</div>
-        <p style={{ fontSize: 14, color: 'var(--text-light)', marginBottom: 20 }}>Nach dem Hochladen wird die Verwaltung automatisch per E-Mail benachrichtigt.</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {DOKUMENT_TYPEN.map(({ key, label, icon }) => {
-            const dok = getDok(key);
-            return (
-              <div key={key} style={{ background: 'var(--purple-pale)', borderRadius: 12, padding: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{icon} {label}</div>
-                  {dok && <span style={{ fontSize: 12, color: 'var(--success)', fontWeight: 700 }}>✅ Hochgeladen</span>}
-                </div>
-                {dok && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, padding: '8px 14px', background: 'white', borderRadius: 8 }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-mid)', flex: 1 }}>📄 {dok.datei_name}</span>
-                    <a href={`${API}/api/dokumente/${dok.id}/download`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">⬇️ Download</a>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(dok.id)}>🗑️</button>
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <input ref={el => fileRefs.current[key] = el} type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => handleUpload(key, e.target.files[0])} style={{ display: 'none' }} id={`file-${key}`}/>
-                  <label htmlFor={`file-${key}`} className="btn btn-primary btn-sm" style={{ cursor: 'pointer' }}>
-                    {uploadLoading[key] ? 'Lädt...' : dok ? '🔄 Ersetzen' : '⬆️ Hochladen'}
-                  </label>
-                  <span style={{ fontSize: 12, color: 'var(--text-light)' }}>PDF, JPG oder PNG · max. 5MB</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
+      {/* Passwort ändern */}
       <div className="card">
         <div className="card-title">🔒 Passwort ändern</div>
         {pwSuccess && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{pwSuccess}</div>}
