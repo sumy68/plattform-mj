@@ -132,6 +132,27 @@ router.get('/', auth, async (req, res) => {
         }
       }
 
+      // 5b. Keine Rechnung Ende Monat
+      const heute2 = new Date();
+      const letzterTagDesMonats = new Date(heute2.getFullYear(), heute2.getMonth() + 1, 0).getDate();
+      if (heute2.getDate() >= 25) {
+        // Prüfe ob Rechnung diesen Monat gestellt wurde
+        try {
+          await pool.query(`CREATE TABLE IF NOT EXISTS rechnungen (id SERIAL PRIMARY KEY, user_id INTEGER, stunden_ids INTEGER[], betrag NUMERIC(10,2), rechnungsnummer VARCHAR(50), pdf_data TEXT, erstellt_am TIMESTAMP DEFAULT NOW())`);
+          const rechnungRes = await pool.query(
+            `SELECT COUNT(*) FROM rechnungen WHERE user_id=$1 AND to_char(erstellt_am,'YYYY-MM')=$2`,
+            [userId, monat]
+          );
+          const hatStunden = await pool.query(
+            `SELECT COUNT(*) FROM stunden WHERE lehrkraft_id=$1 AND to_char(datum,'YYYY-MM')=$2`,
+            [userId, monat]
+          );
+          if (parseInt(rechnungRes.rows[0].count) === 0 && parseInt(hatStunden.rows[0].count) > 0) {
+            notifications.push({ id:'keine_rechnung', typ:'danger', icon:'📄', titel:'Rechnung noch nicht gestellt!', text:`Monat endet in ${letzterTagDesMonats - heute2.getDate()} Tagen — Rechnung noch ausstehend`, link:'/mein-guthaben' });
+          }
+        } catch(e) {}
+      }
+
       // 6. Unterschriften fehlen
       const unterschriften = await pool.query(`SELECT COUNT(*) FROM stunden WHERE lehrkraft_id=$1 AND unterschrift_data IS NULL AND to_char(datum,'YYYY-MM')=$2`, [userId, monat]);
       if (parseInt(unterschriften.rows[0].count) > 0) {
@@ -146,3 +167,4 @@ router.get('/', auth, async (req, res) => {
 });
 
 module.exports = router;
+// WIRD BEREITS OBEN DEFINIERT - nur reminder
