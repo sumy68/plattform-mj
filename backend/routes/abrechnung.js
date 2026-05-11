@@ -203,6 +203,7 @@ router.post('/rechnung', auth, async (req, res) => {
       await transporter.sendMail({
         from: 'meryem.jaber@mj-lernfoerderung.de',
         to: 'info@mj-lernfoerderung.de',
+        cc: user.email,
         replyTo: senderEmail,
         subject: `Rechnung Honorarkraft ${user.vorname || ''} ${user.nachname || user.name} ${monat}`,
         html: `
