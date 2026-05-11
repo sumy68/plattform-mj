@@ -17,6 +17,7 @@ export default function MeinProfil() {
   const [error, setError] = useState('');
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwError, setPwError] = useState('');
+  const [showPw, setShowPw] = useState({ alt: false, neu: false, neu2: false });
 
   const load = async () => {
     const res = await axios.get(`${API}/api/profil`);
@@ -186,10 +187,28 @@ export default function MeinProfil() {
         {pwSuccess && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{pwSuccess}</div>}
         {pwError && <div className="error-msg">{pwError}</div>}
         <form onSubmit={handlePwChange}>
-          <div className="form-group"><label>Aktuelles Passwort *</label><input type="password" required value={pwForm.altes_passwort} onChange={e => setPwForm({ ...pwForm, altes_passwort: e.target.value })} placeholder="••••••••"/></div>
+          <div className="form-group">
+            <label>Aktuelles Passwort *</label>
+            <div style={{position:'relative'}}>
+              <input type={showPw.alt ? 'text' : 'password'} required value={pwForm.altes_passwort} onChange={e => setPwForm({ ...pwForm, altes_passwort: e.target.value })} placeholder="••••••••" style={{paddingRight:42}}/>
+              <button type="button" onClick={() => setShowPw({...showPw, alt: !showPw.alt})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.alt ? '🙈' : '👁️'}</button>
+            </div>
+          </div>
           <div className="form-row">
-            <div className="form-group"><label>Neues Passwort *</label><input type="password" required value={pwForm.neues_passwort} onChange={e => setPwForm({ ...pwForm, neues_passwort: e.target.value })} placeholder="Mindestens 6 Zeichen"/></div>
-            <div className="form-group"><label>Wiederholen *</label><input type="password" required value={pwForm.neues_passwort2} onChange={e => setPwForm({ ...pwForm, neues_passwort2: e.target.value })} placeholder="Passwort bestätigen"/></div>
+            <div className="form-group">
+              <label>Neues Passwort *</label>
+              <div style={{position:'relative'}}>
+                <input type={showPw.neu ? 'text' : 'password'} required value={pwForm.neues_passwort} onChange={e => setPwForm({ ...pwForm, neues_passwort: e.target.value })} placeholder="Mindestens 6 Zeichen" style={{paddingRight:42}}/>
+                <button type="button" onClick={() => setShowPw({...showPw, neu: !showPw.neu})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.neu ? '🙈' : '👁️'}</button>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Wiederholen *</label>
+              <div style={{position:'relative'}}>
+                <input type={showPw.neu2 ? 'text' : 'password'} required value={pwForm.neues_passwort2} onChange={e => setPwForm({ ...pwForm, neues_passwort2: e.target.value })} placeholder="Passwort bestätigen" style={{paddingRight:42}}/>
+                <button type="button" onClick={() => setShowPw({...showPw, neu2: !showPw.neu2})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.neu2 ? '🙈' : '👁️'}</button>
+              </div>
+            </div>
           </div>
           <button type="submit" className="btn btn-ghost" disabled={pwLoading}>{pwLoading ? 'Ändert...' : 'Passwort ändern'}</button>
         </form>

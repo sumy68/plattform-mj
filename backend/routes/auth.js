@@ -136,3 +136,13 @@ router.get('/me', auth, async (req, res) => {
 
 module.exports = router;
 
+
+// Benutzer löschen (nur Admin)
+router.delete('/users/:id', auth, adminOnly, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM users WHERE id=$1 AND role!=\'admin\'', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
