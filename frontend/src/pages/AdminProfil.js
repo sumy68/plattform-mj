@@ -35,7 +35,7 @@ export default function AdminProfil() {
       <label>{label}</label>
       <div style={{position:'relative'}}>
         <input type={show ? 'text' : 'password'} required value={value} onChange={onChange} style={{paddingRight:42}}/>
-        <button type="button" onClick={() => setShow(!show)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
+        <button type="button" onClick={() => setShow(!show)} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
           {show ? '🙈' : '👁️'}
         </button>
       </div>

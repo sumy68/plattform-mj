@@ -77,7 +77,7 @@ export default function Register() {
             <label>Passwort *</label>
             <div style={{position:'relative'}}>
               <input type={showPw ? 'text' : 'password'} required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Mindestens 6 Zeichen" style={{paddingRight:42}}/>
-              <button type="button" onClick={() => setShowPw(!showPw)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
+              <button type="button" onClick={() => setShowPw(!showPw)} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
                 {showPw ? '🙈' : '👁️'}
               </button>
             </div>
@@ -86,7 +86,7 @@ export default function Register() {
             <label>Passwort wiederholen *</label>
             <div style={{position:'relative'}}>
               <input type={showPw2 ? 'text' : 'password'} required value={form.password2} onChange={e => setForm({ ...form, password2: e.target.value })} placeholder="Passwort bestätigen" style={{paddingRight:42}}/>
-              <button type="button" onClick={() => setShowPw2(!showPw2)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
+              <button type="button" onClick={() => setShowPw2(!showPw2)} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
                 {showPw2 ? '🙈' : '👁️'}
               </button>
             </div>

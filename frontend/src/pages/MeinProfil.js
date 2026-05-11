@@ -191,7 +191,7 @@ export default function MeinProfil() {
             <label>Aktuelles Passwort *</label>
             <div style={{position:'relative'}}>
               <input type={showPw.alt ? 'text' : 'password'} required value={pwForm.altes_passwort} onChange={e => setPwForm({ ...pwForm, altes_passwort: e.target.value })} placeholder="••••••••" style={{paddingRight:42}}/>
-              <button type="button" onClick={() => setShowPw({...showPw, alt: !showPw.alt})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.alt ? '🙈' : '👁️'}</button>
+              <button type="button" onClick={() => setShowPw({...showPw, alt: !showPw.alt})} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.alt ? '🙈' : '👁️'}</button>
             </div>
           </div>
           <div className="form-row">
@@ -199,14 +199,14 @@ export default function MeinProfil() {
               <label>Neues Passwort *</label>
               <div style={{position:'relative'}}>
                 <input type={showPw.neu ? 'text' : 'password'} required value={pwForm.neues_passwort} onChange={e => setPwForm({ ...pwForm, neues_passwort: e.target.value })} placeholder="Mindestens 6 Zeichen" style={{paddingRight:42}}/>
-                <button type="button" onClick={() => setShowPw({...showPw, neu: !showPw.neu})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.neu ? '🙈' : '👁️'}</button>
+                <button type="button" onClick={() => setShowPw({...showPw, neu: !showPw.neu})} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.neu ? '🙈' : '👁️'}</button>
               </div>
             </div>
             <div className="form-group">
               <label>Wiederholen *</label>
               <div style={{position:'relative'}}>
                 <input type={showPw.neu2 ? 'text' : 'password'} required value={pwForm.neues_passwort2} onChange={e => setPwForm({ ...pwForm, neues_passwort2: e.target.value })} placeholder="Passwort bestätigen" style={{paddingRight:42}}/>
-                <button type="button" onClick={() => setShowPw({...showPw, neu2: !showPw.neu2})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.neu2 ? '🙈' : '👁️'}</button>
+                <button type="button" onClick={() => setShowPw({...showPw, neu2: !showPw.neu2})} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.neu2 ? '🙈' : '👁️'}</button>
               </div>
             </div>
           </div>
