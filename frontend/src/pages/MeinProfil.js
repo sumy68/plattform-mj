@@ -128,7 +128,7 @@ export default function MeinProfil() {
           </div>
           <div>
             <div style={{ fontFamily: 'Cormorant Garamond,serif', fontSize: 22, fontWeight: 700 }}>{profil.vorname} {profil.nachname}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-light)' }}>{profil.email} · {profil.role}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-light)' }}>{profil.email} · {profil.role === 'honorarkraft' ? 'Honorarkraft' : profil.role === 'lehrkraft' ? 'Lehrkraft' : 'Administrator'}</div>
           </div>
         </div>
         <form onSubmit={handleSave}>
