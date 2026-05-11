@@ -136,7 +136,7 @@ export default function Schueler() {
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   {zuweisungen.map(z => (
                     <div key={z.lehrkraft_id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--purple-pale)',borderRadius:8,padding:'8px 14px'}}>
-                      <span style={{fontWeight:600}}>{z.name} <small style={{color:'var(--text-light)'}}>({z.role})</small></span>
+                      <span style={{fontWeight:600}}>{z.name} <small style={{color:'var(--text-light)'}}>({z.role === 'honorarkraft' ? 'Honorarkraft' : z.role === 'lehrkraft' ? 'Lehrkraft' : z.role})</small></span>
                       <button className="btn btn-danger btn-sm" onClick={()=>removeZuweisung(z.lehrkraft_id)}>🗑️ Entfernen</button>
                     </div>
                   ))}
@@ -149,7 +149,7 @@ export default function Schueler() {
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 {lehrkraefte.filter(l => !zugewieseneIds.includes(l.id)).map(l => (
                   <div key={l.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--lavender)',borderRadius:8,padding:'8px 14px'}}>
-                    <span style={{fontWeight:600}}>{l.name} <small style={{color:'var(--text-light)'}}>({l.role})</small></span>
+                    <span style={{fontWeight:600}}>{l.name} <small style={{color:'var(--text-light)'}}>({l.role === 'honorarkraft' ? 'Honorarkraft' : l.role === 'lehrkraft' ? 'Lehrkraft' : l.role})</small></span>
                     <button className="btn btn-success btn-sm" onClick={()=>addZuweisung(l.id)}>+ Zuweisen</button>
                   </div>
                 ))}

@@ -102,7 +102,7 @@ export default function Freischaltung() {
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12,marginBottom:16}}>
                 <div>
                   <div style={{fontFamily:'Cormorant Garamond,serif',fontSize:20,fontWeight:700}}>{u.user_name}</div>
-                  <div style={{fontSize:13,color:'var(--text-light)'}}>{u.user_role} · Antrag vom {new Date(u.created_at).toLocaleDateString('de-DE')}</div>
+                  <div style={{fontSize:13,color:'var(--text-light)'}}>{u.user_role === 'honorarkraft' ? 'Honorarkraft' : u.user_role === 'lehrkraft' ? 'Lehrkraft' : u.user_role} · Antrag vom {new Date(u.created_at).toLocaleDateString('de-DE')}</div>
                 </div>
                 <span className="badge" style={{background:'#fff3e0',color:'#e65100',fontSize:13}}>⏳ Ausstehend</span>
               </div>
