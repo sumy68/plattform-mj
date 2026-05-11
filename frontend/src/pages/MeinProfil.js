@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const API = 'https://plattform-mj.onrender.com';
-
 const SPRACHEN = ['Deutsch', 'Englisch', 'Arabisch', 'Türkisch', 'Albanisch', 'Kurdisch', 'Bosnisch/Kroatisch/Serbisch', 'Französisch', 'Russisch', 'Spanisch', 'Sonstiges'];
 const GESCHLECHT = ['Männlich', 'Weiblich', 'Divers'];
 
 export default function MeinProfil() {
   const [profil, setProfil] = useState(null);
   const [form, setForm] = useState({});
-  const [pwForm, setPwForm] = useState({ altes_passwort: '', neues_passwort: '', neues_passwort2: '' });
+  const [pwAlt, setPwAlt] = useState('');
+  const [pwNeu, setPwNeu] = useState('');
+  const [pwNeu2, setPwNeu2] = useState('');
   const [rechnungen, setRechnungen] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
@@ -17,9 +18,11 @@ export default function MeinProfil() {
   const [error, setError] = useState('');
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwError, setPwError] = useState('');
-  const [showPw, setShowPw] = useState({ alt: false, neu: false, neu2: false });
+  const [showAlt, setShowAlt] = useState(false);
+  const [showNeu, setShowNeu] = useState(false);
+  const [showNeu2, setShowNeu2] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const res = await axios.get(`${API}/api/profil`);
     setProfil(res.data);
     setForm({
@@ -36,16 +39,15 @@ export default function MeinProfil() {
       geburtsdatum: res.data.geburtsdatum ? res.data.geburtsdatum.split('T')[0] : '',
       sprachen: res.data.sprachen || [],
     });
-    // Rechnungen laden wenn Honorarkraft
     if (res.data.role === 'honorarkraft') {
       try {
         const rRes = await axios.get(`${API}/api/abrechnung/meine-rechnungen`);
         setRechnungen(rRes.data);
       } catch(e) {}
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const toggleSprache = (s) => {
     const arr = form.sprachen || [];
@@ -58,7 +60,6 @@ export default function MeinProfil() {
     try {
       await axios.put(`${API}/api/profil`, form);
       setSuccess('Profil gespeichert ✅');
-      load();
     } catch (err) {
       setError(err.response?.data?.error || 'Fehler beim Speichern');
     } finally {
@@ -69,13 +70,13 @@ export default function MeinProfil() {
   const handlePwChange = async (e) => {
     e.preventDefault();
     setPwError(''); setPwSuccess('');
-    if (pwForm.neues_passwort !== pwForm.neues_passwort2) return setPwError('Passwörter stimmen nicht überein');
-    if (pwForm.neues_passwort.length < 6) return setPwError('Mindestens 6 Zeichen');
+    if (pwNeu !== pwNeu2) return setPwError('Passwörter stimmen nicht überein');
+    if (pwNeu.length < 6) return setPwError('Mindestens 6 Zeichen');
     setPwLoading(true);
     try {
-      await axios.put(`${API}/api/profil/passwort`, { altes_passwort: pwForm.altes_passwort, neues_passwort: pwForm.neues_passwort });
+      await axios.put(`${API}/api/profil/passwort`, { altes_passwort: pwAlt, neues_passwort: pwNeu });
       setPwSuccess('Passwort geändert ✅');
-      setPwForm({ altes_passwort: '', neues_passwort: '', neues_passwort2: '' });
+      setPwAlt(''); setPwNeu(''); setPwNeu2('');
     } catch (err) {
       setPwError(err.response?.data?.error || 'Fehler beim Ändern');
     } finally {
@@ -87,9 +88,7 @@ export default function MeinProfil() {
     const blob = new Blob([Uint8Array.from(atob(r.pdf_data), c => c.charCodeAt(0))], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `Rechnung_${r.rechnungsnummer}.pdf`;
-    a.click();
+    a.href = url; a.download = `Rechnung_${r.rechnungsnummer}.pdf`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -113,33 +112,25 @@ export default function MeinProfil() {
         <form onSubmit={handleSave}>
           {success && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{success}</div>}
           {error && <div className="error-msg">{error}</div>}
-
           <div className="form-row">
             <div className="form-group"><label>Vorname *</label><input required value={form.vorname} onChange={e => setForm({ ...form, vorname: e.target.value })} placeholder="Vorname"/></div>
             <div className="form-group"><label>Nachname *</label><input required value={form.nachname} onChange={e => setForm({ ...form, nachname: e.target.value })} placeholder="Nachname"/></div>
           </div>
-
           <div className="form-group"><label>E-Mail</label><input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="deine@email.de"/></div>
-
           <div className="form-row">
             <div className="form-group"><label>Geschlecht</label><select value={form.geschlecht} onChange={e => setForm({ ...form, geschlecht: e.target.value })}><option value="">Bitte wählen</option>{GESCHLECHT.map(g => <option key={g} value={g}>{g}</option>)}</select></div>
             <div className="form-group"><label>Geburtsdatum</label><input type="date" value={form.geburtsdatum} onChange={e => setForm({ ...form, geburtsdatum: e.target.value })}/></div>
           </div>
-
           <div className="form-row">
             <div className="form-group"><label>Telefon</label><input value={form.telefon} onChange={e => setForm({ ...form, telefon: e.target.value })} placeholder="0152 1234567"/></div>
             <div className="form-group"><label>IBAN</label><input value={form.iban} onChange={e => setForm({ ...form, iban: e.target.value.toUpperCase() })} placeholder="DE12 3456 7890..."/></div>
           </div>
-
           <div className="form-group"><label>Straße & Hausnummer</label><input value={form.adresse} onChange={e => setForm({ ...form, adresse: e.target.value })} placeholder="Musterstraße 12"/></div>
-
           <div className="form-row">
             <div className="form-group"><label>PLZ</label><input value={form.plz} onChange={e => setForm({ ...form, plz: e.target.value })} placeholder="30159"/></div>
             <div className="form-group"><label>Ort</label><input value={form.ort} onChange={e => setForm({ ...form, ort: e.target.value })} placeholder="Hannover"/></div>
           </div>
-
           <div className="form-group"><label>Steuernummer <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>(optional)</span></label><input value={form.steuernummer} onChange={e => setForm({ ...form, steuernummer: e.target.value })} placeholder="12/345/67890"/></div>
-
           <div className="form-group">
             <label>Sprachen</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
@@ -150,12 +141,10 @@ export default function MeinProfil() {
               ))}
             </div>
           </div>
-
           <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Speichert...' : 'Profil speichern'}</button>
         </form>
       </div>
 
-      {/* Gesendete Rechnungen - nur für Honorarkräfte */}
       {profil.role === 'honorarkraft' && (
         <div className="card" style={{ marginBottom: 24 }}>
           <div className="card-title">📄 Meine Rechnungen</div>
@@ -181,7 +170,6 @@ export default function MeinProfil() {
         </div>
       )}
 
-      {/* Passwort ändern */}
       <div className="card">
         <div className="card-title">🔒 Passwort ändern</div>
         {pwSuccess && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{pwSuccess}</div>}
@@ -190,23 +178,29 @@ export default function MeinProfil() {
           <div className="form-group">
             <label>Aktuelles Passwort *</label>
             <div style={{position:'relative'}}>
-              <input type={showPw.alt ? 'text' : 'password'} required value={pwForm.altes_passwort} onChange={e => setPwForm({ ...pwForm, altes_passwort: e.target.value })} placeholder="••••••••" style={{paddingRight:42}}/>
-              <button type="button" onClick={() => setShowPw({...showPw, alt: !showPw.alt})} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.alt ? '🙈' : '👁️'}</button>
+              <input type={showAlt ? 'text' : 'password'} required value={pwAlt} onChange={e => setPwAlt(e.target.value)} placeholder="••••••••" style={{paddingRight:42}}/>
+              <button type="button" onMouseDown={e=>e.preventDefault()} onClick={() => setShowAlt(v=>!v)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
+                {showAlt ? '🙈' : '👁️'}
+              </button>
             </div>
           </div>
           <div className="form-row">
             <div className="form-group">
               <label>Neues Passwort *</label>
               <div style={{position:'relative'}}>
-                <input type={showPw.neu ? 'text' : 'password'} required value={pwForm.neues_passwort} onChange={e => setPwForm({ ...pwForm, neues_passwort: e.target.value })} placeholder="Mindestens 6 Zeichen" style={{paddingRight:42}}/>
-                <button type="button" onClick={() => setShowPw({...showPw, neu: !showPw.neu})} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.neu ? '🙈' : '👁️'}</button>
+                <input type={showNeu ? 'text' : 'password'} required value={pwNeu} onChange={e => setPwNeu(e.target.value)} placeholder="Mindestens 6 Zeichen" style={{paddingRight:42}}/>
+                <button type="button" onMouseDown={e=>e.preventDefault()} onClick={() => setShowNeu(v=>!v)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
+                  {showNeu ? '🙈' : '👁️'}
+                </button>
               </div>
             </div>
             <div className="form-group">
               <label>Wiederholen *</label>
               <div style={{position:'relative'}}>
-                <input type={showPw.neu2 ? 'text' : 'password'} required value={pwForm.neues_passwort2} onChange={e => setPwForm({ ...pwForm, neues_passwort2: e.target.value })} placeholder="Passwort bestätigen" style={{paddingRight:42}}/>
-                <button type="button" onClick={() => setShowPw({...showPw, neu2: !showPw.neu2})} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>{showPw.neu2 ? '🙈' : '👁️'}</button>
+                <input type={showNeu2 ? 'text' : 'password'} required value={pwNeu2} onChange={e => setPwNeu2(e.target.value)} placeholder="Passwort bestätigen" style={{paddingRight:42}}/>
+                <button type="button" onMouseDown={e=>e.preventDefault()} onClick={() => setShowNeu2(v=>!v)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
+                  {showNeu2 ? '🙈' : '👁️'}
+                </button>
               </div>
             </div>
           </div>
