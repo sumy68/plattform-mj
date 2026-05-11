@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import Notifications from './Notifications';
 
-const API = 'https://plattform-mj.onrender.com';
+const API = 'http://localhost:5001';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -42,6 +42,7 @@ export default function Sidebar() {
   ];
 
   const lehrkraftLinks = [
+    { path: '/dashboard', icon: '📊', label: 'Dashboard' },
     { path: '/meine-stunden', icon: '📅', label: 'Meine Stunden' },
     { path: '/kalender', icon: '🗓️', label: 'Kalender' },
     { path: '/meine-schueler', icon: '👧', label: 'Meine Schüler' },

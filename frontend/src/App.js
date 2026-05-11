@@ -40,7 +40,7 @@ export default function App() {
           <Route path="/login" element={<Login/>}/>
           <Route path="/register" element={<Register/>}/>
           <Route path="/profil-einrichten" element={<ProfilEinrichten/>}/>
-          <Route path="/dashboard" element={<PrivateRoute adminOnly><AppLayout><Dashboard/></AppLayout></PrivateRoute>}/>
+          <Route path="/dashboard" element={<PrivateRoute><AppLayout><Dashboard/></AppLayout></PrivateRoute>}/>
           <Route path="/schueler" element={<PrivateRoute adminOnly><AppLayout><Schueler/></AppLayout></PrivateRoute>}/>
           <Route path="/lehrkraefte" element={<PrivateRoute adminOnly><AppLayout><Lehrkraefte/></AppLayout></PrivateRoute>}/>
           <Route path="/stunden" element={<PrivateRoute adminOnly><AppLayout><Stunden adminView/></AppLayout></PrivateRoute>}/>
