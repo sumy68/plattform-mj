@@ -41,6 +41,7 @@ const initDB = async () => {
         schule VARCHAR(255),
         klasse VARCHAR(50),
         faecher TEXT[],
+        sprachen TEXT[],
         eltern_name VARCHAR(255),
         eltern_tel VARCHAR(50),
         eltern_email VARCHAR(255),
@@ -91,6 +92,26 @@ const initDB = async () => {
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+
+    // Migrations — fehlende Spalten nachrüsten
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS faecher TEXT[]`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS sprachen TEXT[]`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS diagnose TEXT[]`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS notizen TEXT`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS but_zeitraum_von DATE`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS but_zeitraum_bis DATE`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS profil_komplett BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS vorname VARCHAR(255)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nachname VARCHAR(255)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS geschlecht VARCHAR(50)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS adresse TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plz VARCHAR(10)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ort VARCHAR(255)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS iban VARCHAR(50)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS steuernummer VARCHAR(50)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS geburtsdatum DATE`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS telefon VARCHAR(50)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS sprachen TEXT[]`);
     console.log('✅ Datenbank initialisiert');
   } finally {
     client.release();
