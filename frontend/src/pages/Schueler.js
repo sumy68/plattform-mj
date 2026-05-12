@@ -105,9 +105,9 @@ export default function Schueler() {
                   <td><strong>{s.vorname} {s.nachname}</strong></td>
                   <td>{s.klasse}</td>
                   <td>{s.schule}</td>
-                  <td style={{fontSize:12}}>{(s.sprachen||[]).slice(0,2).join(', ') || '–'}</td>
+                  <td style={{fontSize:12}}>{(Array.isArray(s.sprachen) ? s.sprachen : []).slice(0,2).join(', ') || '–'}</td>
                   <td>{s.but_status ? <span className="badge badge-but">BuT</span> : <span className="badge badge-no-but">Nein</span>}</td>
-                  <td>{(s.diagnose||[]).join(', ') || '–'}</td>
+                  <td>{(Array.isArray(s.diagnose) ? s.diagnose : []).join(', ') || '–'}</td>
                   <td>{s.eltern_name}<br/><small style={{color:'var(--text-light)'}}>{s.eltern_tel}</small></td>
                   {isAdmin && <td>
                     <div style={{display:'flex',gap:6,alignItems:'center'}}>
