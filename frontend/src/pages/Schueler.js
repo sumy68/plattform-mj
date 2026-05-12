@@ -54,9 +54,13 @@ export default function Schueler() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editId) await axios.put(`${API}/api/schueler/${editId}`, form);
-    else await axios.post(`${API}/api/schueler`, form);
-    setModal(false); load();
+    try {
+      if (editId) await axios.put(`${API}/api/schueler/${editId}`, form);
+      else await axios.post(`${API}/api/schueler`, form);
+      setModal(false); load();
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
+    }
   };
 
   const addZuweisung = async (lehrkraft_id) => {
