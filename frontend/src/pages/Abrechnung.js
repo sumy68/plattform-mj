@@ -171,7 +171,7 @@ export default function Abrechnung() {
   return (
     <div>
       <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:32,marginBottom:24,color:'var(--text-dark)'}}>
-        {isHonorar ? 'Mein Guthaben & Rechnung' : 'Mein Guthaben'}
+        {isHonorar ? 'Mein Guthaben & Rechnung' : 'Meine Stunden'}
       </h2>
 
       {success && <div style={{background:'#e8f5e9',border:'2px solid #a5d6a7',borderRadius:12,padding:16,marginBottom:20,fontWeight:700,color:'#2e7d32'}}>{success}</div>}
@@ -179,9 +179,9 @@ export default function Abrechnung() {
       {guthaben && <>
         {/* Stats */}
         <div className="stats-grid" style={{marginBottom:24}}>
-          <div className="stat-card"><div className="stat-number">{guthaben.gesamt_stunden}</div><div className="stat-label">Offene Stunden</div></div>
-          <div className="stat-card"><div className="stat-number" style={{color:'var(--success)'}}>{guthaben.gesamt_betrag.toFixed(2)} €</div><div className="stat-label">Offenes Guthaben</div></div>
+          <div className="stat-card"><div className="stat-number">{guthaben.gesamt_stunden}</div><div className="stat-label">Stunden diesen Monat</div></div>
           {isHonorar && <>
+            <div className="stat-card"><div className="stat-number" style={{color:'var(--success)'}}>{guthaben.gesamt_betrag.toFixed(2)} €</div><div className="stat-label">Offenes Guthaben</div></div>
             <div className="stat-card"><div className="stat-number" style={{color:'var(--purple)'}}>{guthaben.bereits_abgerechnet.toFixed(2)} €</div><div className="stat-label">Bereits abgerechnet</div></div>
             <div className="stat-card"><div className="stat-number" style={{color: guthaben.noch_moeglich < 100 ? 'var(--danger)' : 'var(--success)'}}>{guthaben.noch_moeglich.toFixed(2)} €</div><div className="stat-label">Noch möglich (603€ Grenze)</div></div>
           </>}

@@ -48,7 +48,7 @@ export default function Sidebar() {
     { path: '/meine-schueler', icon: '👧', label: 'Meine Schüler' },
     { path: '/but', icon: '📋', label: 'BuT Anträge', badge: butWarnungen, badgeColor: 'var(--warning)' },
     { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten' },
-    { path: '/mein-guthaben', icon: '💰', label: 'Guthaben' },
+    { path: '/mein-guthaben', icon: '💰', label: user?.role === 'honorarkraft' ? 'Guthaben & Rechnung' : 'Meine Stunden' },
     { path: '/mein-profil', icon: '👤', label: 'Mein Profil' },
   ];
 
@@ -86,7 +86,7 @@ export default function Sidebar() {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
           <div>
             <strong>{user?.name}</strong>
-            <span style={{fontSize:11,opacity:0.6,display:'block'}}>{user?.role === 'admin' ? 'Administrator' : user?.role === 'honorarkraft' ? 'Honorarkraft' : 'Lehrkraft'}</span>
+            <span style={{fontSize:11,opacity:0.6,display:'block'}}>{user?.role === 'admin' ? 'Administrator' : user?.role}</span>
           </div>
           <Notifications/>
         </div>
