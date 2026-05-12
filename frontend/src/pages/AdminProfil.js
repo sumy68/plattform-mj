@@ -3,6 +3,18 @@ import axios from 'axios';
 
 const API = 'https://plattform-mj.onrender.com';
 
+const PwField = ({ label, value, onChange, show, setShow }) => (
+  <div className="form-group">
+    <label>{label}</label>
+    <div style={{position:'relative'}}>
+      <input type={show ? 'text' : 'password'} required value={value} onChange={onChange} style={{paddingRight:42}}/>
+      <button type="button" onClick={() => setShow(!show)} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
+        {show ? '🙈' : '👁️'}
+      </button>
+    </div>
+  </div>
+);
+
 export default function AdminProfil() {
   const [form, setForm] = useState({ alt: '', neu: '', bestaetigung: '' });
   const [showAlt, setShowAlt] = useState(false);
@@ -29,18 +41,6 @@ export default function AdminProfil() {
       setLoading(false);
     }
   };
-
-  const PwField = ({ label, value, onChange, show, setShow }) => (
-    <div className="form-group">
-      <label>{label}</label>
-      <div style={{position:'relative'}}>
-        <input type={show ? 'text' : 'password'} required value={value} onChange={onChange} style={{paddingRight:42}}/>
-        <button type="button" onClick={() => setShow(!show)} onMouseDown={e=>e.preventDefault()} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-light)'}}>
-          {show ? '🙈' : '👁️'}
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div>
