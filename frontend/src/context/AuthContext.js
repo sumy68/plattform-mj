@@ -32,9 +32,13 @@ export const AuthProvider = ({ children }) => {
         const profil = await axios.get('https://plattform-mj.onrender.com/api/profil', {
           headers: { Authorization: `Bearer ${token}` }
         });
+        const updatedUser = { ...userData, profil_komplett: profil.data.profil_komplett };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
         if (!profil.data.profil_komplett) {
-          return { ...userData, needsProfil: true };
+          return { ...updatedUser, needsProfil: true };
         }
+        return updatedUser;
       } catch (e) {
         return { ...userData, needsProfil: true };
       }
