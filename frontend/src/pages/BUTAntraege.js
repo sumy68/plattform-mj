@@ -28,7 +28,7 @@ export default function ButAntraege() {
       axios.get(`${API}/api/schueler`)
     ]);
     setAntraege(aRes.data);
-    setSchueler(sRes.data.filter(s => s.but_status));
+    setSchueler(sRes.data.filter(s => s.but_status === true || s.but_status === 'true'));
   };
 
   useEffect(() => { load(); }, []);
