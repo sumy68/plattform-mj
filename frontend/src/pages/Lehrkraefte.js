@@ -66,7 +66,7 @@ export default function Lehrkraefte() {
                   <td><strong>{u.name}</strong></td>
                   <td>{u.email}</td>
                   <td>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
-                  <td style={{fontSize:12}}>{(u.sprachen||[]).slice(0,2).join(', ') || '–'}</td>
+                  <td style={{fontSize:12}}>{(Array.isArray(u.sprachen) ? u.sprachen : []).slice(0,2).join(', ') || '–'}</td>
                   <td>
                     {editStundensatz === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
@@ -130,8 +130,8 @@ export default function Lehrkraefte() {
             <div style={{marginBottom:20}}>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text-mid)',marginBottom:8}}>Sprachen</div>
               <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                {(detailUser.sprachen||[]).length > 0
-                  ? detailUser.sprachen.map(s => <span key={s} className="badge" style={{background:'var(--purple-pale)',color:'var(--purple-dark)'}}>{s}</span>)
+                {(Array.isArray(detailUser.sprachen) ? detailUser.sprachen : []).length > 0
+                  ? (Array.isArray(detailUser.sprachen) ? detailUser.sprachen : []).map(s => <span key={s} className="badge" style={{background:'var(--purple-pale)',color:'var(--purple-dark)'}}>{s}</span>)
                   : <span style={{color:'var(--text-light)',fontSize:13}}>Keine Angabe</span>
                 }
               </div>
