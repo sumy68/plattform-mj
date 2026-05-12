@@ -50,11 +50,10 @@ export default function Dashboard() {
         } else {
           // Lehrkraft/Honorarkraft
           const st = await axios.get(`${API}/api/stunden?monat=${heute}`).catch(() => ({ data: [] }));
-          const offen = st.data.filter(s => !s.abgerechnet).length;
           const unterschrift = st.data.filter(s => !s.unterschrift_data).length;
           setStats({
             stunden_monat: st.data.length,
-            offen,
+            offen: st.data.filter(s => !s.abgerechnet).length,
             unterschrift,
           });
           setStunden(st.data.slice(0, 5));
@@ -63,11 +62,15 @@ export default function Dashboard() {
             axios.get(`${API}/api/stunden?monat=${m.monat}`).catch(() => ({ data: [] }))
           );
           const chartResults = await Promise.all(chartPromises);
-          setChartData(monate.map((m, i) => ({
-            monat: m.label,
-            Stunden: chartResults[i].data.length,
-            Abgerechnet: chartResults[i].data.filter(s => s.abgerechnet).length,
-          })));
+          const isHonorar = user?.role === 'honorarkraft';
+          setChartData(monate.map((m, i) => {
+            const data = chartResults[i].data;
+            if (isHonorar) {
+              return { monat: m.label, Stunden: data.length, Abgerechnet: data.filter(s => s.abgerechnet).length };
+            } else {
+              return { monat: m.label, Stunden: data.length };
+            }
+          }));
         }
       } catch (err) { console.error(err); }
     };
@@ -89,7 +92,7 @@ export default function Dashboard() {
           <div className="stat-card"><div className="stat-number">{stats.but_schueler}</div><div className="stat-label">BuT-Schüler</div></div>
         </> : <>
           <div className="stat-card"><div className="stat-number">{stats.stunden_monat}</div><div className="stat-label">Meine Stunden diesen Monat</div></div>
-          <div className="stat-card"><div className="stat-number" style={{color:'var(--warning)'}}>{stats.offen}</div><div className="stat-label">Noch nicht abgerechnet</div></div>
+          {user?.role === 'honorarkraft' && <div className="stat-card"><div className="stat-number" style={{color:'var(--warning)'}}>{stats.offen}</div><div className="stat-label">Noch nicht abgerechnet</div></div>}
           <div className="stat-card"><div className="stat-number" style={{color:'var(--danger)'}}>{stats.unterschrift}</div><div className="stat-label">Unterschrift fehlt</div></div>
         </>}
       </div>
@@ -109,7 +112,7 @@ export default function Dashboard() {
               <Bar dataKey="BuT" fill="#c3a8e8" radius={[6,6,0,0]}/>
             </> : <>
               <Bar dataKey="Stunden" fill="#9b7fd4" radius={[6,6,0,0]}/>
-              <Bar dataKey="Abgerechnet" fill="#c3a8e8" radius={[6,6,0,0]}/>
+              {user?.role === 'honorarkraft' && <Bar dataKey="Abgerechnet" fill="#c3a8e8" radius={[6,6,0,0]}/>}
             </>}
           </BarChart>
         </ResponsiveContainer>
