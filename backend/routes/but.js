@@ -88,12 +88,21 @@ router.post('/', auth, adminOnly, async (req, res) => {
 
 // BuT Antrag bearbeiten (nur Admin)
 router.put('/:id', auth, adminOnly, async (req, res) => {
-  const { gutscheine_gesamt, gueltig_von, gueltig_bis, notizen, aktiv } = req.body;
+  const { gutscheine_gesamt, gutscheine_verbraucht, gueltig_von, gueltig_bis, notizen, aktiv } = req.body;
   try {
+    // Wenn gutscheine_verbraucht nicht angegeben, rückwirkend aus Stunden berechnen
+    let verbraucht = gutscheine_verbraucht;
+    if (verbraucht === undefined || verbraucht === null) {
+      const res2 = await pool.query(
+        `SELECT COUNT(*) FROM stunden WHERE schueler_id=(SELECT schueler_id FROM but_antraege WHERE id=$1) AND datum BETWEEN $2 AND $3`,
+        [req.params.id, gueltig_von, gueltig_bis]
+      );
+      verbraucht = parseInt(res2.rows[0].count) || 0;
+    }
     const result = await pool.query(
-      `UPDATE but_antraege SET gutscheine_gesamt=$1, gueltig_von=$2, gueltig_bis=$3, notizen=$4, aktiv=$5
-       WHERE id=$6 RETURNING *`,
-      [gutscheine_gesamt, gueltig_von, gueltig_bis, notizen, aktiv, req.params.id]
+      `UPDATE but_antraege SET gutscheine_gesamt=$1, gutscheine_verbraucht=$2, gueltig_von=$3, gueltig_bis=$4, notizen=$5, aktiv=$6
+       WHERE id=$7 RETURNING *`,
+      [gutscheine_gesamt, verbraucht, gueltig_von, gueltig_bis, notizen, aktiv, req.params.id]
     );
     res.json(result.rows[0]);
   } catch (err) {
