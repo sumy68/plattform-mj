@@ -38,6 +38,7 @@ export default function MeinProfil() {
       steuernummer: res.data.steuernummer || '',
       geburtsdatum: res.data.geburtsdatum ? res.data.geburtsdatum.split('T')[0] : '',
       sprachen: res.data.sprachen || [],
+      fuehrerschein: res.data.fuehrerschein || false,
     });
     if (res.data.role === 'honorarkraft') {
       try {
@@ -131,6 +132,12 @@ export default function MeinProfil() {
             <div className="form-group"><label>Ort</label><input value={form.ort} onChange={e => setForm({ ...form, ort: e.target.value })} placeholder="Hannover"/></div>
           </div>
           <div className="form-group"><label>Steuernummer <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>(optional)</span></label><input value={form.steuernummer} onChange={e => setForm({ ...form, steuernummer: e.target.value })} placeholder="12/345/67890"/></div>
+          <div className="form-group">
+            <label style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',fontWeight:600}}>
+              <input type="checkbox" checked={form.fuehrerschein || false} onChange={e => setForm({ ...form, fuehrerschein: e.target.checked })} style={{width:18,height:18}}/>
+              🚗 Führerschein vorhanden
+            </label>
+          </div>
           <div className="form-group">
             <label>Sprachen</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>

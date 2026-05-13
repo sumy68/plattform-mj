@@ -62,7 +62,7 @@ export default function Lehrkraefte() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Sprachen</th><th>Stundensatz</th><th>Status</th><th>Aktionen</th>
+              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Sprachen</th><th>Führerschein</th><th>Stundensatz</th><th>Status</th><th>Aktionen</th>
             </tr></thead>
             <tbody>
               {users.map(u => (
@@ -71,6 +71,7 @@ export default function Lehrkraefte() {
                   <td>{u.email}</td>
                   <td>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(u.sprachen) ? u.sprachen : []).slice(0,2).join(', ') || '–'}</td>
+                  <td>{u.fuehrerschein ? '🚗 Ja' : '❌ Nein'}</td>
                   <td>
                     {editStundensatz === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
@@ -124,6 +125,7 @@ export default function Lehrkraefte() {
                 ['Adresse', detailUser.adresse ? `${detailUser.adresse}, ${detailUser.plz} ${detailUser.ort}` : '–'],
                 ['IBAN', detailUser.iban || '–'],
                 ['Steuernummer', detailUser.steuernummer || '–'],
+                ['Führerschein', detailUser.fuehrerschein ? '🚗 Ja' : '❌ Nein'],
               ].map(([label, value]) => (
                 <div key={label} style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
                   <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>{label}</div>
