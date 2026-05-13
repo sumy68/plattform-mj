@@ -16,8 +16,10 @@ export default function Sidebar() {
   useEffect(() => {
     if (!user) return;
     if (user.role === 'admin') {
-      axios.get(`${API}/api/auth/pending`).then(res => setPendingCount(res.data.length)).catch(() => {});
-      axios.get(`${API}/api/abwesenheiten/pending-urlaub`).then(res => setPendingCount(c => c + res.data.length)).catch(() => {});
+      Promise.all([
+        axios.get(`${API}/api/auth/pending`).catch(() => ({ data: [] })),
+        axios.get(`${API}/api/abwesenheiten/pending-urlaub`).catch(() => ({ data: [] }))
+      ]).then(([p, u]) => setPendingCount(p.data.length + u.data.length));
 
       axios.get(`${API}/api/abwesenheiten`).then(res => {
         const heute = new Date().toISOString().split('T')[0];
