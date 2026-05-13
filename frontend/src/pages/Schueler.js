@@ -106,24 +106,25 @@ export default function Schueler() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>Name</th><th>Klasse</th><th>Schule</th><th>Sprachen</th><th>BuT</th><th>Förderbedarf</th><th>Eltern</th>{isAdmin && <th>Aktionen</th>}
+              <th>Name</th><th>Klasse</th><th>Schule</th><th>Sprachen</th><th>BuT</th><th>Förderbedarf</th><th>Eltern</th><th>Aktionen</th>
             </tr></thead>
             <tbody>
               {filtered.map(s => (
                 <tr key={s.id}>
-                  <td><strong style={{cursor: !isAdmin ? 'pointer' : 'default', color: !isAdmin ? 'var(--purple)' : 'inherit'}} onClick={() => !isAdmin && setDetailSchueler(s)}>{s.vorname} {s.nachname}</strong></td>
+                  <td><strong>{s.vorname} {s.nachname}</strong></td>
                   <td>{s.klasse}</td>
                   <td>{s.schule}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(s.sprachen) ? s.sprachen : []).slice(0,2).join(', ') || '–'}</td>
                   <td>{s.but_status ? <span className="badge badge-but">BuT</span> : <span className="badge badge-no-but">Nein</span>}</td>
                   <td>{(Array.isArray(s.diagnose) ? s.diagnose : []).join(', ') || '–'}</td>
                   <td>{s.eltern_name}<br/><small style={{color:'var(--text-light)'}}>{s.eltern_tel}</small></td>
-                  {isAdmin && <td>
+                  <td>
                     <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                      <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)} style={{padding:'6px 10px'}}>✏️ Bearbeiten</button>
-                      <button className="btn btn-primary btn-sm" onClick={()=>openZuweisung(s)}>👩‍🏫 Zuweisen</button>
+                      {!isAdmin && <button className="btn btn-ghost btn-sm" onClick={()=>setDetailSchueler(s)}>📋 Details</button>}
+                      {isAdmin && <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)} style={{padding:'6px 10px'}}>✏️ Bearbeiten</button>}
+                      {isAdmin && <button className="btn btn-primary btn-sm" onClick={()=>openZuweisung(s)}>👩‍🏫 Zuweisen</button>}
                     </div>
-                  </td>}
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Schüler gefunden</td></tr>}
