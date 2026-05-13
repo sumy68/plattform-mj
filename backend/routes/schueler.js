@@ -104,3 +104,17 @@ router.delete('/:id/zuweisung/:lehrkraft_id', auth, adminOnly, async (req, res) 
 });
 
 module.exports = router;
+
+// Lehrkraft kann SchülerInnen-Infos bearbeiten
+router.put('/:id/infos', auth, async (req, res) => {
+  const { deutschniveau, lieblingsfach, schwachstes_fach, konzentration, eigenmotivation, selbststaendigkeit, tipps_tricks } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE schueler SET deutschniveau=$1, lieblingsfach=$2, schwachstes_fach=$3, konzentration=$4, eigenmotivation=$5, selbststaendigkeit=$6, tipps_tricks=$7 WHERE id=$8 RETURNING *`,
+      [deutschniveau, lieblingsfach, schwachstes_fach, konzentration, eigenmotivation, selbststaendigkeit, tipps_tricks, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

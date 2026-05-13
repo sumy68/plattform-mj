@@ -33,6 +33,8 @@ export default function Schueler() {
   const [editId, setEditId] = useState(null);
   const [search, setSearch] = useState('');
   const [detailSchueler, setDetailSchueler] = useState(null);
+  const [lkEditForm, setLkEditForm] = useState(null);
+  const [lkEditLoading, setLkEditLoading] = useState(false);
 
   const load = async () => {
     const [sRes, lRes] = await Promise.all([
@@ -69,6 +71,19 @@ export default function Schueler() {
       setModal(false); load();
     } catch (err) {
       alert('Fehler: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const saveLkInfos = async () => {
+    setLkEditLoading(true);
+    try {
+      await axios.put(`${API}/api/schueler/${detailSchueler.id}/infos`, lkEditForm);
+      setDetailSchueler({...detailSchueler, ...lkEditForm});
+      setLkEditForm(null);
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLkEditLoading(false);
     }
   };
 
@@ -200,22 +215,43 @@ export default function Schueler() {
               ))}
             </div>
             <div style={{borderTop:'2px solid var(--lavender)',paddingTop:16}}>
-              <div style={{fontFamily:'Cormorant Garamond,serif',fontSize:18,fontWeight:700,marginBottom:12,color:'var(--purple)'}}>SchülerInnen-Infos</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
-                {[
-                  ['Deutschniveau', detailSchueler.deutschniveau || '–'],
-                  ['Lieblingsfach', detailSchueler.lieblingsfach || '–'],
-                  ['Schwächstes Fach', detailSchueler.schwachstes_fach || '–'],
-                  ['Konzentration', detailSchueler.konzentration || '–'],
-                  ['Eigenmotivation', detailSchueler.eigenmotivation || '–'],
-                  ['Selbstständigkeit', detailSchueler.selbststaendigkeit || '–'],
-                ].map(([label, value]) => (
-                  <div key={label} style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
-                    <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>{label}</div>
-                    <div style={{fontSize:14,color:'var(--text-dark)',fontWeight:600}}>{value}</div>
-                  </div>
-                ))}
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                <div style={{fontFamily:'Cormorant Garamond,serif',fontSize:18,fontWeight:700,color:'var(--purple)'}}>SchülerInnen-Infos</div>
+                {!lkEditForm
+                  ? <button className="btn btn-ghost btn-sm" onClick={()=>setLkEditForm({deutschniveau:detailSchueler.deutschniveau||'',lieblingsfach:detailSchueler.lieblingsfach||'',schwachstes_fach:detailSchueler.schwachstes_fach||'',konzentration:detailSchueler.konzentration||'',eigenmotivation:detailSchueler.eigenmotivation||'',selbststaendigkeit:detailSchueler.selbststaendigkeit||'',tipps_tricks:detailSchueler.tipps_tricks||''})}>✏️ Bearbeiten</button>
+                  : <div style={{display:'flex',gap:8}}>
+                      <button className="btn btn-ghost btn-sm" onClick={()=>setLkEditForm(null)}>Abbrechen</button>
+                      <button className="btn btn-primary btn-sm" onClick={saveLkInfos} disabled={lkEditLoading}>{lkEditLoading?'Speichert...':'✅ Speichern'}</button>
+                    </div>
+                }
               </div>
+              {!lkEditForm ? (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+                  {[
+                    ['Deutschniveau', detailSchueler.deutschniveau || '–'],
+                    ['Lieblingsfach', detailSchueler.lieblingsfach || '–'],
+                    ['Schwächstes Fach', detailSchueler.schwachstes_fach || '–'],
+                    ['Konzentration', detailSchueler.konzentration || '–'],
+                    ['Eigenmotivation', detailSchueler.eigenmotivation || '–'],
+                    ['Selbstständigkeit', detailSchueler.selbststaendigkeit || '–'],
+                  ].map(([label, value]) => (
+                    <div key={label} style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
+                      <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>{label}</div>
+                      <div style={{fontSize:14,color:'var(--text-dark)',fontWeight:600}}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+                  <div className="form-group" style={{marginBottom:0}}><label style={{fontSize:11}}>Deutschniveau</label><select value={lkEditForm.deutschniveau} onChange={e=>setLkEditForm({...lkEditForm,deutschniveau:e.target.value})}><option value="">–</option>{['Spricht kein Deutsch','Spricht ein wenig Deutsch','Kann sich verständigen','Spricht gut, mit vielen Fehlern','Spricht gut mit wenig Fehlern','Muttersprache'].map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+                  <div className="form-group" style={{marginBottom:0}}><label style={{fontSize:11}}>Lieblingsfach</label><select value={lkEditForm.lieblingsfach} onChange={e=>setLkEditForm({...lkEditForm,lieblingsfach:e.target.value})}><option value="">–</option>{['Deutsch','Mathematik','Englisch','Sachunterricht','Naturwissenschaften','Physik','Chemie','Biologie','Erdkunde','Musik'].map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+                  <div className="form-group" style={{marginBottom:0}}><label style={{fontSize:11}}>Schwächstes Fach</label><select value={lkEditForm.schwachstes_fach} onChange={e=>setLkEditForm({...lkEditForm,schwachstes_fach:e.target.value})}><option value="">–</option>{['Deutsch','Mathematik','Englisch','Sachunterricht','Naturwissenschaften','Physik','Chemie','Biologie','Erdkunde','Musik'].map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+                  <div className="form-group" style={{marginBottom:0}}><label style={{fontSize:11}}>Konzentration</label><select value={lkEditForm.konzentration} onChange={e=>setLkEditForm({...lkEditForm,konzentration:e.target.value})}><option value="">–</option>{['Geringe Konzentration','Mittlere Konzentration','Hohe Konzentration'].map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+                  <div className="form-group" style={{marginBottom:0}}><label style={{fontSize:11}}>Eigenmotivation</label><select value={lkEditForm.eigenmotivation} onChange={e=>setLkEditForm({...lkEditForm,eigenmotivation:e.target.value})}><option value="">–</option>{['Geringe Motivation','Mittlere Motivation','Hohe Motivation'].map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+                  <div className="form-group" style={{marginBottom:0}}><label style={{fontSize:11}}>Selbstständigkeit</label><select value={lkEditForm.selbststaendigkeit} onChange={e=>setLkEditForm({...lkEditForm,selbststaendigkeit:e.target.value})}><option value="">–</option>{['Geringe Selbstständigkeit','Mittlere Selbstständigkeit','Hohe Selbstständigkeit'].map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+                  <div className="form-group" style={{gridColumn:'1/-1',marginBottom:0}}><label style={{fontSize:11}}>Tipps & Tricks</label><textarea rows={2} value={lkEditForm.tipps_tricks} onChange={e=>setLkEditForm({...lkEditForm,tipps_tricks:e.target.value})} style={{width:'100%'}}/></div>
+                </div>
+              )}
               {detailSchueler.tipps_tricks && (
                 <div style={{background:'#fff3e0',borderRadius:8,padding:'12px 14px'}}>
                   <div style={{fontSize:11,fontWeight:700,color:'#e65100',textTransform:'uppercase',marginBottom:4}}>💡 Tipps & Tricks</div>
