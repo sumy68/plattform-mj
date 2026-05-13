@@ -32,7 +32,7 @@ export default function AdminProfil() {
     if (form.neu.length < 6) return setError('Passwort muss mindestens 6 Zeichen haben');
     setLoading(true);
     try {
-      await axios.patch(`${API}/api/profil/passwort`, { altes_passwort: form.alt, neues_passwort: form.neu });
+      await axios.put(`${API}/api/profil/passwort`, { altes_passwort: form.alt, neues_passwort: form.neu });
       setSuccess(true);
       setForm({ alt: '', neu: '', bestaetigung: '' });
     } catch (err) {
