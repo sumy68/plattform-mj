@@ -12,6 +12,7 @@ export default function Sidebar() {
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
   const [butWarnungen, setButWarnungen] = useState(0);
+  const [krankCount, setKrankCount] = useState(() => parseInt(localStorage.getItem('krank_badge') || '0'));
 
   useEffect(() => {
     if (!user) return;
@@ -22,6 +23,16 @@ export default function Sidebar() {
       ]).then(([p, u]) => setPendingCount(p.data.length + u.data.length));
 
 
+    }
+    if (user.role === 'admin') {
+      axios.get(`${API}/api/abwesenheiten`).then(res => {
+        const heute = new Date().toISOString().split('T')[0];
+        const neu = res.data.filter(a => a.typ === 'krank' && a.created_at?.split('T')[0] === heute).length;
+        const gesehen = parseInt(localStorage.getItem('krank_badge_gesehen') || '0');
+        const ungesehen = Math.max(0, neu - gesehen);
+        setKrankCount(ungesehen);
+        localStorage.setItem('krank_badge', ungesehen);
+      }).catch(() => {});
     }
     axios.get(`${API}/api/but`).then(res => {
       const warnungen = res.data.filter(a => {
@@ -39,7 +50,7 @@ export default function Sidebar() {
     { path: '/lehrkraefte', icon: '👩‍🏫', label: 'Lehrkräfte' },
     { path: '/stunden', icon: '📅', label: 'Alle Stunden' },
     { path: '/but', icon: '📋', label: 'BuT Anträge', badge: butWarnungen, badgeColor: 'var(--warning)' },
-    { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten' },
+    { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten', badge: krankCount, badgeColor: 'var(--danger)' },
     { path: '/abrechnung', icon: '💰', label: 'Finanzen' },
     { path: '/freischaltung', icon: '🔓', label: 'Freischaltung', badge: pendingCount, badgeColor: 'var(--danger)' },
     { path: '/admin-profil', icon: '👤', label: 'Mein Profil' },
@@ -69,7 +80,15 @@ export default function Sidebar() {
           <button
             key={link.path}
             className={`nav-item ${location.pathname === link.path ? 'active' : ''}`}
-            onClick={() => navigate(link.path)}
+            onClick={() => { 
+              navigate(link.path);
+              if (link.path === '/abwesenheiten') {
+                const heute = new Date().toISOString().split('T')[0];
+                localStorage.setItem('krank_badge_gesehen_date', heute);
+                setKrankCount(0);
+                localStorage.setItem('krank_badge', '0');
+              }
+            }}
           >
             <span className="nav-icon">{link.icon}</span>
             {link.label}
