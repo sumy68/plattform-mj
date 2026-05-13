@@ -78,6 +78,13 @@ const initDB = async () => {
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS sprachen TEXT[]`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS manuell_deaktiviert BOOLEAN DEFAULT false`);
     await client.query(`ALTER TABLE abwesenheiten ADD COLUMN IF NOT EXISTS admin_notiz TEXT`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS deutschniveau VARCHAR(100)`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS lieblingsfach VARCHAR(100)`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS schwachstes_fach VARCHAR(100)`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS konzentration VARCHAR(100)`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS eigenmotivation VARCHAR(100)`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS selbststaendigkeit VARCHAR(100)`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS tipps_tricks TEXT`);
 
     // Migrations schueler
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS geburtsdatum DATE`);

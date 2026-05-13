@@ -10,8 +10,16 @@ const SPRACHEN = ['Deutsch', 'Englisch', 'Arabisch', 'Türkisch', 'Albanisch', '
 const emptyForm = {
   vorname:'', nachname:'', geburtsdatum:'', schule:'', klasse:'', faecher:[],
   sprachen:[], eltern_name:'', eltern_tel:'', eltern_email:'', adresse:'',
-  but_status:false, but_zeitraum_von:'', but_zeitraum_bis:'', diagnose:[], notizen:''
+  but_status:false, but_zeitraum_von:'', but_zeitraum_bis:'', diagnose:[], notizen:'',
+  deutschniveau:'', lieblingsfach:'', schwachstes_fach:'', konzentration:'', eigenmotivation:'', selbststaendigkeit:'', tipps_tricks:''
 };
+
+const KLASSEN = ['Unbekannt','1','2','3','4','5','6','7','8','9','10','11','12','13'];
+const DEUTSCHNIVEAU = ['Spricht kein Deutsch','Spricht ein wenig Deutsch','Kann sich verständigen','Spricht gut, mit vielen Fehlern','Spricht gut mit wenig Fehlern','Muttersprache'];
+const LERNFAECHER = ['Deutsch','Mathematik','Englisch','Sachunterricht','Naturwissenschaften','Physik','Chemie','Biologie','Erdkunde','Musik'];
+const KONZENTRATION = ['Geringe Konzentration','Mittlere Konzentration','Hohe Konzentration'];
+const MOTIVATION = ['Geringe Motivation','Mittlere Motivation','Hohe Motivation'];
+const SELBSTSTAENDIGKEIT = ['Geringe Selbstständigkeit','Mittlere Selbstständigkeit','Hohe Selbstständigkeit'];
 
 export default function Schueler() {
   const { user } = useAuth();
@@ -203,7 +211,7 @@ export default function Schueler() {
                 </div>
               </div>
               <div className="form-group">
-                <label>Diagnose / Förderbedarf</label>
+                <label>Förderbedarf</label>
                 <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
                   {DIAGNOSEN.map(d => (
                     <label key={d} style={{display:'flex',alignItems:'center',gap:4,fontSize:13,cursor:'pointer',padding:'4px 10px',background:(form.diagnose||[]).includes(d)?'var(--purple-light)':'var(--purple-pale)',borderRadius:50,fontWeight:600}}>
@@ -232,6 +240,69 @@ export default function Schueler() {
               </div>
               <div className="form-group"><label>Eltern E-Mail</label><input type="email" value={form.eltern_email} onChange={e=>setForm({...form,eltern_email:e.target.value})}/></div>
               <div className="form-group"><label>Lernfortschritt / Notizen</label><textarea rows={3} value={form.notizen} onChange={e=>setForm({...form,notizen:e.target.value})}/></div>
+
+              <div style={{borderTop:'2px solid var(--lavender)',paddingTop:16,marginTop:8}}>
+                <div style={{fontFamily:'Cormorant Garamond,serif',fontSize:18,fontWeight:700,marginBottom:16,color:'var(--purple)'}}>SchülerInnen-Infos</div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Klasse</label>
+                    <select value={form.klasse} onChange={e=>setForm({...form,klasse:e.target.value})}>
+                      {KLASSEN.map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Deutschniveau</label>
+                    <select value={form.deutschniveau} onChange={e=>setForm({...form,deutschniveau:e.target.value})}>
+                      <option value="">Bitte auswählen</option>
+                      {DEUTSCHNIVEAU.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Lieblingsfach</label>
+                    <select value={form.lieblingsfach} onChange={e=>setForm({...form,lieblingsfach:e.target.value})}>
+                      <option value="">Bitte auswählen</option>
+                      {LERNFAECHER.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Schwächstes Fach</label>
+                    <select value={form.schwachstes_fach} onChange={e=>setForm({...form,schwachstes_fach:e.target.value})}>
+                      <option value="">Bitte auswählen</option>
+                      {LERNFAECHER.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{fontSize:13,fontWeight:700,color:'var(--text-mid)',margin:'12px 0 8px',textAlign:'center',borderBottom:'1px solid var(--lavender)',paddingBottom:8}}>Lernmotivation</div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Konzentrationsfähigkeit</label>
+                    <select value={form.konzentration} onChange={e=>setForm({...form,konzentration:e.target.value})}>
+                      <option value="">Bitte auswählen</option>
+                      {KONZENTRATION.map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Eigenmotivation</label>
+                    <select value={form.eigenmotivation} onChange={e=>setForm({...form,eigenmotivation:e.target.value})}>
+                      <option value="">Bitte auswählen</option>
+                      {MOTIVATION.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Selbstständigkeit</label>
+                  <select value={form.selbststaendigkeit} onChange={e=>setForm({...form,selbststaendigkeit:e.target.value})}>
+                    <option value="">Bitte auswählen</option>
+                    {SELBSTSTAENDIGKEIT.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Tipps & Tricks im Umgang</label>
+                  <textarea rows={3} value={form.tipps_tricks} onChange={e=>setForm({...form,tipps_tricks:e.target.value})} placeholder="z.B. Braucht viele Pausen, mag visuelle Erklärungen..."/>
+                </div>
+              </div>
               <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
                 <button type="button" className="btn btn-ghost" onClick={()=>setModal(false)}>Abbrechen</button>
                 <button type="submit" className="btn btn-primary">Speichern</button>
