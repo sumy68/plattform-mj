@@ -32,6 +32,7 @@ export default function Schueler() {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [search, setSearch] = useState('');
+  const [detailSchueler, setDetailSchueler] = useState(null);
 
   const load = async () => {
     const [sRes, lRes] = await Promise.all([
@@ -105,12 +106,12 @@ export default function Schueler() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>Name</th><th>Klasse</th><th>Schule</th><th>Sprachen</th><th>BuT</th><th>Diagnose</th><th>Eltern</th>{isAdmin && <th>Aktionen</th>}
+              <th>Name</th><th>Klasse</th><th>Schule</th><th>Sprachen</th><th>BuT</th><th>Förderbedarf</th><th>Eltern</th>{isAdmin && <th>Aktionen</th>}
             </tr></thead>
             <tbody>
               {filtered.map(s => (
                 <tr key={s.id}>
-                  <td><strong>{s.vorname} {s.nachname}</strong></td>
+                  <td><strong style={{cursor: !isAdmin ? 'pointer' : 'default', color: !isAdmin ? 'var(--purple)' : 'inherit'}} onClick={() => !isAdmin && setDetailSchueler(s)}>{s.vorname} {s.nachname}</strong></td>
                   <td>{s.klasse}</td>
                   <td>{s.schule}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(s.sprachen) ? s.sprachen : []).slice(0,2).join(', ') || '–'}</td>
@@ -169,6 +170,73 @@ export default function Schueler() {
                   <div style={{fontSize:13,color:'var(--text-light)'}}>Alle Lehrkräfte sind bereits zugewiesen</div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schüler Info Modal für Lehrkräfte */}
+      {detailSchueler && !isAdmin && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setDetailSchueler(null)}>
+          <div className="modal" style={{maxWidth:600}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <div className="modal-title" style={{margin:0}}>📋 {detailSchueler.vorname} {detailSchueler.nachname}</div>
+              <button className="btn btn-ghost btn-sm" onClick={()=>setDetailSchueler(null)}>✕</button>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+              {[
+                ['Klasse', detailSchueler.klasse || '–'],
+                ['Schule', detailSchueler.schule || '–'],
+                ['Geburtsdatum', detailSchueler.geburtsdatum ? new Date(detailSchueler.geburtsdatum).toLocaleDateString('de-DE') : '–'],
+                ['BuT-Status', detailSchueler.but_status ? 'Ja ✅' : 'Nein'],
+                ['Eltern', detailSchueler.eltern_name || '–'],
+                ['Eltern Tel.', detailSchueler.eltern_tel || '–'],
+              ].map(([label, value]) => (
+                <div key={label} style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>{label}</div>
+                  <div style={{fontSize:14,color:'var(--text-dark)',fontWeight:600}}>{value}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{borderTop:'2px solid var(--lavender)',paddingTop:16}}>
+              <div style={{fontFamily:'Cormorant Garamond,serif',fontSize:18,fontWeight:700,marginBottom:12,color:'var(--purple)'}}>SchülerInnen-Infos</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+                {[
+                  ['Deutschniveau', detailSchueler.deutschniveau || '–'],
+                  ['Lieblingsfach', detailSchueler.lieblingsfach || '–'],
+                  ['Schwächstes Fach', detailSchueler.schwachstes_fach || '–'],
+                  ['Konzentration', detailSchueler.konzentration || '–'],
+                  ['Eigenmotivation', detailSchueler.eigenmotivation || '–'],
+                  ['Selbstständigkeit', detailSchueler.selbststaendigkeit || '–'],
+                ].map(([label, value]) => (
+                  <div key={label} style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>{label}</div>
+                    <div style={{fontSize:14,color:'var(--text-dark)',fontWeight:600}}>{value}</div>
+                  </div>
+                ))}
+              </div>
+              {detailSchueler.tipps_tricks && (
+                <div style={{background:'#fff3e0',borderRadius:8,padding:'12px 14px'}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#e65100',textTransform:'uppercase',marginBottom:4}}>💡 Tipps & Tricks</div>
+                  <div style={{fontSize:14,color:'var(--text-dark)'}}>{detailSchueler.tipps_tricks}</div>
+                </div>
+              )}
+              {detailSchueler.notizen && (
+                <div style={{background:'var(--purple-pale)',borderRadius:8,padding:'12px 14px',marginTop:10}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>Notizen</div>
+                  <div style={{fontSize:14,color:'var(--text-dark)'}}>{detailSchueler.notizen}</div>
+                </div>
+              )}
+              {(Array.isArray(detailSchueler.diagnose) ? detailSchueler.diagnose : []).length > 0 && (
+                <div style={{marginTop:10}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:6}}>Förderbedarf</div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                    {(Array.isArray(detailSchueler.diagnose) ? detailSchueler.diagnose : []).map(d => (
+                      <span key={d} style={{background:'var(--purple-light)',color:'white',borderRadius:20,padding:'4px 12px',fontSize:12,fontWeight:600}}>{d}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
