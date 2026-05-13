@@ -87,6 +87,15 @@ const initDB = async () => {
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS tipps_tricks TEXT`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS fuehrerschein BOOLEAN DEFAULT false`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS absage_stundensatz DECIMAL(10,2) DEFAULT 0`);
+    await client.query(`CREATE TABLE IF NOT EXISTS signatur_tokens (
+      id SERIAL PRIMARY KEY,
+      stunde_id INTEGER REFERENCES stunden(id) ON DELETE CASCADE,
+      token VARCHAR(255) UNIQUE NOT NULL,
+      email VARCHAR(255),
+      verwendet BOOLEAN DEFAULT false,
+      erstellt_am TIMESTAMP DEFAULT NOW(),
+      ablaeuft_am TIMESTAMP DEFAULT NOW() + INTERVAL '7 days'
+    )`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_von TEXT`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_nach TEXT`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_km DECIMAL(10,2)`);

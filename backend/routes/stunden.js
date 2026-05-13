@@ -225,3 +225,106 @@ router.delete('/:id', auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Signatur-Link per Email senden
+router.post('/:id/signatur-link', auth, async (req, res) => {
+  const { email } = req.body;
+  try {
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    // Stunde laden
+    const stundeRes = await pool.query(
+      `SELECT st.*, s.vorname, s.nachname, u.name as lehrkraft_name
+       FROM stunden st
+       JOIN schueler s ON st.schueler_id = s.id
+       JOIN users u ON st.lehrkraft_id = u.id
+       WHERE st.id = $1`,
+      [req.params.id]
+    );
+    const st = stundeRes.rows[0];
+    if (!st) return res.status(404).json({ error: 'Stunde nicht gefunden' });
+
+    // Token speichern
+    await pool.query(
+      `INSERT INTO signatur_tokens (stunde_id, token, email) VALUES ($1,$2,$3)
+       ON CONFLICT DO NOTHING`,
+      [req.params.id, token, email]
+    );
+
+    // Email senden
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.ionos.de', port: 587, secure: false,
+      auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: 'BENQFunk68!' }
+    });
+
+    const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
+    const datum = new Date(st.datum).toLocaleDateString('de-DE');
+
+    await transporter.sendMail({
+      from: 'MJ Lernförderung <meryem.jaber@mj-lernfoerderung.de>',
+      to: email,
+      subject: `Unterschrift benötigt – Nachhilfe ${datum}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:500px;margin:auto">
+          <h2 style="color:#9b7fd4">MJ Lernförderung</h2>
+          <p>Sehr geehrte Eltern,</p>
+          <p>für die Nachhilfestunde am <strong>${datum}</strong> mit Lehrkraft <strong>${st.lehrkraft_name}</strong> wird Ihre digitale Unterschrift benötigt.</p>
+          <p><strong>Schüler:</strong> ${st.vorname} ${st.nachname}<br/>
+          <strong>Zeit:</strong> ${st.startzeit} – ${st.endzeit} Uhr<br/>
+          <strong>Fach:</strong> ${st.fach || '–'}</p>
+          <a href="${link}" style="display:inline-block;background:#9b7fd4;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">
+            ✍️ Jetzt unterschreiben
+          </a>
+          <p style="color:#888;font-size:12px">Dieser Link ist 7 Tage gültig.</p>
+        </div>
+      `
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Signatur-Seite laden (öffentlich)
+router.get('/signatur/:token', async (req, res) => {
+  try {
+    const tokenRes = await pool.query(
+      `SELECT st.*, s.vorname, s.nachname, u.name as lehrkraft_name, tok.verwendet, tok.email
+       FROM signatur_tokens tok
+       JOIN stunden st ON tok.stunde_id = st.id
+       JOIN schueler s ON st.schueler_id = s.id
+       JOIN users u ON st.lehrkraft_id = u.id
+       WHERE tok.token = $1 AND tok.ablaeuft_am > NOW()`,
+      [req.params.token]
+    );
+    if (!tokenRes.rows[0]) return res.status(404).json({ error: 'Link ungültig oder abgelaufen' });
+    res.json(tokenRes.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Unterschrift via Token speichern (öffentlich)
+router.post('/signatur/:token', async (req, res) => {
+  const { unterschrift_data, unterschrift_name } = req.body;
+  try {
+    const tokenRes = await pool.query(
+      `SELECT * FROM signatur_tokens WHERE token=$1 AND verwendet=false AND ablaeuft_am > NOW()`,
+      [req.params.token]
+    );
+    if (!tokenRes.rows[0]) return res.status(400).json({ error: 'Link ungültig oder bereits verwendet' });
+    
+    const stunde_id = tokenRes.rows[0].stunde_id;
+    await pool.query(
+      `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW() WHERE id=$3`,
+      [unterschrift_data, unterschrift_name, stunde_id]
+    );
+    await pool.query(`UPDATE signatur_tokens SET verwendet=true WHERE token=$1`, [req.params.token]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

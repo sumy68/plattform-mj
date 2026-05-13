@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
+import Unterschreiben from './pages/Unterschreiben';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Schueler from './pages/Schueler';
@@ -38,6 +39,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login/>}/>
+          <Route path="/unterschreiben/:token" element={<Unterschreiben/>}/>
           <Route path="/register" element={<Register/>}/>
           <Route path="/profil-einrichten" element={<ProfilEinrichten/>}/>
           <Route path="/dashboard" element={<PrivateRoute><AppLayout><Dashboard/></AppLayout></PrivateRoute>}/>

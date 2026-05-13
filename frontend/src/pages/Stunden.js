@@ -102,6 +102,17 @@ export default function Stunden({ adminView }) {
     window.open(`${API}/api/stunden/${id}/pdf?token=${token}`, '_blank');
   };
 
+  const sendSignaturLink = async (st) => {
+    const email = st.eltern_email || prompt('Eltern E-Mail Adresse:');
+    if (!email) return;
+    try {
+      await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email });
+      alert(`✅ Link wurde an ${email} gesendet!`);
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
   const deleteStunde = async (id) => {
     if (!window.confirm('Stunde wirklich löschen?')) return;
     try {
@@ -156,8 +167,9 @@ export default function Stunden({ adminView }) {
                     }
                   </td>
                   <td>
-                    <div style={{display:'flex',gap:6}}>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                       <button className="btn btn-ghost btn-sm" onClick={()=>downloadPDF(st.id)}>📄 PDF</button>
+                      {!st.unterschrift_name && <button className="btn btn-ghost btn-sm" onClick={()=>sendSignaturLink(st)}>📧 Link</button>}
                       <button className="btn btn-danger btn-sm" onClick={()=>deleteStunde(st.id)}>🗑️</button>
                     </div>
                   </td>
