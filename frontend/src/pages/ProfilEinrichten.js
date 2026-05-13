@@ -69,7 +69,7 @@ export default function ProfilEinrichten() {
           }}>Profil einrichten</h1>
           <p style={{ color: 'var(--text-light)', fontSize: 14, lineHeight: 1.6 }}>
             Bitte fülle dein Profil aus.<br/>
-            Diese Daten werden für deine Rechnungen benötigt.
+            Diese Daten werden für deine Auszahlungen benötigt.
           </p>
         </div>
 

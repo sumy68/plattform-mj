@@ -325,3 +325,29 @@ router.get('/meine-rechnungen', auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Auszahlungswunsch einreichen (Festlehrkraft)
+router.post('/auszahlung', auth, async (req, res) => {
+  const { betrag, monat, notizen } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO auszahlungswuensche (user_id, betrag, monat, notizen) VALUES ($1,$2,$3,$4) RETURNING *`,
+      [req.user.id, betrag, monat, notizen || null]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Alle Auszahlungswünsche (Admin)
+router.get('/auszahlungen', auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT a.*, u.name, u.role FROM auszahlungswuensche a JOIN users u ON a.user_id=u.id ORDER BY a.created_at DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

@@ -89,6 +89,15 @@ const initDB = async () => {
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_von TEXT`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_nach TEXT`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_km DECIMAL(10,2)`);
+    await client.query(`CREATE TABLE IF NOT EXISTS auszahlungswuensche (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      betrag DECIMAL(10,2) NOT NULL,
+      monat VARCHAR(7) NOT NULL,
+      notizen TEXT,
+      status VARCHAR(50) DEFAULT 'offen',
+      created_at TIMESTAMP DEFAULT NOW()
+    )`);
 
     // Migrations schueler
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS geburtsdatum DATE`);

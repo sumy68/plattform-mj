@@ -109,7 +109,7 @@ export default function Sidebar() {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
           <div>
             <strong>{user?.name}</strong>
-            <span style={{fontSize:11,opacity:0.6,display:'block'}}>{user?.role === 'admin' ? 'Administrator' : user?.role === 'honorarkraft' ? 'Honorarkraft' : 'Lehrkraft'}</span>
+            <span style={{fontSize:11,opacity:0.6,display:'block'}}>{user?.role === 'admin' ? 'Administrator' : 'Lehrkraft'}</span>
           </div>
           <Notifications/>
         </div>

@@ -17,6 +17,9 @@ export default function Abrechnung() {
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
+  const [auszahlungBetrag, setAuszahlungBetrag] = useState('');
+  const [auszahlungNotiz, setAuszahlungNotiz] = useState('');
+  const [auszahlungLoading, setAuszahlungLoading] = useState(false);
 
   useEffect(() => {
     if (isAdmin) loadAdminStats();
@@ -70,6 +73,23 @@ export default function Abrechnung() {
   };
 
   const selectedBetrag = selected.length * (guthaben?.stundensatz || 0);
+
+  const handleAuszahlung = async () => {
+    if (!auszahlungBetrag || parseFloat(auszahlungBetrag) <= 0) return alert('Bitte Betrag eingeben');
+    if (!window.confirm(`Auszahlung von ${parseFloat(auszahlungBetrag).toFixed(2)}€ beantragen?`)) return;
+    setAuszahlungLoading(true);
+    try {
+      await axios.post(`${API}/api/abrechnung/auszahlung`, { betrag: parseFloat(auszahlungBetrag), monat, notizen: auszahlungNotiz });
+      setSuccess('✅ Auszahlungswunsch eingereicht!');
+      setAuszahlungBetrag('');
+      setAuszahlungNotiz('');
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setAuszahlungLoading(false);
+    }
+  };
 
   const handleRechnung = async () => {
     if (!selected.length) return;
@@ -215,6 +235,27 @@ export default function Abrechnung() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Auszahlung für Festlehrkräfte */}
+        {!isHonorar && (
+          <div className="card" style={{marginBottom:24}}>
+            <div className="card-title">💰 Auszahlung beantragen</div>
+            <p style={{fontSize:13,color:'var(--text-light)',marginBottom:16}}>Als Lehrkraft kannst du einmal im Monat deinen Auszahlungswunsch einreichen. Der Admin wird benachrichtigt.</p>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Gewünschter Betrag (€) *</label>
+                <input type="number" step="0.01" min="0" value={auszahlungBetrag} onChange={e=>setAuszahlungBetrag(e.target.value)} placeholder="z.B. 450.00"/>
+              </div>
+              <div className="form-group">
+                <label>Notiz (optional)</label>
+                <input value={auszahlungNotiz} onChange={e=>setAuszahlungNotiz(e.target.value)} placeholder="z.B. Mai 2026"/>
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading}>
+              {auszahlungLoading ? 'Wird gesendet...' : '💸 Auszahlung beantragen'}
+            </button>
           </div>
         )}
 
