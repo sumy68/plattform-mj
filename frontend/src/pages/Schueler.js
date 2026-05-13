@@ -131,7 +131,7 @@ export default function Schueler() {
                   <td>{s.schule}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(s.sprachen) ? s.sprachen : []).slice(0,2).join(', ') || '–'}</td>
                   <td>{s.but_status ? <span className="badge badge-but">BuT</span> : <span className="badge badge-no-but">Nein</span>}</td>
-                  <td>{(Array.isArray(s.diagnose) ? s.diagnose : []).join(', ') || '–'}</td>
+                  <td style={{fontSize:12}}>{(Array.isArray(s.diagnose) ? s.diagnose : []).join(', ') || '–'}</td>
                   <td>{s.eltern_name}<br/><small style={{color:'var(--text-light)'}}>{s.eltern_tel}</small></td>
                   <td>
                     <div style={{display:'flex',gap:6,alignItems:'center'}}>
@@ -332,12 +332,7 @@ export default function Schueler() {
                     BuT-Förderung aktiv
                   </label>
                 </div>
-                {form.but_status && (
-                  <div className="form-row">
-                    <div className="form-group" style={{marginBottom:0}}><label>BuT von</label><input type="date" value={form.but_zeitraum_von} onChange={e=>setForm({...form,but_zeitraum_von:e.target.value})}/></div>
-                    <div className="form-group" style={{marginBottom:0}}><label>BuT bis</label><input type="date" value={form.but_zeitraum_bis} onChange={e=>setForm({...form,but_zeitraum_bis:e.target.value})}/></div>
-                  </div>
-                )}
+
               </div>
               <div className="form-row">
                 <div className="form-group"><label>Eltern Name</label><input value={form.eltern_name} onChange={e=>setForm({...form,eltern_name:e.target.value})}/></div>
