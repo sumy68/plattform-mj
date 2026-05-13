@@ -75,8 +75,8 @@ const initDB = async () => {
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS steuernummer VARCHAR(50)`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS geburtsdatum DATE`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS telefon VARCHAR(50)`);
-    await client.query(\`ALTER TABLE users ADD COLUMN IF NOT EXISTS sprachen TEXT[]\`);
-    await client.query(\`ALTER TABLE users ADD COLUMN IF NOT EXISTS manuell_deaktiviert BOOLEAN DEFAULT false\`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS sprachen TEXT[]`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS manuell_deaktiviert BOOLEAN DEFAULT false`);
 
     // Migrations schueler
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS geburtsdatum DATE`);
