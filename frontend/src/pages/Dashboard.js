@@ -88,10 +88,10 @@ export default function Dashboard() {
         {isAdmin ? <>
           <div className="stat-card"><div className="stat-number">{stats.schueler}</div><div className="stat-label">Aktive Schüler</div></div>
           <div className="stat-card"><div className="stat-number">{stats.lehrkraefte}</div><div className="stat-label">Lehrkräfte</div></div>
-          <div className="stat-card"><div className="stat-number">{stats.stunden_monat}</div><div className="stat-label">Stunden diesen Monat</div></div>
+          <div className="stat-card"><div className="stat-number">{stats.stunden_monat}</div><div className="stat-label">Geleistete Stunden</div></div>
           <div className="stat-card"><div className="stat-number">{stats.but_schueler}</div><div className="stat-label">BuT-Schüler</div></div>
         </> : <>
-          <div className="stat-card"><div className="stat-number">{stats.stunden_monat}</div><div className="stat-label">Meine Stunden diesen Monat</div></div>
+          <div className="stat-card"><div className="stat-number">{stats.stunden_monat}</div><div className="stat-label">Meine Geleistete Stunden</div></div>
           {user?.role === 'honorarkraft' && <div className="stat-card"><div className="stat-number" style={{color:'var(--warning)'}}>{stats.offen}</div><div className="stat-label">Noch nicht abgerechnet</div></div>}
           <div className="stat-card"><div className="stat-number" style={{color:'var(--danger)'}}>{stats.unterschrift}</div><div className="stat-label">Unterschrift fehlt</div></div>
         </>}
@@ -142,7 +142,7 @@ export default function Dashboard() {
                   </td>
                 </tr>
               ))}
-              {stunden.length === 0 && <tr><td colSpan={isAdmin ? 5 : 4} style={{textAlign:'center',color:'var(--text-light)'}}>Noch keine Stunden diesen Monat</td></tr>}
+              {stunden.length === 0 && <tr><td colSpan={isAdmin ? 5 : 4} style={{textAlign:'center',color:'var(--text-light)'}}>Noch keine Geleistete Stunden</td></tr>}
             </tbody>
           </table>
         </div>
