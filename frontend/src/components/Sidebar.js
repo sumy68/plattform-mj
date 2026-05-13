@@ -18,6 +18,11 @@ export default function Sidebar() {
     if (user.role === 'admin') {
       axios.get(`${API}/api/auth/pending`).then(res => setPendingCount(res.data.length)).catch(() => {});
       axios.get(`${API}/api/abwesenheiten/pending-urlaub`).then(res => setPendingCount(c => c + res.data.length)).catch(() => {});
+      axios.get(`${API}/api/abwesenheiten`).then(res => {
+        const heute = new Date().toISOString().split('T')[0];
+        const krankHeute = res.data.filter(a => a.typ === 'krank' && a.created_at?.split('T')[0] === heute).length;
+        setPendingCount(c => c + krankHeute);
+      }).catch(() => {});
     }
     axios.get(`${API}/api/but`).then(res => {
       const warnungen = res.data.filter(a => {

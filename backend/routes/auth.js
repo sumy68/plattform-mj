@@ -47,7 +47,7 @@ router.post('/register-request', async (req, res) => {
 router.get('/pending', auth, adminOnly, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id,name,email,role,created_at FROM users WHERE aktiv=false AND role!=\'admin\' ORDER BY created_at DESC'
+      'SELECT id,name,email,role,created_at FROM users WHERE aktiv=false AND role!=\'admin\' AND (manuell_deaktiviert IS NULL OR manuell_deaktiviert=false) ORDER BY created_at DESC'
     );
     res.json(result.rows);
   } catch (err) {
