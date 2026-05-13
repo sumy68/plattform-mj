@@ -111,7 +111,9 @@ export default function Stunden({ adminView }) {
                   <td>
                     {st.unterschrift_name
                       ? <span className="badge badge-unterschrift">✓ {st.unterschrift_name}</span>
-                      : <button className="btn btn-ghost btn-sm" onClick={()=>setUnterschriftModal(st)}>✍️</button>
+                      : st.but_status
+                        ? <button className="btn btn-ghost btn-sm" onClick={()=>setUnterschriftModal(st)}>✍️ Erforderlich</button>
+                        : <button className="btn btn-ghost btn-sm" onClick={()=>setUnterschriftModal(st)}>✍️</button>
                     }
                   </td>
                   <td>
