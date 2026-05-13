@@ -164,6 +164,79 @@ const initDB = async () => {
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS abgerechnet BOOLEAN DEFAULT false`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS kurzfristige_absage BOOLEAN DEFAULT false`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS lernfortschritt TEXT`);
+    // but_antraege neu aufbauen mit korrekten Spalten
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='but_antraege' AND column_name='gutschein_stunden'
+        ) THEN
+          DROP TABLE but_antraege CASCADE;
+        END IF;
+      END $$;
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS but_antraege (
+        id SERIAL PRIMARY KEY,
+        schueler_id INTEGER REFERENCES schueler(id) ON DELETE CASCADE,
+        gutscheine_gesamt INTEGER NOT NULL,
+        gutscheine_verbraucht INTEGER DEFAULT 0,
+        gueltig_von DATE NOT NULL,
+        gueltig_bis DATE NOT NULL,
+        antrag_pdf_name VARCHAR(255),
+        antrag_pdf_data TEXT,
+        notizen TEXT,
+        aktiv BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    // abwesenheiten neu aufbauen
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='abwesenheiten' AND column_name='notiz'
+        ) THEN
+          DROP TABLE abwesenheiten CASCADE;
+        END IF;
+      END $$;
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS abwesenheiten (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        typ VARCHAR(50) NOT NULL,
+        datum_von DATE NOT NULL,
+        datum_bis DATE NOT NULL,
+        notizen TEXT,
+        au_pdf_name VARCHAR(255),
+        au_pdf_data TEXT,
+        au_email_gesendet BOOLEAN DEFAULT false,
+        status VARCHAR(50) DEFAULT 'genehmigt',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    // dokumente neu aufbauen
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='dokumente' AND column_name='datei_data'
+        ) THEN
+          DROP TABLE dokumente CASCADE;
+        END IF;
+      END $$;
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS dokumente (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        typ VARCHAR(50),
+        name VARCHAR(255),
+        data TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
     console.log('✅ Datenbank initialisiert');
   } finally {
     client.release();
