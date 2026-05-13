@@ -18,7 +18,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const id = req.query.user_id && req.user.role === 'admin' ? req.query.user_id : req.user.id;
     const result = await pool.query(
-      'SELECT id, user_id, typ, datei_name, erstellt_am FROM dokumente WHERE user_id=$1 ORDER BY erstellt_am DESC',
+      'SELECT id, user_id, typ, name as datei_name, created_at as erstellt_am FROM dokumente WHERE user_id=$1 ORDER BY created_at DESC',
       [id]
     );
     res.json(result.rows);
@@ -36,7 +36,7 @@ router.post('/', auth, async (req, res) => {
 
     // Neues speichern
     const result = await pool.query(
-      'INSERT INTO dokumente (user_id, typ, datei_name, datei_data) VALUES ($1,$2,$3,$4) RETURNING id, typ, datei_name, erstellt_am',
+      'INSERT INTO dokumente (user_id, typ, name, data) VALUES ($1,$2,$3,$4) RETURNING id, typ, name as datei_name, created_at as erstellt_am',
       [req.user.id, typ, datei_name, datei_data]
     );
 
