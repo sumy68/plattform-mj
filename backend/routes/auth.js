@@ -119,6 +119,8 @@ router.patch('/users/:id', auth, adminOnly, async (req, res) => {
   try {
     if (req.body.stundensatz !== undefined) {
       await pool.query('UPDATE users SET stundensatz=$1 WHERE id=$2', [req.body.stundensatz, req.params.id]);
+    } else if (req.body.absage_stundensatz !== undefined) {
+      await pool.query('UPDATE users SET absage_stundensatz=$1 WHERE id=$2', [req.body.absage_stundensatz, req.params.id]);
     } else {
       if (req.body.aktiv === false) {
         await pool.query('UPDATE users SET aktiv=false, manuell_deaktiviert=true WHERE id=$1', [req.params.id]);

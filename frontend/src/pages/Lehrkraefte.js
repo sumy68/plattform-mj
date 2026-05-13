@@ -41,6 +41,15 @@ export default function Lehrkraefte() {
     load();
   };
 
+  const [editAbsage, setEditAbsage] = useState(null);
+  const [newAbsage, setNewAbsage] = useState('');
+
+  const saveAbsage = async (id) => {
+    await axios.patch(`${API}/api/auth/users/${id}`, { absage_stundensatz: parseFloat(newAbsage) });
+    setEditAbsage(null);
+    load();
+  };
+
   const openDetail = async (u) => {
     const [profilRes, dokRes] = await Promise.all([
       axios.get(`${API}/api/auth/users/${u.id}/profil`),
@@ -62,7 +71,7 @@ export default function Lehrkraefte() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Sprachen</th><th>Führerschein</th><th>Stundensatz</th><th>Status</th><th>Aktionen</th>
+              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Sprachen</th><th>Führerschein</th><th>Stundensatz</th><th>Absage-Satz</th><th>Status</th><th>Aktionen</th>
             </tr></thead>
             <tbody>
               {users.map(u => (
@@ -88,6 +97,22 @@ export default function Lehrkraefte() {
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
                         <span>{u.stundensatz} €/Std.</span>
                         <button className="btn btn-ghost btn-sm" onClick={()=>{setEditStundensatz(u.id); setNewStundensatz(u.stundensatz);}}>✏️</button>
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    {editAbsage === u.id ? (
+                      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                        <input type="number" step="0.01" value={newAbsage}
+                          onChange={e=>setNewAbsage(e.target.value)}
+                          style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
+                        <button className="btn btn-success btn-sm" onClick={()=>saveAbsage(u.id)}>✓</button>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>setEditAbsage(null)}>✕</button>
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span>{u.absage_stundensatz || 0} €/Std.</span>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>{setEditAbsage(u.id);setNewAbsage(u.absage_stundensatz||0);}}>✏️</button>
                       </div>
                     )}
                   </td>
