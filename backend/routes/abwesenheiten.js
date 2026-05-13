@@ -35,12 +35,15 @@ const transporter = nodemailer.createTransport({
 // Alle Abwesenheiten
 router.get('/', auth, async (req, res) => {
   try {
-    let query, params = [];
-    if (req.user.role === 'admin') {
-      query = `SELECT a.*, u.name as user_name, u.email as user_email, u.role as user_role 
+    // Alle sehen alle Abwesenheiten (für Kalender) - AU-PDF nur eigene
+    let query = `SELECT a.id, a.user_id, a.typ, a.datum_von, a.datum_bis, a.notizen,
+               a.au_email_gesendet, a.status, a.created_at, a.admin_notiz, a.au_pdf_name,
+               ${req.user.role === 'admin' ? 'a.au_pdf_data,' : ''}
+               u.name as user_name, u.email as user_email, u.role as user_role
                FROM abwesenheiten a JOIN users u ON a.user_id=u.id 
                ORDER BY a.created_at DESC`;
-    } else {
+    let params = [];
+    if (false) {
       query = `SELECT a.*, u.name as user_name, u.email as user_email, u.role as user_role 
                FROM abwesenheiten a JOIN users u ON a.user_id=u.id 
                WHERE a.user_id=$1 ORDER BY a.created_at DESC`;
