@@ -93,6 +93,73 @@ const initDB = async () => {
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS diagnose TEXT[]`);
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS notizen TEXT`);
 
+    // but_antraege Tabelle
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS but_antraege (
+        id SERIAL PRIMARY KEY,
+        schueler_id INTEGER REFERENCES schueler(id) ON DELETE CASCADE,
+        gueltig_von DATE NOT NULL,
+        gueltig_bis DATE NOT NULL,
+        gutscheine_gesamt INTEGER NOT NULL,
+        gutscheine_verbraucht INTEGER DEFAULT 0,
+        notizen TEXT,
+        pdf_name VARCHAR(255),
+        pdf_data TEXT,
+        aktiv BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    // notifications Tabelle
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        titel VARCHAR(255),
+        nachricht TEXT,
+        typ VARCHAR(50) DEFAULT 'info',
+        gelesen BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    // abwesenheiten Tabelle
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS abwesenheiten (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        typ VARCHAR(50) NOT NULL,
+        datum_von DATE NOT NULL,
+        datum_bis DATE NOT NULL,
+        notizen TEXT,
+        au_pdf_name VARCHAR(255),
+        au_pdf_data TEXT,
+        au_email_gesendet BOOLEAN DEFAULT false,
+        status VARCHAR(50) DEFAULT 'genehmigt',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    // dokumente Tabelle
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS dokumente (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        typ VARCHAR(50),
+        name VARCHAR(255),
+        data TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    // rechnungen Tabelle
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS rechnungen (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        rechnungsnummer VARCHAR(50),
+        stunden_ids INTEGER[],
+        betrag DECIMAL(10,2),
+        pdf_data TEXT,
+        erstellt_am TIMESTAMP DEFAULT NOW()
+      )
+    `);
     console.log('✅ Datenbank initialisiert');
   } finally {
     client.release();
