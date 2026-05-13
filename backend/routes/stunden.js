@@ -216,3 +216,14 @@ router.get('/:id/pdf', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+// Stunde löschen
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM stunden WHERE id=$1 AND (lehrkraft_id=$2 OR $3=true)', 
+      [req.params.id, req.user.id, req.user.role === 'admin']);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

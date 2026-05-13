@@ -73,6 +73,16 @@ export default function Stunden({ adminView }) {
     window.open(`${API}/api/stunden/${id}/pdf?token=${token}`, '_blank');
   };
 
+  const deleteStunde = async (id) => {
+    if (!window.confirm('Stunde wirklich löschen?')) return;
+    try {
+      await axios.delete(`${API}/api/stunden/${id}`);
+      load();
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
   return (
     <div>
       {butWarnung && (
@@ -117,7 +127,10 @@ export default function Stunden({ adminView }) {
                     }
                   </td>
                   <td>
-                    <button className="btn btn-ghost btn-sm" onClick={()=>downloadPDF(st.id)}>📄 PDF</button>
+                    <div style={{display:'flex',gap:6}}>
+                      <button className="btn btn-ghost btn-sm" onClick={()=>downloadPDF(st.id)}>📄 PDF</button>
+                      <button className="btn btn-danger btn-sm" onClick={()=>deleteStunde(st.id)}>🗑️</button>
+                    </div>
                   </td>
                 </tr>
               ))}
