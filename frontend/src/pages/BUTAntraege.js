@@ -114,7 +114,7 @@ export default function ButAntraege() {
         <div className="stat-card"><div className="stat-number">{antraege.length}</div><div className="stat-label">Anträge gesamt</div></div>
         <div className="stat-card"><div className="stat-number" style={{ color: 'var(--success)' }}>{antraege.filter(a => a.gutscheine_offen > 0).length}</div><div className="stat-label">Aktive Anträge</div></div>
         <div className="stat-card"><div className="stat-number" style={{ color: 'var(--warning)' }}>{warnungen.length}</div><div className="stat-label">Warnungen</div></div>
-        <div className="stat-card"><div className="stat-number">{antraege.reduce((sum, a) => sum + (a.gutscheine_offen || 0), 0)}</div><div className="stat-label">Stunden offen</div></div>
+
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
@@ -127,7 +127,7 @@ export default function ButAntraege() {
           <table>
             <thead>
               <tr>
-                <th>Schüler</th><th>Gültig</th><th>Stunden gesamt</th><th>Verbraucht</th><th>Offen</th><th>Status</th><th>PDF</th>
+                <th>Schüler</th><th>Gültig</th><th>Stunden gesamt</th><th>Verbraucht</th><th>Status</th><th>PDF</th>
                 {isAdmin && <th>Aktionen</th>}
               </tr>
             </thead>
@@ -140,7 +140,7 @@ export default function ButAntraege() {
                     <td>{new Date(a.gueltig_von).toLocaleDateString('de-DE')}<br/><small style={{ color: 'var(--text-light)' }}>bis {new Date(a.gueltig_bis).toLocaleDateString('de-DE')}</small></td>
                     <td style={{ textAlign: 'center', fontWeight: 700 }}>{a.gutscheine_gesamt}</td>
                     <td style={{ textAlign: 'center' }}>{a.gutscheine_verbraucht}</td>
-                    <td style={{ textAlign: 'center' }}><span style={{ fontWeight: 700, fontSize: 18, color: a.warnung ? '#e65100' : 'var(--success)' }}>{a.gutscheine_offen}</span></td>
+
                     <td><span className="badge" style={{ background: style.bg, color: style.color }}>{getStatusText(a)}</span></td>
                     <td>
                       {a.pdf_name
