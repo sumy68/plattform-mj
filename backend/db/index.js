@@ -86,6 +86,9 @@ const initDB = async () => {
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS selbststaendigkeit VARCHAR(100)`);
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS tipps_tricks TEXT`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS fuehrerschein BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_von TEXT`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_nach TEXT`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_km DECIMAL(10,2)`);
 
     // Migrations schueler
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS geburtsdatum DATE`);

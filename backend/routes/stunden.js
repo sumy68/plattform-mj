@@ -41,7 +41,7 @@ router.get('/', auth, async (req, res) => {
 
 // Stunde eintragen
 router.post('/', auth, async (req, res) => {
-  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt } = req.body;
+  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km } = req.body;
   try {
     // Dauer berechnen
     const [sh, sm] = startzeit.split(':').map(Number);
@@ -129,18 +129,12 @@ router.get('/:id/pdf', auth, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=stundennachweis-${st.id}.pdf`);
     doc.pipe(res);
 
-    // Logo
-    const logoPath = path.join(__dirname, '../logo_mj.png');
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 50, 30, { width: 80 });
-    }
-
-    // Header
+    // Header ohne Logo
     doc.fontSize(20).fillColor('#9b7fd4').font('Helvetica-Bold');
-    doc.text('MJ Lernförderung', 150, 40);
+    doc.text('MJ Lernförderung', 50, 40);
     doc.fontSize(10).fillColor('#888').font('Helvetica');
-    doc.text('Georgstraße 38 · 30159 Hannover', 150, 65);
-    doc.text('info@mj-lernfoerderung.de · www.mj-lernfoerderung.de', 150, 78);
+    doc.text('Georgstraße 38 · 30159 Hannover', 50, 65);
+    doc.text('info@mj-lernfoerderung.de · www.mj-lernfoerderung.de', 50, 78);
 
     // Linie
     doc.moveTo(50, 115).lineTo(545, 115).strokeColor('#9b7fd4').stroke();
@@ -177,6 +171,10 @@ router.get('/:id/pdf', auth, async (req, res) => {
       ['Uhrzeit', `${st.startzeit} – ${st.endzeit} Uhr (${st.dauer_minuten || '–'} Min.)`],
       ['Fach', st.fach || '–'],
       ['Ort', st.ort === 'online' ? 'Online' : 'Vor Ort'],
+      ...(st.ort !== 'online' && st.fahrt_km ? [
+        ['Fahrtweg', `${st.fahrt_km} km (Hinfahrt)`],
+        ['Fahrtkosten', `${(st.fahrt_km * 0.38).toFixed(2)} € (0,38 €/km)`],
+      ] : []),
     ];
 
     let y = 325;

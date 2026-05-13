@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import MonatsPicker from '../components/MonatsPicker';
 
 const API = 'https://plattform-mj.onrender.com';
-const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'' };
+const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'', fahrt_von:'', fahrt_nach:'', fahrt_km:null };
+const ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjMxNTJiYzU1YmQwMDQwNDE4ZWZlYzljNzZiMzQyYTIzIiwiaCI6Im11cm11cjY0In0=';
 
 export default function Stunden({ adminView }) {
   const { user } = useAuth();
@@ -17,7 +18,34 @@ export default function Stunden({ adminView }) {
   const [monat, setMonat] = useState(new Date().toISOString().slice(0,7));
   const [unterschriftName, setUnterschriftName] = useState('');
   const [butWarnung, setButWarnung] = useState(null);
+  const [kmLaden, setKmLaden] = useState(false);
   const sigRef = useRef(null);
+
+  const berechneKm = async () => {
+    if (!form.fahrt_von || !form.fahrt_nach) return;
+    setKmLaden(true);
+    try {
+      const geocode = async (addr) => {
+        const r = await fetch(`https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${encodeURIComponent(addr)}&size=1`);
+        const d = await r.json();
+        return d.features[0]?.geometry?.coordinates;
+      };
+      const [from, to] = await Promise.all([geocode(form.fahrt_von), geocode(form.fahrt_nach)]);
+      if (!from || !to) return alert('Adresse nicht gefunden');
+      const r = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', {
+        method: 'POST',
+        headers: { 'Authorization': ORS_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coordinates: [from, to] })
+      });
+      const d = await r.json();
+      const km = (d.routes[0].summary.distance / 1000).toFixed(1);
+      setForm(f => ({ ...f, fahrt_km: parseFloat(km) }));
+    } catch(e) {
+      alert('Fehler bei Berechnung: ' + e.message);
+    } finally {
+      setKmLaden(false);
+    }
+  };
 
   // Dauer automatisch berechnen
   const getDauer = () => {
@@ -177,6 +205,31 @@ export default function Stunden({ adminView }) {
                   <option value="online">Online</option>
                 </select>
               </div>
+              {form.ort === 'vor_ort' && (
+                <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:16}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'var(--purple)',marginBottom:12}}>🚗 Fahrtkosten (0,38 €/km)</div>
+                  <div className="form-row">
+                    <div className="form-group" style={{marginBottom:0}}>
+                      <label>Von (deine Adresse)</label>
+                      <input value={form.fahrt_von} onChange={e=>setForm({...form,fahrt_von:e.target.value})} placeholder="Musterstraße 1, 30159 Hannover"/>
+                    </div>
+                    <div className="form-group" style={{marginBottom:0}}>
+                      <label>Nach (Schüler Adresse)</label>
+                      <input value={form.fahrt_nach} onChange={e=>setForm({...form,fahrt_nach:e.target.value})} placeholder="Schülerstraße 2, 30159 Hannover"/>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:12,marginTop:12}}>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={berechneKm} disabled={kmLaden}>
+                      {kmLaden ? 'Berechne...' : '📍 Kilometer berechnen'}
+                    </button>
+                    {form.fahrt_km && (
+                      <span style={{fontWeight:700,color:'var(--purple)'}}>
+                        {form.fahrt_km} km = {(form.fahrt_km * 0.38).toFixed(2)} €
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="form-group">
                 <label>Lernfortschritt</label>
                 <textarea rows={3} value={form.lernfortschritt} onChange={e=>setForm({...form,lernfortschritt:e.target.value})} placeholder="Was wurde heute erarbeitet? Welche Fortschritte hat der Schüler gemacht?"/>
