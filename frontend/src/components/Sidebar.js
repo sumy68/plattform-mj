@@ -21,11 +21,7 @@ export default function Sidebar() {
         axios.get(`${API}/api/abwesenheiten/pending-urlaub`).catch(() => ({ data: [] }))
       ]).then(([p, u]) => setPendingCount(p.data.length + u.data.length));
 
-      axios.get(`${API}/api/abwesenheiten`).then(res => {
-        const heute = new Date().toISOString().split('T')[0];
-        const krankHeute = res.data.filter(a => a.typ === 'krank' && a.created_at?.split('T')[0] === heute).length;
-        setPendingCount(c => c + krankHeute);
-      }).catch(() => {});
+
     }
     axios.get(`${API}/api/but`).then(res => {
       const warnungen = res.data.filter(a => {
