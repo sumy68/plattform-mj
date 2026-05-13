@@ -19,6 +19,19 @@ app.use('/api/but', require('./routes/but'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
 
+app.get('/api/debug/schema', async (req, res) => {
+  const { pool } = require('./db');
+  const tables = ['users','schueler','stunden','but_antraege','abwesenheiten','notifications','dokumente','rechnungen','lehrkraft_schueler','abrechnungen'];
+  const result = {};
+  for (const t of tables) {
+    try {
+      const r = await pool.query(`SELECT column_name FROM information_schema.columns WHERE table_name=$1 ORDER BY ordinal_position`, [t]);
+      result[t] = r.rows.map(c => c.column_name);
+    } catch(e) { result[t] = 'ERROR: '+e.message; }
+  }
+  res.json(result);
+});
+
 const PORT = process.env.PORT || 5000;
 
 initDB().then(() => {
