@@ -18,6 +18,7 @@ export default function Stunden({ adminView }) {
   const [monat, setMonat] = useState(new Date().toISOString().slice(0,7));
   const [unterschriftName, setUnterschriftName] = useState('');
   const [butWarnung, setButWarnung] = useState(null);
+  const [absagePopup, setAbsagePopup] = useState(false);
   const [kmLaden, setKmLaden] = useState(false);
   const sigRef = useRef(null);
 
@@ -144,7 +145,7 @@ export default function Stunden({ adminView }) {
                   <td>{st.startzeit} – {st.endzeit}</td>
                   <td style={{fontSize:12,color:'var(--text-light)'}}>{st.dauer_minuten ? `${st.dauer_minuten} Min.` : '–'}</td>
                   <td>{st.fach}</td>
-                  <td>{st.ort === 'online' ? '💻 Online' : '🏠 Vor Ort'}</td>
+                  <td>{st.kurzfristige_absage ? <span className="badge" style={{background:'#fdecea',color:'#c62828'}}>❌ Absage</span> : st.ort === 'online' ? '💻 Online' : '🏠 Vor Ort'}</td>
                   <td>{st.but_status ? <span className="badge badge-but">BuT</span> : '–'}</td>
                   <td>
                     {st.unterschrift_name
@@ -184,6 +185,11 @@ export default function Stunden({ adminView }) {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div style={{marginBottom:12}}>
+                <button type="button" className="btn btn-danger" style={{width:'100%'}} onClick={()=>setAbsagePopup(true)}>
+                  ❌ Kurzfristige Absage melden
+                </button>
               </div>
               <div className="form-row">
                 <div className="form-group"><label>Datum *</label><input type="date" required value={form.datum} onChange={e=>setForm({...form,datum:e.target.value})}/></div>
@@ -234,11 +240,40 @@ export default function Stunden({ adminView }) {
                 <label>Lernfortschritt</label>
                 <textarea rows={3} value={form.lernfortschritt} onChange={e=>setForm({...form,lernfortschritt:e.target.value})} placeholder="Was wurde heute erarbeitet? Welche Fortschritte hat der Schüler gemacht?"/>
               </div>
+              <div className="form-group">
+                <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
+                  <input type="checkbox" checked={form.kurzfristige_absage||false} onChange={e=>setForm({...form,kurzfristige_absage:e.target.checked})}/>
+                  ⚠️ Als kurzfristige Absage markieren
+                </label>
+              </div>
               <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
                 <button type="button" className="btn btn-ghost" onClick={()=>setModal(false)}>Abbrechen</button>
                 <button type="submit" className="btn btn-primary">Speichern</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Kurzfristige Absage Popup */}
+      {absagePopup && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setAbsagePopup(false)}>
+          <div className="modal" style={{maxWidth:400,textAlign:'center'}}>
+            <div style={{fontSize:40,marginBottom:16}}>⚠️</div>
+            <button className="btn btn-ghost btn-sm" style={{position:'absolute',top:16,right:16}} onClick={()=>setAbsagePopup(false)}>✕</button>
+            <p style={{fontSize:14,color:'var(--text-dark)',lineHeight:1.7,marginBottom:20}}>
+              Bitte denke daran, dass die kurzfristige Absage nur vergütet werden kann, wenn du die Teamleiterin des Schülers informiert hast.
+            </p>
+            <p style={{fontWeight:700,marginBottom:16}}>
+              Teamleiterin: Souad · 0152 5635 2575
+            </p>
+            <a href="https://wa.me/4915256352575" target="_blank" rel="noreferrer" className="btn btn-success" style={{display:'inline-flex',alignItems:'center',gap:8,marginBottom:16}}>
+              💬 Chat on WhatsApp
+            </a>
+            <br/>
+            <button className="btn btn-primary" style={{width:'100%'}} onClick={()=>{setForm({...form,kurzfristige_absage:true});setAbsagePopup(false);}}>
+              Verstanden
+            </button>
           </div>
         </div>
       )}

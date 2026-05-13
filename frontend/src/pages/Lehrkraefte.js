@@ -125,6 +125,7 @@ export default function Lehrkraefte() {
                 ['Adresse', detailUser.adresse ? `${detailUser.adresse}, ${detailUser.plz} ${detailUser.ort}` : '–'],
                 ['IBAN', detailUser.iban || '–'],
                 ['Steuernummer', detailUser.steuernummer || '–'],
+                ['Absage-Stundensatz', `${detailUser.absage_stundensatz || 0} €`],
                 ['Führerschein', detailUser.fuehrerschein ? '🚗 Ja' : '❌ Nein'],
               ].map(([label, value]) => (
                 <div key={label} style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
