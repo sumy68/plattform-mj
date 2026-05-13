@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import MonatsPicker from '../components/MonatsPicker';
 
 const API = 'https://plattform-mj.onrender.com';
-const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'', fahrt_von:'', fahrt_nach:'', fahrt_km:null };
+const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'', fahrt_von:'', fahrt_nach:'', fahrt_km:null, stundentyp:'lehrstunde', zusatz_typ:'', zusatz_beschreibung:'' };
 const ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjMxNTJiYzU1YmQwMDQwNDE4ZWZlYzljNzZiMzQyYTIzIiwiaCI6Im11cm11cjY0In0=';
 
 export default function Stunden({ adminView }) {
@@ -155,7 +155,10 @@ export default function Stunden({ adminView }) {
                   {adminView && <td>{st.lehrkraft_name}</td>}
                   <td>{st.startzeit} – {st.endzeit}</td>
                   <td style={{fontSize:12,color:'var(--text-light)'}}>{st.dauer_minuten ? `${st.dauer_minuten} Min.` : '–'}</td>
-                  <td>{st.fach}</td>
+                  <td>
+                    {st.fach}
+                    {st.stundentyp === 'zusatzstunde' && <span className="badge" style={{marginLeft:6,background:'#e3f2fd',color:'#1565c0',fontSize:10}}>⭐ Zusatz</span>}
+                  </td>
                   <td>{st.kurzfristige_absage ? <span className="badge" style={{background:'#fdecea',color:'#c62828'}}>❌ Absage</span> : st.ort === 'online' ? '💻 Online' : '🏠 Vor Ort'}</td>
                   <td>{st.but_status ? <span className="badge badge-but">BuT</span> : '–'}</td>
                   <td>
@@ -223,6 +226,29 @@ export default function Stunden({ adminView }) {
                   <option value="online">Online</option>
                 </select>
               </div>
+              <div className="form-group">
+                <label>Stundentyp</label>
+                <select value={form.stundentyp} onChange={e=>setForm({...form,stundentyp:e.target.value,zusatz_typ:'',zusatz_beschreibung:''})}>
+                  <option value="lehrstunde">📚 Lehrstunde</option>
+                  <option value="zusatzstunde">⭐ Zusatzstunde</option>
+                </select>
+              </div>
+              {form.stundentyp === 'zusatzstunde' && (
+                <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:8}}>
+                  <div className="form-group" style={{marginBottom:12}}>
+                    <label>Art der Zusatzstunde</label>
+                    <select value={form.zusatz_typ} onChange={e=>setForm({...form,zusatz_typ:e.target.value})}>
+                      <option value="">Bitte wählen</option>
+                      <option value="ausflug">🚌 Sonstiger Ausflug mit Lernförderzweck</option>
+                      <option value="sonstiges">📋 Sonstiges</option>
+                    </select>
+                  </div>
+                  <div className="form-group" style={{marginBottom:0}}>
+                    <label>Beschreibung *</label>
+                    <input value={form.zusatz_beschreibung} onChange={e=>setForm({...form,zusatz_beschreibung:e.target.value})} placeholder="z.B. Museumsbesuch Stadtmuseum Hannover"/>
+                  </div>
+                </div>
+              )}
               {form.ort === 'vor_ort' && (
                 <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:16}}>
                   <div style={{fontSize:13,fontWeight:700,color:'var(--purple)',marginBottom:12}}>🚗 Fahrtkosten (0,38 €/km)</div>

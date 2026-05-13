@@ -41,7 +41,7 @@ router.get('/', auth, async (req, res) => {
 
 // Stunde eintragen
 router.post('/', auth, async (req, res) => {
-  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km } = req.body;
+  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung } = req.body;
   try {
     // Dauer berechnen
     const [sh, sm] = startzeit.split(':').map(Number);
