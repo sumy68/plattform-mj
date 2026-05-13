@@ -33,9 +33,12 @@ router.post('/register-request', async (req, res) => {
     const exists = await pool.query('SELECT id FROM users WHERE email=$1', [email]);
     if (exists.rows.length > 0) return res.status(400).json({ error: 'E-Mail bereits registriert' });
     const hash = await bcrypt.hash(password, 10);
+    const nameParts = name.trim().split(' ');
+    const vorname = nameParts[0] || '';
+    const nachname = nameParts.slice(1).join(' ') || '';
     await pool.query(
-      'INSERT INTO users (name,email,password,role,aktiv) VALUES ($1,$2,$3,$4,false)',
-      [name, email, hash, role]
+      'INSERT INTO users (name,email,password,role,aktiv,vorname,nachname) VALUES ($1,$2,$3,$4,false,$5,$6)',
+      [name, email, hash, role, vorname, nachname]
     );
     res.json({ success: true });
   } catch (err) {
