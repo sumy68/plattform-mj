@@ -20,10 +20,14 @@ export default function Lehrkraefte() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post(`${API}/api/auth/register`, form);
-    setModal(false);
-    setForm(emptyForm);
-    load();
+    try {
+      await axios.post(`${API}/api/auth/register`, form);
+      setModal(false);
+      setForm(emptyForm);
+      load();
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
+    }
   };
 
   const toggleAktiv = async (u) => {

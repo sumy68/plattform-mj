@@ -178,7 +178,7 @@ export default function ButAntraege() {
                     <option value="">Bitte wählen...</option>
                     {schueler.map(s => <option key={s.id} value={s.id}>{s.vorname} {s.nachname} (Kl. {s.klasse})</option>)}
                   </select>
-                  <small style={{ color: 'var(--text-light)', fontSize: 12 }}>Nur Schüler mit aktivem BuT-Status werden angezeigt</small>
+                  <small style={{ color: 'var(--text-light)', fontSize: 12 }}>Alle aktiven Schüler werden angezeigt</small>
                 </div>
               )}
               <div className="form-row">

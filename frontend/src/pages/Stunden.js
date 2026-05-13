@@ -41,14 +41,18 @@ export default function Stunden({ adminView }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await axios.post(`${API}/api/stunden`, form);
-    setModal(false);
-    setForm(emptyForm);
-    if (res.data.but_warnung) {
-      setButWarnung(`⚠️ Achtung: Nur noch ${res.data.but_verbleibend} BuT-Gutschein übrig für diesen Schüler!`);
-      setTimeout(() => setButWarnung(null), 8000);
+    try {
+      const res = await axios.post(`${API}/api/stunden`, form);
+      setModal(false);
+      setForm(emptyForm);
+      if (res.data.but_warnung) {
+        setButWarnung(`⚠️ Achtung: Nur noch ${res.data.but_verbleibend} BuT-Gutschein übrig für diesen Schüler!`);
+        setTimeout(() => setButWarnung(null), 8000);
+      }
+      load();
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
     }
-    load();
   };
 
   const saveUnterschrift = async () => {
