@@ -69,10 +69,16 @@ router.get('/schueler/:schueler_id', auth, async (req, res) => {
 router.post('/', auth, adminOnly, async (req, res) => {
   const { schueler_id, gutscheine_gesamt, gueltig_von, gueltig_bis, notizen, antrag_pdf_name, antrag_pdf_data } = req.body;
   try {
+    // Bereits eingetragene Stunden im Zeitraum rückwirkend zählen
+    const bereitsRes = await pool.query(
+      `SELECT COUNT(*) FROM stunden WHERE schueler_id=$1 AND datum BETWEEN $2 AND $3`,
+      [schueler_id, gueltig_von, gueltig_bis]
+    );
+    const bereits_verbraucht = parseInt(bereitsRes.rows[0].count) || 0;
     const result = await pool.query(
-      `INSERT INTO but_antraege (schueler_id, gutscheine_gesamt, gueltig_von, gueltig_bis, notizen, antrag_pdf_name, antrag_pdf_data)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [schueler_id, gutscheine_gesamt, gueltig_von, gueltig_bis, notizen, antrag_pdf_name || null, antrag_pdf_data || null]
+      `INSERT INTO but_antraege (schueler_id, gutscheine_gesamt, gutscheine_verbraucht, gueltig_von, gueltig_bis, notizen, antrag_pdf_name, antrag_pdf_data)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [schueler_id, gutscheine_gesamt, bereits_verbraucht, gueltig_von, gueltig_bis, notizen, antrag_pdf_name || null, antrag_pdf_data || null]
     );
     res.json(result.rows[0]);
   } catch (err) {
