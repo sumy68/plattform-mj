@@ -104,7 +104,7 @@ export default function ButAntraege() {
           <div style={{ fontWeight: 700, color: '#e65100', marginBottom: 8 }}>⚠️ Achtung — fast aufgebraucht:</div>
           {warnungen.map(a => (
             <div key={a.id} style={{ fontSize: 14, color: '#e65100' }}>
-              • {a.schueler_name} — noch {a.gutscheine_offen} Gutschein(e) übrig (bis {new Date(a.gueltig_bis).toLocaleDateString('de-DE')})
+              • {a.schueler_name} — noch {a.gutscheine_offen} Stunden übrig (bis {new Date(a.gueltig_bis).toLocaleDateString('de-DE')})
             </div>
           ))}
         </div>
@@ -114,7 +114,7 @@ export default function ButAntraege() {
         <div className="stat-card"><div className="stat-number">{antraege.length}</div><div className="stat-label">Anträge gesamt</div></div>
         <div className="stat-card"><div className="stat-number" style={{ color: 'var(--success)' }}>{antraege.filter(a => a.gutscheine_offen > 0).length}</div><div className="stat-label">Aktive Anträge</div></div>
         <div className="stat-card"><div className="stat-number" style={{ color: 'var(--warning)' }}>{warnungen.length}</div><div className="stat-label">Warnungen</div></div>
-        <div className="stat-card"><div className="stat-number">{antraege.reduce((sum, a) => sum + (a.gutscheine_offen || 0), 0)}</div><div className="stat-label">Gutscheine offen</div></div>
+        <div className="stat-card"><div className="stat-number">{antraege.reduce((sum, a) => sum + (a.gutscheine_offen || 0), 0)}</div><div className="stat-label">Stunden offen</div></div>
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
@@ -127,7 +127,7 @@ export default function ButAntraege() {
           <table>
             <thead>
               <tr>
-                <th>Schüler</th><th>Gültig</th><th>Gutscheine</th><th>Verbraucht</th><th>Offen</th><th>Status</th><th>PDF</th>
+                <th>Schüler</th><th>Gültig</th><th>Stunden gesamt</th><th>Verbraucht</th><th>Offen</th><th>Status</th><th>PDF</th>
                 {isAdmin && <th>Aktionen</th>}
               </tr>
             </thead>
@@ -186,8 +186,8 @@ export default function ButAntraege() {
                 <div className="form-group"><label>Gültig bis *</label><input type="date" required value={form.gueltig_bis} onChange={e => setForm({ ...form, gueltig_bis: e.target.value })} /></div>
               </div>
               <div className="form-group">
-                <label>Anzahl Gutscheine *</label>
-                <input type="number" required min="1" max="100" value={form.gutscheine_gesamt} onChange={e => setForm({ ...form, gutscheine_gesamt: e.target.value })} placeholder="z.B. 10" />
+                <label>Anzahl Stunden *</label>
+                <input type="number" required min="1" max="100" value={form.gutscheine_gesamt} onChange={e => setForm({ ...form, gutscheine_gesamt: e.target.value })} placeholder="z.B. 45" />
               </div>
               <div className="form-group">
                 <label>Notizen</label>
@@ -200,7 +200,7 @@ export default function ButAntraege() {
                 </div>
               )}
               <div style={{ background: 'var(--purple-pale)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: 'var(--text-mid)' }}>
-                ⚠️ Eine Warnung erscheint automatisch wenn nur noch 1 Gutschein übrig ist.
+                ⚠️ Eine Warnung erscheint automatisch wenn nur noch 12 Stunden übrig sind.
               </div>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(false)}>Abbrechen</button>

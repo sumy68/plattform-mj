@@ -160,7 +160,7 @@ router.post('/verbrauchen/:schueler_id', auth, async (req, res) => {
     res.json({ 
       success: true, 
       verbleibend,
-      warnung: verbleibend <= 1
+      warnung: verbleibend <= 12
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
