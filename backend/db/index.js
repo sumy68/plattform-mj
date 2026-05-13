@@ -160,6 +160,10 @@ const initDB = async () => {
         erstellt_am TIMESTAMP DEFAULT NOW()
       )
     `);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS aktiv BOOLEAN DEFAULT true`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS abgerechnet BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS kurzfristige_absage BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS lernfortschritt TEXT`);
     console.log('✅ Datenbank initialisiert');
   } finally {
     client.release();
