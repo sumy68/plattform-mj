@@ -77,8 +77,8 @@ router.post('/', auth, async (req, res) => {
       [req.user.id, typ, datum_von, datum_bis, notizen, au_pdf_name || null, au_pdf_data || null, status]
     );
 
-    // Bei Krank: E-Mail mit AU an Admin
-    if (typ === 'krank' && au_pdf_data) {
+    // Bei Krank: E-Mail an Admin (auch ohne AU)
+    if (typ === 'krank') {
       const userRes = await pool.query('SELECT name, role FROM users WHERE id=$1', [req.user.id]);
       const user = userRes.rows[0];
       const base64 = au_pdf_data.split(',')[1] || au_pdf_data;
