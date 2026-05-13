@@ -168,18 +168,21 @@ router.post('/rechnung', auth, async (req, res) => {
       doc.fontSize(12).font('Helvetica-Bold').fillColor('#9b7fd4');
       doc.text(`Gesamtbetrag: ${parseFloat(betrag).toFixed(2)} €`, 50, y + 15, { align: 'right' });
       
-      // Hinweis Kleinunternehmer
-      doc.fontSize(9).fillColor('#888').font('Helvetica');
-      doc.text('Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.', 50, y + 45);
-      
       // IBAN
       doc.fontSize(10).fillColor('#333').font('Helvetica-Bold');
-      doc.text('Bankverbindung:', 50, y + 70);
-      doc.font('Helvetica').text(`IBAN: ${user.iban}`, 50, y + 85);
-      
+      doc.text('Bankverbindung:', 50, y + 20);
+      doc.font('Helvetica').text(`IBAN: ${user.iban}`, 50, y + 35);
+
+      // Rechtlicher Hinweis
+      doc.fontSize(8).fillColor('#555').font('Helvetica');
+      doc.text('Sofern die leistende Lehrkraft Kleinunternehmer im Sinne von § 19 UStG ist, wird die Umsatzsteuer nicht erhoben. Soweit die Kleinunternehmerregelung auf die Lehrkraft keine Anwendung findet, ist dessen Leistung gem. § 4 Nr. 21b), bb) i. V. m. Nr. 21a), bb) UStG umsatzsteuerfrei.', 50, y + 60, { width: 495 });
+      doc.text('Der Auftragnehmer ist für die Abführung der ihn betreffenden Steuern und Abgaben, gleich aus welchem Rechtsgrund, zuständig.', 50, y + 90, { width: 495 });
+      doc.fontSize(8).fillColor('#333').font('Helvetica-Bold');
+      doc.text('Maschinell erstellter Beleg. Wenn nicht geändert, dann ist er ohne Unterschrift gültig.', 50, y + 115, { width: 495 });
+
       // Footer
       doc.moveTo(50, 750).lineTo(545, 750).strokeColor('#9b7fd4').stroke();
-      doc.fontSize(8).fillColor('#888');
+      doc.fontSize(8).fillColor('#888').font('Helvetica');
       doc.text('MJ Lernförderung · Souad Meryem Jaber · Georgstraße 38 · 30159 Hannover', 50, 760, { align: 'center' });
       
       doc.end();
