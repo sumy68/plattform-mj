@@ -40,13 +40,15 @@ router.post('/', auth, adminOnly, async (req, res) => {
 
 // Schüler bearbeiten
 router.put('/:id', auth, adminOnly, async (req, res) => {
-  const { vorname, nachname, geburtsdatum, schule, klasse, faecher, sprachen, eltern_name, eltern_tel, eltern_email, adresse, but_status, but_zeitraum_von, but_zeitraum_bis, diagnose, notizen } = req.body;
+  const { vorname, nachname, geburtsdatum, schule, klasse, faecher, sprachen, eltern_name, eltern_tel, eltern_email, adresse, but_status, but_zeitraum_von, but_zeitraum_bis, diagnose, notizen, deutschniveau, lieblingsfach, schwachstes_fach, konzentration, eigenmotivation, selbststaendigkeit, tipps_tricks } = req.body;
   try {
     const result = await pool.query(
       `UPDATE schueler SET vorname=$1,nachname=$2,geburtsdatum=$3,schule=$4,klasse=$5,faecher=$6,sprachen=$7,
        eltern_name=$8,eltern_tel=$9,eltern_email=$10,adresse=$11,but_status=$12,
-       but_zeitraum_von=$13,but_zeitraum_bis=$14,diagnose=$15,notizen=$16 WHERE id=$17 RETURNING *`,
-      [vorname,nachname,geburtsdatum||null,schule,klasse,faecher,sprachen,eltern_name,eltern_tel,eltern_email,adresse,but_status,but_zeitraum_von||null,but_zeitraum_bis||null,diagnose,notizen,req.params.id]
+       but_zeitraum_von=$13,but_zeitraum_bis=$14,diagnose=$15,notizen=$16,
+       deutschniveau=$17,lieblingsfach=$18,schwachstes_fach=$19,konzentration=$20,
+       eigenmotivation=$21,selbststaendigkeit=$22,tipps_tricks=$23 WHERE id=$24 RETURNING *`,
+      [vorname,nachname,geburtsdatum||null,schule,klasse,faecher,sprachen,eltern_name,eltern_tel,eltern_email,adresse,but_status,but_zeitraum_von||null,but_zeitraum_bis||null,diagnose,notizen,deutschniveau,lieblingsfach,schwachstes_fach,konzentration,eigenmotivation,selbststaendigkeit,tipps_tricks,req.params.id]
     );
     res.json(result.rows[0]);
   } catch (err) {
