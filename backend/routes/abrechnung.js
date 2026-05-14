@@ -354,3 +354,13 @@ router.get('/auszahlungen', auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Auszahlung als erledigt markieren
+router.patch('/auszahlung/:id', auth, async (req, res) => {
+  try {
+    await pool.query('UPDATE auszahlungswuensche SET status=$1 WHERE id=$2', [req.body.status, req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

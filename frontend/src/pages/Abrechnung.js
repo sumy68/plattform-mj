@@ -156,7 +156,15 @@ export default function Abrechnung() {
                       <td style={{fontWeight:700,color:'var(--purple)'}}>{parseFloat(a.betrag).toFixed(2)} €</td>
                       <td style={{fontSize:13}}>{a.notizen || '–'}</td>
                       <td style={{fontSize:12,color:'var(--text-light)'}}>{new Date(a.created_at).toLocaleDateString('de-DE')}</td>
-                      <td><span className="badge" style={{background: a.status==='offen' ? '#fff3e0' : '#e8f5e9', color: a.status==='offen' ? '#e65100' : '#2e7d32'}}>{a.status==='offen' ? '⏳ Offen' : '✅ Erledigt'}</span></td>
+                      <td>
+                        {a.status === 'offen'
+                          ? <button className="btn btn-success btn-sm" onClick={async()=>{
+                              await axios.patch(`${API}/api/abrechnung/auszahlung/${a.id}`, {status:'erledigt'});
+                              loadAuszahlungen();
+                            }}>✅ Als erledigt markieren</button>
+                          : <span className="badge" style={{background:'#e8f5e9',color:'#2e7d32'}}>✅ Erledigt</span>
+                        }
+                      </td>
                     </tr>
                   ))}
                 </tbody>
