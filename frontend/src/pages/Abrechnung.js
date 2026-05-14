@@ -13,6 +13,7 @@ export default function Abrechnung() {
   const isHonorar = user?.role === 'honorarkraft';
   const [monat, setMonat] = useState(new Date().toISOString().slice(0,7));
   const [adminStats, setAdminStats] = useState(null);
+  const [auszahlungen, setAuszahlungen] = useState([]);
   const [guthaben, setGuthaben] = useState(null);
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -22,9 +23,16 @@ export default function Abrechnung() {
   const [auszahlungLoading, setAuszahlungLoading] = useState(false);
 
   useEffect(() => {
-    if (isAdmin) loadAdminStats();
+    if (isAdmin) { loadAdminStats(); loadAuszahlungen(); }
     else loadGuthaben();
   }, [monat]);
+
+  const loadAuszahlungen = async () => {
+    try {
+      const res = await axios.get(`${API}/api/abrechnung/auszahlungen`);
+      setAuszahlungen(res.data);
+    } catch(e) {}
+  };
 
   const loadAdminStats = async () => {
     const [stundenRes, usersRes] = await Promise.all([
@@ -134,6 +142,29 @@ export default function Abrechnung() {
           <div className="stat-card"><div className="stat-number" style={{color:'var(--warning)'}}>{adminStats.total_offen.toFixed(0)} €</div><div className="stat-label">Noch auszuzahlen</div></div>
           <div className="stat-card"><div className="stat-number">{adminStats.honorarkraefte.length}</div><div className="stat-label">Aktive Honorarkräfte</div></div>
         </div>
+        {auszahlungen.length > 0 && (
+          <div className="card" style={{marginBottom:20}}>
+            <div className="card-title">💸 Auszahlungswünsche Lehrkräfte</div>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Lehrkraft</th><th>Monat</th><th>Betrag</th><th>Notiz</th><th>Eingereicht</th><th>Status</th></tr></thead>
+                <tbody>
+                  {auszahlungen.map(a => (
+                    <tr key={a.id}>
+                      <td><strong>{a.name}</strong><br/><small style={{color:'var(--text-light)'}}>{a.role === 'honorarkraft' ? 'Honorarkraft' : 'Lehrkraft'}</small></td>
+                      <td>{a.monat}</td>
+                      <td style={{fontWeight:700,color:'var(--purple)'}}>{parseFloat(a.betrag).toFixed(2)} €</td>
+                      <td style={{fontSize:13}}>{a.notizen || '–'}</td>
+                      <td style={{fontSize:12,color:'var(--text-light)'}}>{new Date(a.created_at).toLocaleDateString('de-DE')}</td>
+                      <td><span className="badge" style={{background: a.status==='offen' ? '#fff3e0' : '#e8f5e9', color: a.status==='offen' ? '#e65100' : '#2e7d32'}}>{a.status==='offen' ? '⏳ Offen' : '✅ Erledigt'}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         <div className="card" style={{marginBottom:20}}>
           <div className="card-title">📄 Honorarkräfte</div>
           <div className="table-wrap">
