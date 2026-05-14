@@ -26,12 +26,19 @@ const PrivateRoute = ({ children, adminOnly }) => {
   return children;
 };
 
-const AppLayout = ({ children }) => (
-  <div className="app-layout">
-    <Sidebar/>
-    <main className="main-content">{children}</main>
-  </div>
-);
+const AppLayout = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  return (
+    <div className="app-layout">
+      <button className="hamburger-btn" onClick={()=>setSidebarOpen(true)}>☰</button>
+      <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={()=>setSidebarOpen(false)}/>
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={{position:'fixed',top:0,left:0,bottom:0,zIndex:1000}}>
+        <Sidebar onClose={()=>setSidebarOpen(false)}/>
+      </div>
+      <main className="main-content">{children}</main>
+    </div>
+  );
+};
 
 export default function App() {
   return (
