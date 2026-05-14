@@ -124,10 +124,13 @@ tr:hover td { background: var(--purple-pale); }
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .main-content { margin-left: 0; padding: 16px; }
-  .form-row { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+  .main-content { margin-left: 0 !important; padding: 56px 12px 20px !important; }
+  .form-row { grid-template-columns: 1fr !important; }
+  .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+  .stat-card { padding: 12px 10px; }
+  .stat-number { font-size: 22px !important; }
+  h2 { font-size: 22px !important; }
 }
 
 /* ===== MOBILE & IPAD OPTIMIERUNG ===== */

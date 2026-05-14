@@ -6,7 +6,7 @@ import Notifications from './Notifications';
 
 const API = 'https://plattform-mj.onrender.com';
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -113,7 +113,7 @@ export default function Sidebar() {
           </div>
           <Notifications/>
         </div>
-        <button className="logout-btn" onClick={() => { logout(); navigate('/login'); }}>Abmelden</button>
+        <button className="logout-btn" onClick={() => { logout(); navigate('/login'); if(onClose) onClose(); }}>Abmelden</button>
       </div>
     </div>
   );
