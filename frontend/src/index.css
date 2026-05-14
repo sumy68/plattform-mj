@@ -225,3 +225,30 @@ tr:hover td { background: var(--purple-pale); }
 
 /* Hamburger standardmäßig versteckt */
 .hamburger-btn { display: none; }
+
+/* Mobile Form Fixes */
+@media (max-width: 768px) {
+  /* Schüler Modal scrollbar */
+  .modal { padding-bottom: 40px; }
+  
+  /* Tabellen Buttons untereinander */
+  td .btn { margin-bottom: 4px; }
+  
+  /* Signatur Canvas auf Mobile kleiner */
+  canvas { max-width: 100% !important; }
+  
+  /* Checkbox Labels leichter klickbar */
+  input[type="checkbox"] { width: 18px; height: 18px; }
+  
+  /* Abrechnung Pie Chart */
+  .recharts-wrapper { max-width: 100% !important; }
+  
+  /* Navigation aktiv State deutlicher */
+  .nav-item.active { background: rgba(155,127,212,0.3); }
+  
+  /* Lange Texte umbrechen */
+  td { word-break: break-word; max-width: 200px; }
+  
+  /* BuT Anträge Tabelle */
+  .badge { font-size: 10px; padding: 2px 6px; }
+}
