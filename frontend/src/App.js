@@ -29,14 +29,24 @@ const PrivateRoute = ({ children, adminOnly }) => {
 
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = window.innerWidth <= 768;
   return (
-    <div className="app-layout">
-      <button className="hamburger-btn" onClick={()=>setSidebarOpen(true)}>☰</button>
-      <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={()=>setSidebarOpen(false)}/>
-      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={{position:'fixed',top:0,left:0,bottom:0,zIndex:1000}}>
-        <Sidebar onClose={()=>setSidebarOpen(false)}/>
-      </div>
-      <main className="main-content">{children}</main>
+    <div className="app-layout" style={{display:'flex',minHeight:'100vh'}}>
+      {isMobile ? (
+        <>
+          <button className="hamburger-btn" onClick={()=>setSidebarOpen(true)}>☰</button>
+          <div style={{display: sidebarOpen ? 'block' : 'none', position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:999}} onClick={()=>setSidebarOpen(false)}/>
+          <div style={{position:'fixed',top:0,left:0,bottom:0,zIndex:1000,transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',transition:'transform 0.3s',width:260}}>
+            <Sidebar onClose={()=>setSidebarOpen(false)}/>
+          </div>
+          <main style={{flex:1,width:'100%',padding:'56px 12px 20px',boxSizing:'border-box'}}>{children}</main>
+        </>
+      ) : (
+        <>
+          <Sidebar/>
+          <main className="main-content">{children}</main>
+        </>
+      )}
     </div>
   );
 };
