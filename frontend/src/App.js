@@ -45,7 +45,7 @@ const AppLayout = ({ children }) => {
       )}
 
       {/* Sidebar */}
-      <div style={{position:'fixed',top:0,left:0,bottom:0,zIndex:1000,transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',transition:'transform 0.3s ease',width:260}} className="mobile-sidebar">
+      <div style={{position:'fixed',top:0,left:0,bottom:0,zIndex:1000,transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',transition:'transform 0.3s ease',width:260,background:'#2d2040'}} className="mobile-sidebar">
         <Sidebar onClose={()=>setSidebarOpen(false)}/>
       </div>
 
