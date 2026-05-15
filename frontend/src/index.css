@@ -255,3 +255,15 @@ tr:hover td { background: var(--purple-pale); }
   /* BuT Anträge Tabelle */
   .badge { font-size: 10px; padding: 2px 6px; }
 }
+
+/* Desktop/Mobile Sidebar Switch */
+.mobile-sidebar { display: none; }
+.desktop-sidebar { display: block; }
+.hamburger-btn { display: none !important; }
+
+@media (max-width: 768px) {
+  .mobile-sidebar { display: block; }
+  .desktop-sidebar { display: none; }
+  .hamburger-btn { display: flex !important; }
+  .main-content { margin-left: 0 !important; padding: 60px 12px 20px !important; width: 100% !important; }
+}

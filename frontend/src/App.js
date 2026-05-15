@@ -29,24 +29,33 @@ const PrivateRoute = ({ children, adminOnly }) => {
 
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isMobile = window.innerWidth <= 768;
   return (
-    <div className="app-layout" style={{display:'flex',minHeight:'100vh'}}>
-      {isMobile ? (
-        <>
-          <button className="hamburger-btn" onClick={()=>setSidebarOpen(true)}>☰</button>
-          <div style={{display: sidebarOpen ? 'block' : 'none', position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:999}} onClick={()=>setSidebarOpen(false)}/>
-          <div style={{position:'fixed',top:0,left:0,bottom:0,zIndex:1000,transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',transition:'transform 0.3s',width:260}}>
-            <Sidebar onClose={()=>setSidebarOpen(false)}/>
-          </div>
-          <main style={{flex:1,width:'100%',padding:'56px 12px 20px',boxSizing:'border-box'}}>{children}</main>
-        </>
-      ) : (
-        <>
-          <Sidebar/>
-          <main className="main-content">{children}</main>
-        </>
+    <div style={{display:'flex',minHeight:'100vh',position:'relative'}}>
+      {/* Hamburger - nur Mobile */}
+      <button
+        onClick={()=>setSidebarOpen(true)}
+        style={{display:'none',position:'fixed',top:12,left:12,zIndex:1001,background:'#2d2040',color:'white',border:'none',borderRadius:8,padding:'8px 12px',fontSize:20,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.3)'}}
+        className="hamburger-btn">☰</button>
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          onClick={()=>setSidebarOpen(false)}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:999}}/>
       )}
+
+      {/* Sidebar */}
+      <div style={{position:'fixed',top:0,left:0,bottom:0,zIndex:1000,transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',transition:'transform 0.3s ease',width:260}} className="mobile-sidebar">
+        <Sidebar onClose={()=>setSidebarOpen(false)}/>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className="desktop-sidebar">
+        <Sidebar/>
+      </div>
+
+      {/* Content */}
+      <main className="main-content">{children}</main>
     </div>
   );
 };
