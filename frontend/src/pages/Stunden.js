@@ -268,27 +268,36 @@ export default function Stunden({ adminView }) {
               )}
               {form.ort === 'vor_ort' && (
                 <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:16}}>
-                  <div style={{fontSize:13,fontWeight:700,color:'var(--purple)',marginBottom:12}}>🚗 Fahrtkosten (0,38 €/km)</div>
-                  <div className="form-row">
-                    <div className="form-group" style={{marginBottom:0}}>
-                      <label>Von (deine Adresse)</label>
-                      <input value={form.fahrt_von} onChange={e=>setForm({...form,fahrt_von:e.target.value})} placeholder="Musterstraße 1, 30159 Hannover"/>
-                    </div>
-                    <div className="form-group" style={{marginBottom:0}}>
-                      <label>Nach (Schüler Adresse)</label>
-                      <input value={form.fahrt_nach} onChange={e=>setForm({...form,fahrt_nach:e.target.value})} placeholder="Schülerstraße 2, 30159 Hannover"/>
-                    </div>
+                  <div style={{fontSize:13,fontWeight:700,color:'var(--purple)',marginBottom:12}}>🚗 Fahrtkosten</div>
+                  <div className="form-group" style={{marginBottom:12}}>
+                    <label style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',fontWeight:600}}>
+                      <input type="checkbox" checked={form.fahrt_pkw||false} onChange={e=>setForm({...form,fahrt_pkw:e.target.checked,fahrt_km:null})} style={{width:18,height:18}}/>
+                      Ich fahre mit meinem eigenen PKW (0,38 €/km)
+                    </label>
+                    <p style={{fontSize:11,color:'var(--text-light)',marginTop:4,marginLeft:28}}>Fahrtkosten werden nur bei Nutzung des eigenen PKW erstattet.</p>
                   </div>
-                  <div style={{display:'flex',alignItems:'center',gap:12,marginTop:12}}>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={berechneKm} disabled={kmLaden}>
-                      {kmLaden ? 'Berechne...' : '📍 Kilometer berechnen'}
-                    </button>
-                    {form.fahrt_km && (
-                      <span style={{fontWeight:700,color:'var(--purple)'}}>
-                        {form.fahrt_km} km = {(form.fahrt_km * 0.38).toFixed(2)} €
-                      </span>
-                    )}
-                  </div>
+                  {form.fahrt_pkw && (<>
+                    <div className="form-row">
+                      <div className="form-group" style={{marginBottom:0}}>
+                        <label>Von (deine Adresse)</label>
+                        <input value={form.fahrt_von||''} onChange={e=>setForm({...form,fahrt_von:e.target.value})} placeholder="Musterstraße 1, 30159 Hannover"/>
+                      </div>
+                      <div className="form-group" style={{marginBottom:0}}>
+                        <label>Nach (Schüler Adresse)</label>
+                        <input value={form.fahrt_nach||''} onChange={e=>setForm({...form,fahrt_nach:e.target.value})} placeholder="Schülerstraße 2, 30159 Hannover"/>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:12,marginTop:12}}>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={berechneKm} disabled={kmLaden}>
+                        {kmLaden ? 'Berechne...' : '📍 Kilometer berechnen'}
+                      </button>
+                      {form.fahrt_km && (
+                        <span style={{fontWeight:700,color:'var(--purple)'}}>
+                          {form.fahrt_km} km = {(form.fahrt_km * 0.38).toFixed(2)} €
+                        </span>
+                      )}
+                    </div>
+                  </>)}
                 </div>
               )}
               <div className="form-group">
