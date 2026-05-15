@@ -1,4 +1,8 @@
+import { useAuth } from '../context/AuthContext';
+
 export default function Hilfe() {
+  const { user } = useAuth();
+  const isHonorar = user?.role === 'honorarkraft';
   return (
     <div style={{maxWidth:800,margin:'0 auto',padding:'40px 20px'}}>
       <h2 style={{fontFamily:'Cormorant Garamond,serif',marginBottom:8,color:'#2d2040'}}>Hilfe & Tutorial</h2>
@@ -17,8 +21,13 @@ export default function Hilfe() {
         <p style={{fontSize:15,fontWeight:700,color:'#2d2040',marginBottom:24}}>📚 Schritt-für-Schritt Anleitung</p>
 
         <HilfeSection nr="1" titel="Anmelden & Profil einrichten">
-          Beim ersten Login wirst du aufgefordert, dein Profil auszufüllen. Das ist wichtig für deine Auszahlungen:
-          <ul><li>Vorname & Nachname</li><li>Adresse (Straße, PLZ, Ort)</li><li>IBAN (für Auszahlungen)</li><li>Steuernummer (optional)</li><li>Führerschein (Ja/Nein) — wichtig für Fahrtkosten</li></ul>
+{isHonorar ? <>
+            Beim ersten Login wirst du aufgefordert, dein Profil auszufüllen. Das ist wichtig für deine Rechnungen:
+            <ul><li>Vorname & Nachname</li><li>Adresse (Straße, PLZ, Ort)</li><li>IBAN (für Auszahlungen)</li><li>Steuernummer (optional)</li><li>Führerschein (Ja/Nein) — wichtig für Fahrtkosten</li></ul>
+          </> : <>
+            Beim ersten Login wirst du aufgefordert, dein Profil auszufüllen:
+            <ul><li>Vorname & Nachname</li><li>Adresse (Straße, PLZ, Ort)</li><li>Steuernummer (optional)</li><li>Führerschein (Ja/Nein) — wichtig für Fahrtkosten</li></ul>
+          </>}
           Ohne ausgefülltes Profil kannst du die Plattform nicht vollständig nutzen.
         </HilfeSection>
 
@@ -72,8 +81,11 @@ export default function Hilfe() {
         </HilfeSection>
 
         <HilfeSection nr="9" titel="Guthaben & Abrechnung">
-<strong>Honorarkräfte</strong> können hier Stunden auswählen und eine Rechnung als PDF erstellen lassen. Die Rechnung wird automatisch an info@mj-lernfoerderung.de geschickt.<br/><br/>
-          <strong>Lehrkräfte (fest angestellt)</strong> geben einfach den gewünschten Auszahlungsbetrag ein und reichen ihn ein. Meryem sieht den Wunsch und überweist den Betrag — keine Rechnung nötig.
+{isHonorar ? <>
+            Hier kannst du deine Stunden auswählen und eine <strong>Rechnung als PDF</strong> erstellen lassen. Die Rechnung wird automatisch an info@mj-lernfoerderung.de geschickt. Du kannst selbst bestimmen welche Stunden du in diesem Monat abrechnen möchtest.
+          </> : <>
+            Hier gibst du einfach den <strong>gewünschten Auszahlungsbetrag</strong> ein und reichst ihn ein. Meryem sieht deinen Wunsch und überweist dir den Betrag — keine Rechnung nötig.
+          </>}
         </HilfeSection>
 
         <HilfeSection nr="10" titel="Kurzfristige Absage">
