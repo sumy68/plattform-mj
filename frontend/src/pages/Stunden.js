@@ -332,7 +332,7 @@ export default function Stunden({ adminView }) {
               Meryem Jaber · 0152 5635 2575
             </p>
             <a href="https://wa.me/4915256352575" target="_blank" rel="noreferrer" className="btn btn-success" style={{display:'inline-flex',alignItems:'center',gap:8,marginBottom:16}}>
-              💬 Chat on WhatsApp
+              💬 Auf WhatsApp kontaktieren
             </a>
             <br/>
             <button className="btn btn-primary" style={{width:'100%'}} onClick={()=>{setForm({...form,kurzfristige_absage:true});setAbsagePopup(false);}}>
