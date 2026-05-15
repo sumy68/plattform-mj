@@ -72,8 +72,8 @@ export default function Hilfe() {
         </HilfeSection>
 
         <HilfeSection nr="9" titel="Guthaben & Abrechnung">
-          <strong>Honorarkräfte</strong> können hier Stunden auswählen und eine Rechnung als PDF erstellen lassen. Die Rechnung wird automatisch an info@mj-lernfoerderung.de geschickt.<br/><br/>
-          <strong>Festlehrkräfte</strong> können hier einen Auszahlungswunsch einreichen. Meryem wird benachrichtigt und überweist den Betrag.
+<strong>Honorarkräfte</strong> können hier Stunden auswählen und eine Rechnung als PDF erstellen lassen. Die Rechnung wird automatisch an info@mj-lernfoerderung.de geschickt.<br/><br/>
+          <strong>Lehrkräfte (fest angestellt)</strong> geben einfach den gewünschten Auszahlungsbetrag ein und reichen ihn ein. Meryem sieht den Wunsch und überweist den Betrag — keine Rechnung nötig.
         </HilfeSection>
 
         <HilfeSection nr="10" titel="Kurzfristige Absage">
