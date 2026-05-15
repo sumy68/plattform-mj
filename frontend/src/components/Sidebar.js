@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -7,6 +7,10 @@ import Notifications from './Notifications';
 const API = 'https://plattform-mj.onrender.com';
 
 export default function Sidebar({ onClose }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = () => window.innerWidth <= 900;
+  const toggleMenu = () => setMobileOpen(v => !v);
+  const closeMenu = () => setMobileOpen(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,7 +74,32 @@ export default function Sidebar({ onClose }) {
   const links = user?.role === 'admin' ? adminLinks : lehrkraftLinks;
 
   return (
-    <div className="sidebar">
+    <>
+      {/* Hamburger - nur Mobile */}
+      <button
+        onClick={toggleMenu}
+        style={{
+          display:'none',
+          position:'fixed',top:10,left:10,
+          zIndex:1002,background:'#2d2040',color:'white',
+          border:'none',borderRadius:8,
+          width:44,height:44,fontSize:22,
+          cursor:'pointer',alignItems:'center',justifyContent:'center',
+          boxShadow:'0 2px 10px rgba(0,0,0,0.4)'
+        }}
+        className="hamburger-btn"
+      >{mobileOpen ? '✕' : '☰'}</button>
+
+      {/* Overlay */}
+      {mobileOpen && (
+        <div
+          onClick={closeMenu}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1000}}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`sidebar${mobileOpen ? ' sidebar-mobile-open' : ''}`}>
       <div className="sidebar-logo">
         <h1>MJ</h1>
         <p>Lernförderung</p>
@@ -115,6 +144,7 @@ export default function Sidebar({ onClose }) {
         </div>
         <button className="logout-btn" onClick={() => { logout(); navigate('/login'); if(onClose) onClose(); }}>Abmelden</button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
