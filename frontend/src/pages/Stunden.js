@@ -178,7 +178,14 @@ export default function Stunden({ adminView }) {
                   <td>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                       <button className="btn btn-ghost btn-sm" onClick={()=>downloadPDF(st.id)}>📄 PDF</button>
-                      {!st.unterschrift_name && <button className="btn btn-ghost btn-sm" onClick={()=>sendSignaturLink(st)}>📧 Link</button>}
+                      {!st.unterschrift_name && <>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>sendSignaturLink(st)}>📧 Link</button>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>{
+                          const link = `https://plattform-mj-1.onrender.com/unterschreiben/direkt/${st.id}`;
+                          const waText = encodeURIComponent(`Bitte unterschreiben Sie die Nachhilfestunde hier: ${link}`);
+                          window.open(`https://wa.me/?text=${waText}`, '_blank');
+                        }}>💬 WA</button>
+                      </>}
                       <button className="btn btn-danger btn-sm" onClick={()=>deleteStunde(st.id)}>🗑️</button>
                     </div>
                   </td>
