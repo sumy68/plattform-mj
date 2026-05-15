@@ -78,7 +78,7 @@ export default function Sidebar({ onClose }) {
   return (
     <>
       {/* Hamburger Button - via CSS auf Mobile sichtbar */}
-      <button className="hamburger-btn" onClick={() => setMobileOpen(true)}>☰</button>
+      <button className="hamburger-btn" onClick={() => setMobileOpen(v => !v)}>{mobileOpen ? '✕' : '☰'}</button>
 
       {/* Overlay wenn offen */}
       {mobileOpen && (
