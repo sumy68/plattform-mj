@@ -67,8 +67,8 @@ export default function Sidebar({ onClose }) {
   const links = user?.role === 'admin' ? adminLinks : lehrkraftLinks;
 
   const handleNav = (path) => {
-    navigate(path);
     setMobileOpen(false);
+    setTimeout(() => navigate(path), 10);
     if (path === '/abwesenheiten') {
       setKrankCount(0);
       localStorage.setItem('krank_badge', '0');
