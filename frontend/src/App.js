@@ -13,6 +13,7 @@ import Abrechnung from './pages/Abrechnung';
 import Freischaltung from './pages/Freischaltung';
 import ProfilEinrichten from './pages/ProfilEinrichten';
 import Impressum from './pages/Impressum';
+import Hilfe from './pages/Hilfe';
 import Datenschutz from './pages/Datenschutz';
 import MeinProfil from './pages/MeinProfil';
 import AdminProfil from './pages/AdminProfil';
@@ -70,6 +71,7 @@ export default function App() {
           <Route path="/login" element={<Login/>}/>
           <Route path="/unterschreiben/:token" element={<Unterschreiben/>}/>
           <Route path="/impressum" element={<Impressum/>}/>
+          <Route path="/hilfe" element={<PrivateRoute><AppLayout><Hilfe/></AppLayout></PrivateRoute>}/>
           <Route path="/datenschutz" element={<Datenschutz/>}/>
           <Route path="/register" element={<Register/>}/>
           <Route path="/profil-einrichten" element={<ProfilEinrichten/>}/>

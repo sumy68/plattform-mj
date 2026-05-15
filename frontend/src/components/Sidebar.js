@@ -62,6 +62,7 @@ export default function Sidebar({ onClose }) {
     { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten' },
     { path: '/mein-guthaben', icon: '💰', label: user?.role === 'honorarkraft' ? 'Guthaben & Rechnung' : 'Meine Stunden' },
     { path: '/mein-profil', icon: '👤', label: 'Mein Profil' },
+    { path: '/hilfe', icon: '❓', label: 'Hilfe & Tutorial' },
   ];
 
   const links = user?.role === 'admin' ? adminLinks : lehrkraftLinks;
