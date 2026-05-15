@@ -31,7 +31,9 @@ export default function Stunden({ adminView }) {
         const d = await r.json();
         return d.features[0]?.geometry?.coordinates;
       };
-      const [from, to] = await Promise.all([geocode(form.fahrt_von), geocode(form.fahrt_nach)]);
+      const vonAdresse = `${form.fahrt_von||''} ${form.fahrt_von_nr||''}, ${form.fahrt_von_plz||''} ${form.fahrt_von_ort||''}`;
+      const nachAdresse = `${form.fahrt_nach||''} ${form.fahrt_nach_nr||''}, ${form.fahrt_nach_plz||''} ${form.fahrt_nach_ort||''}`;
+      const [from, to] = await Promise.all([geocode(vonAdresse), geocode(nachAdresse)]);
       if (!from || !to) return alert('Adresse nicht gefunden');
       const r = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', {
         method: 'POST',
@@ -277,14 +279,50 @@ export default function Stunden({ adminView }) {
                     <p style={{fontSize:11,color:'var(--text-light)',marginTop:4,marginLeft:28}}>Fahrtkosten werden nur bei Nutzung des eigenen PKW erstattet.</p>
                   </div>
                   {form.fahrt_pkw && (<>
-                    <div className="form-row">
-                      <div className="form-group" style={{marginBottom:0}}>
-                        <label>Von (deine Adresse)</label>
-                        <input value={form.fahrt_von||''} onChange={e=>setForm({...form,fahrt_von:e.target.value})} placeholder="Musterstraße 1, 30159 Hannover"/>
+                    <div style={{marginBottom:10}}>
+                      <div style={{fontSize:12,fontWeight:700,color:'var(--text-mid)',marginBottom:6}}>Von (deine Adresse)</div>
+                      <div className="form-row" style={{marginBottom:6}}>
+                        <div className="form-group" style={{marginBottom:0,flex:2}}>
+                          <label style={{fontSize:11}}>Straße</label>
+                          <input value={form.fahrt_von||''} onChange={e=>setForm({...form,fahrt_von:e.target.value})} placeholder="Musterstraße"/>
+                        </div>
+                        <div className="form-group" style={{marginBottom:0,flex:1}}>
+                          <label style={{fontSize:11}}>Nr.</label>
+                          <input value={form.fahrt_von_nr||''} onChange={e=>setForm({...form,fahrt_von_nr:e.target.value})} placeholder="7"/>
+                        </div>
                       </div>
-                      <div className="form-group" style={{marginBottom:0}}>
-                        <label>Nach (Schüler Adresse)</label>
-                        <input value={form.fahrt_nach||''} onChange={e=>setForm({...form,fahrt_nach:e.target.value})} placeholder="Schülerstraße 2, 30159 Hannover"/>
+                      <div className="form-row">
+                        <div className="form-group" style={{marginBottom:0,flex:1}}>
+                          <label style={{fontSize:11}}>PLZ</label>
+                          <input value={form.fahrt_von_plz||''} onChange={e=>setForm({...form,fahrt_von_plz:e.target.value})} placeholder="85077"/>
+                        </div>
+                        <div className="form-group" style={{marginBottom:0,flex:2}}>
+                          <label style={{fontSize:11}}>Ort</label>
+                          <input value={form.fahrt_von_ort||''} onChange={e=>setForm({...form,fahrt_von_ort:e.target.value})} placeholder="Manching"/>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:700,color:'var(--text-mid)',marginBottom:6}}>Nach (Schüler Adresse)</div>
+                      <div className="form-row" style={{marginBottom:6}}>
+                        <div className="form-group" style={{marginBottom:0,flex:2}}>
+                          <label style={{fontSize:11}}>Straße</label>
+                          <input value={form.fahrt_nach||''} onChange={e=>setForm({...form,fahrt_nach:e.target.value})} placeholder="Schülerstraße"/>
+                        </div>
+                        <div className="form-group" style={{marginBottom:0,flex:1}}>
+                          <label style={{fontSize:11}}>Nr.</label>
+                          <input value={form.fahrt_nach_nr||''} onChange={e=>setForm({...form,fahrt_nach_nr:e.target.value})} placeholder="1"/>
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group" style={{marginBottom:0,flex:1}}>
+                          <label style={{fontSize:11}}>PLZ</label>
+                          <input value={form.fahrt_nach_plz||''} onChange={e=>setForm({...form,fahrt_nach_plz:e.target.value})} placeholder="30159"/>
+                        </div>
+                        <div className="form-group" style={{marginBottom:0,flex:2}}>
+                          <label style={{fontSize:11}}>Ort</label>
+                          <input value={form.fahrt_nach_ort||''} onChange={e=>setForm({...form,fahrt_nach_ort:e.target.value})} placeholder="Hannover"/>
+                        </div>
                       </div>
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:12,marginTop:12}}>
