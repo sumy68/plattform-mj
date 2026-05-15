@@ -328,8 +328,10 @@ export default function Schueler() {
               <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:16}}>
                 <div className="form-group" style={{marginBottom:8}}>
                   <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:14,fontWeight:600,whiteSpace:'nowrap'}}>
-                    <input type="checkbox" checked={form.but_status} onChange={e=>setForm({...form,but_status:e.target.checked})}/>
-                    BuT-Förderung aktiv
+                    <label style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',fontSize:14,fontWeight:600}}>
+                      <input type="checkbox" checked={form.but_status} onChange={e=>setForm({...form,but_status:e.target.checked})} style={{width:18,height:18,flexShrink:0}}/>
+                      BuT-Förderung aktiv
+                    </label>
                   </label>
                 </div>
 
