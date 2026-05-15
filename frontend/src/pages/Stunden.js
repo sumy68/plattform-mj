@@ -329,7 +329,7 @@ export default function Stunden({ adminView }) {
               Bitte denke daran, dass die kurzfristige Absage nur vergütet werden kann, wenn du die Teamleiterin des Schülers informiert hast.
             </p>
             <p style={{fontWeight:700,marginBottom:16}}>
-              Teamleitung MJ Lernförderung · 0152 5635 2575
+              Meryem Jaber · 0152 5635 2575
             </p>
             <a href="https://wa.me/4915256352575" target="_blank" rel="noreferrer" className="btn btn-success" style={{display:'inline-flex',alignItems:'center',gap:8,marginBottom:16}}>
               💬 Chat on WhatsApp
