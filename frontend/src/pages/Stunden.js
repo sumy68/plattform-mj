@@ -106,8 +106,14 @@ export default function Stunden({ adminView }) {
     const email = st.eltern_email || prompt('Eltern E-Mail Adresse:');
     if (!email) return;
     try {
-      await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email });
-      alert(`✅ Link wurde an ${email} gesendet!`);
+      const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email });
+      const token = res.data.token;
+      const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
+      const waText = encodeURIComponent(`Bitte unterschreiben Sie die Nachhilfestunde hier: ${link}`);
+      const copied = await navigator.clipboard.writeText(link).then(()=>true).catch(()=>false);
+      const waUrl = `https://wa.me/?text=${waText}`;
+      alert(`✅ Link per E-Mail gesendet!${copied ? '\n\n🔗 Link wurde in die Zwischenablage kopiert.' : ''}\n\n${link}`);
+      window.open(waUrl, '_blank');
     } catch (err) {
       alert('Fehler: ' + (err.response?.data?.error || err.message));
     }
@@ -303,7 +309,7 @@ export default function Stunden({ adminView }) {
               Bitte denke daran, dass die kurzfristige Absage nur vergütet werden kann, wenn du die Teamleiterin des Schülers informiert hast.
             </p>
             <p style={{fontWeight:700,marginBottom:16}}>
-              Teamleiterin: Souad · 0152 5635 2575
+              Teamleitung MJ Lernförderung · 0152 5635 2575
             </p>
             <a href="https://wa.me/4915256352575" target="_blank" rel="noreferrer" className="btn btn-success" style={{display:'inline-flex',alignItems:'center',gap:8,marginBottom:16}}>
               💬 Chat on WhatsApp

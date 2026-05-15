@@ -12,6 +12,8 @@ import Lehrkraefte from './pages/Lehrkraefte';
 import Abrechnung from './pages/Abrechnung';
 import Freischaltung from './pages/Freischaltung';
 import ProfilEinrichten from './pages/ProfilEinrichten';
+import Impressum from './pages/Impressum';
+import Datenschutz from './pages/Datenschutz';
 import MeinProfil from './pages/MeinProfil';
 import AdminProfil from './pages/AdminProfil';
 import BUTAntraege from './pages/BUTAntraege';
@@ -67,6 +69,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login/>}/>
           <Route path="/unterschreiben/:token" element={<Unterschreiben/>}/>
+          <Route path="/impressum" element={<Impressum/>}/>
+          <Route path="/datenschutz" element={<Datenschutz/>}/>
           <Route path="/register" element={<Register/>}/>
           <Route path="/profil-einrichten" element={<ProfilEinrichten/>}/>
           <Route path="/dashboard" element={<PrivateRoute><AppLayout><Dashboard/></AppLayout></PrivateRoute>}/>

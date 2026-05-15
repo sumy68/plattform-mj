@@ -105,7 +105,7 @@ router.patch('/abrechnen', auth, async (req, res) => {
       'UPDATE stunden SET abgerechnet=true WHERE id=ANY($1) AND lehrkraft_id=$2',
       [stunden_ids, req.user.id]
     );
-    res.json({ success: true });
+    res.json({ success: true, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -220,7 +220,7 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     await pool.query('DELETE FROM stunden WHERE id=$1 AND (lehrkraft_id=$2 OR $3=true)', 
       [req.params.id, req.user.id, req.user.role === 'admin']);
-    res.json({ success: true });
+    res.json({ success: true, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -282,7 +282,7 @@ router.post('/:id/signatur-link', auth, async (req, res) => {
       `
     });
 
-    res.json({ success: true });
+    res.json({ success: true, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -323,7 +323,7 @@ router.post('/signatur/:token', async (req, res) => {
       [unterschrift_data, unterschrift_name, stunde_id]
     );
     await pool.query(`UPDATE signatur_tokens SET verwendet=true WHERE token=$1`, [req.params.token]);
-    res.json({ success: true });
+    res.json({ success: true, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

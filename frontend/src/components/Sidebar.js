@@ -123,7 +123,8 @@ export default function Sidebar({ onClose }) {
             </div>
             <Notifications/>
           </div>
-          <button className="logout-btn" onClick={() => { logout(); navigate('/login'); setMobileOpen(false); }}>Abmelden</button>
+          <button onClick={()=>handleNav('/impressum')} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',fontSize:11,cursor:'pointer',marginBottom:8,padding:0}}>Impressum & Datenschutz</button>
+        <button className="logout-btn" onClick={() => { logout(); navigate('/login'); setMobileOpen(false); }}>Abmelden</button>
         </div>
       </div>
     </>

@@ -60,6 +60,10 @@ export default function Login() {
           <Link to="/register" style={{color:'var(--purple)',fontWeight:700,textDecoration:'none'}}>Jetzt registrieren</Link>
         </div>
       </div>
+    <div style={{textAlign:'center',marginTop:24}}>
+        <a href="/impressum" style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginRight:16}}>Impressum</a>
+        <a href="/datenschutz" style={{color:'rgba(255,255,255,0.5)',fontSize:12}}>Datenschutz</a>
+      </div>
     </div>
   );
 }
