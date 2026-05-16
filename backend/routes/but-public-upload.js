@@ -1,4 +1,5 @@
 const router = require('express').Router();
+router.use(require('cors')());
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 
