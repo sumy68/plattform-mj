@@ -17,6 +17,7 @@ app.use('/api/profil', require('./routes/profil'));
 app.use('/api/dokumente', require('./routes/dokumente'));
 app.use('/api/but', require('./routes/but'));
 
+app.use('/api/but-public-upload', require('./routes/but-public-upload'));
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
 
 app.get('/api/debug/schema', async (req, res) => {
