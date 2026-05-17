@@ -187,4 +187,14 @@ router.post('/zurueckbuchen/:schueler_id', auth, async (req, res) => {
   }
 });
 
+
+router.delete('/:id', auth, adminOnly, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM but_antraege WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
