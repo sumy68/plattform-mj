@@ -26,7 +26,7 @@ router.put('/', auth, async (req, res) => {
         vorname=$1, nachname=$2, geschlecht=$3, adresse=$4, plz=$5, ort=$6,
         iban=$7, steuernummer=$8, geburtsdatum=$9, telefon=$10, sprachen=$11,
         profil_komplett=true, name=$12
-       WHERE id=$14 RETURNING *`,
+       WHERE id=$13 RETURNING *`,
       [vorname, nachname, geschlecht, adresse, plz, ort, iban, steuernummer, geburtsdatum || null, telefon, sprachen, fullName, req.user.id]
     );
     res.json(result.rows[0]);
