@@ -61,7 +61,7 @@ export default function ButAntraege() {
         });
       }
       if (editItem) await axios.put(`${API}/api/but/${editItem.id}`, form);
-      else await axios.post(`${API}/api/but`, { ...form, pdf_name, pdf_data });
+      else await axios.post(`${API}/api/but`, { ...form, antrag_pdf_name: pdf_name, antrag_pdf_data: pdf_data });
       setModal(false);
       load();
     } catch (err) {
@@ -143,7 +143,7 @@ export default function ButAntraege() {
 
                     <td><span className="badge" style={{ background: style.bg, color: style.color }}>{getStatusText(a)}</span></td>
                     <td>
-                      {a.pdf_name
+                      {a.antrag_pdf_name
                         ? <a href={`${API}/api/but/${a.id}/pdf?token=${localStorage.getItem('token')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">📄 PDF</a>
                         : <span style={{ fontSize: 12, color: 'var(--text-light)' }}>–</span>}
                     </td>
