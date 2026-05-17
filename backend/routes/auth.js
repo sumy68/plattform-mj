@@ -108,7 +108,7 @@ router.get('/users/:id/profil', auth, adminOnly, async (req, res) => {
 
 router.get('/users', auth, adminOnly, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id,name,email,role,stundensatz,aktiv,absage_stundensatz,sprachen,fuehrerschein,created_at FROM users WHERE role != 'admin' ORDER BY aktiv DESC, name');
+    const result = await pool.query("SELECT id,name,email,role,stundensatz,aktiv,absage_stundensatz,sprachen,fuehrerschein,created_at FROM users WHERE role != 'admin' ORDER BY aktiv DESC, name");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
