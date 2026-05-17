@@ -71,7 +71,7 @@ export default function Lehrkraefte() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Sprachen</th><th>Führerschein</th><th>Stundensatz</th><th>Absage-Satz</th><th>Status</th><th>Aktionen</th>
+              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Sprachen</th><th>Stundensatz</th><th>Status</th><th>Aktionen</th>
             </tr></thead>
             <tbody>
               {users.map(u => (
@@ -80,7 +80,6 @@ export default function Lehrkraefte() {
                   <td>{u.email}</td>
                   <td>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(u.sprachen) ? u.sprachen : []).slice(0,2).join(', ') || '–'}</td>
-                  <td>{u.fuehrerschein ? '🚗 Ja' : '❌ Nein'}</td>
                   <td>
                     {editStundensatz === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
@@ -100,22 +99,7 @@ export default function Lehrkraefte() {
                       </div>
                     )}
                   </td>
-                  <td>
-                    {editAbsage === u.id ? (
-                      <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        <input type="number" step="0.01" value={newAbsage}
-                          onChange={e=>setNewAbsage(e.target.value)}
-                          style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
-                        <button className="btn btn-success btn-sm" onClick={()=>saveAbsage(u.id)}>✓</button>
-                        <button className="btn btn-ghost btn-sm" onClick={()=>setEditAbsage(null)}>✕</button>
-                      </div>
-                    ) : (
-                      <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <span>{u.absage_stundensatz || 0} €/Std.</span>
-                        <button className="btn btn-ghost btn-sm" onClick={()=>{setEditAbsage(u.id);setNewAbsage(u.absage_stundensatz||0);}}>✏️</button>
-                      </div>
-                    )}
-                  </td>
+
                   <td><span className="badge" style={{background:u.aktiv?'#e8f5e9':'#fdecea',color:u.aktiv?'#2e7d32':'#c62828'}}>{u.aktiv?'Aktiv':'Inaktiv'}</span></td>
                   <td style={{display:'flex',gap:8}}>
                     <button className="btn btn-ghost btn-sm" onClick={()=>openDetail(u)}>👁️ Details</button>
