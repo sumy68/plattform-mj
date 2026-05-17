@@ -6,7 +6,7 @@ const API = 'https://plattform-mj.onrender.com';
 
 const emptyForm = {
   schueler_id: '', gueltig_von: '', gueltig_bis: '',
-  gutscheine_gesamt: '', notizen: ''
+  gutscheine_gesamt: '', behoerde: '', notizen: ''
 };
 
 export default function ButAntraege() {
@@ -41,7 +41,7 @@ export default function ButAntraege() {
       gueltig_von: a.gueltig_von?.split('T')[0] || '',
       gueltig_bis: a.gueltig_bis?.split('T')[0] || '',
       gutscheine_gesamt: a.gutscheine_gesamt,
-      notizen: a.notizen || ''
+      behoerde: a.behoerde || '', notizen: a.notizen || ''
     });
     setEditItem(a);
     setModal(true);
@@ -187,7 +187,15 @@ export default function ButAntraege() {
               </div>
               <div className="form-group">
                 <label>Anzahl Stunden *</label>
-                <input type="number" required min="1" max="100" value={form.gutscheine_gesamt} onChange={e => setForm({ ...form, gutscheine_gesamt: e.target.value })} placeholder="z.B. 45" />
+                <input type="number" required min="1" value={form.gutscheine_gesamt} onChange={e => setForm({ ...form, gutscheine_gesamt: e.target.value })} placeholder="z.B. 45" />
+              </div>
+              <div className="form-group">
+                <label>Behörde</label>
+                <select value={form.behoerde} onChange={e => setForm({ ...form, behoerde: e.target.value })}>
+                  <option value="">Bitte auswählen</option>
+                  <option value="Stadt Hannover">Stadt Hannover</option>
+                  <option value="Jobcenter">Jobcenter</option>
+                </select>
               </div>
               <div className="form-group">
                 <label>Notizen</label>
