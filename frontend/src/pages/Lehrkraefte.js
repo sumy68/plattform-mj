@@ -10,6 +10,8 @@ export default function Lehrkraefte() {
   const [detailUser, setDetailUser] = useState(null);
   const [editStundensatz, setEditStundensatz] = useState(null);
   const [newStundensatz, setNewStundensatz] = useState('');
+  const [editAbsage, setEditAbsage] = useState(null);
+  const [newAbsage, setNewAbsage] = useState('');
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
@@ -41,9 +43,6 @@ export default function Lehrkraefte() {
     load();
   };
 
-  const [editAbsage, setEditAbsage] = useState(null);
-  const [newAbsage, setNewAbsage] = useState('');
-
   const saveAbsage = async (id) => {
     await axios.patch(`${API}/api/auth/users/${id}`, { absage_stundensatz: parseFloat(newAbsage) });
     setEditAbsage(null);
@@ -55,6 +54,7 @@ export default function Lehrkraefte() {
     await axios.delete(`${API}/api/auth/users/${u.id}`);
     load();
   };
+
   const openDetail = async (u) => {
     const [profilRes, dokRes] = await Promise.all([
       axios.get(`${API}/api/auth/users/${u.id}/profil`),
@@ -73,12 +73,20 @@ export default function Lehrkraefte() {
       </div>
 
       <div className="card">
-        <div className="table-wrap" style={{overflowX:"auto"}}>
-          <table style={{minWidth:800}}>
-          
-            <thead><tr>
-              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Sprachen</th><th>Stundensatz</th><th style={{whiteSpace:"nowrap"}}>Absage-Satz</th><th>Status</th><th style={{whiteSpace:"nowrap"}}>Aktionen</th>
-            </tr></thead>
+        <div className="table-wrap" style={{overflowX:'auto'}}>
+          <table style={{minWidth:900}}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>E-Mail</th>
+                <th>Rolle</th>
+                <th>Sprachen</th>
+                <th style={{whiteSpace:'nowrap'}}>Stundensatz</th>
+                <th style={{whiteSpace:'nowrap'}}>Absage-Satz</th>
+                <th>Status</th>
+                <th style={{whiteSpace:'nowrap'}}>Aktionen</th>
+              </tr>
+            </thead>
             <tbody>
               {users.map(u => (
                 <tr key={u.id}>
@@ -86,32 +94,24 @@ export default function Lehrkraefte() {
                   <td>{u.email}</td>
                   <td style={{whiteSpace:'nowrap'}}>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(u.sprachen) ? u.sprachen : []).slice(0,2).join(', ') || '–'}</td>
-                  <td style={{verticalAlign:"middle"}}><div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  <td>
                     {editStundensatz === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        <input
-                          type="number" step="0.01" value={newStundensatz}
-                          onChange={e=>setNewStundensatz(e.target.value)}
-                          style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}}
-                          autoFocus
-                        />
+                        <input type="number" step="0.01" value={newStundensatz} onChange={e=>setNewStundensatz(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
                         <button className="btn btn-success btn-sm" onClick={()=>saveStundensatz(u.id)}>✓</button>
                         <button className="btn btn-ghost btn-sm" onClick={()=>setEditStundensatz(null)}>✕</button>
                       </div>
                     ) : (
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
                         <span>{u.stundensatz} €/Std.</span>
-                        <button className="btn btn-ghost btn-sm" onClick={()=>{setEditStundensatz(u.id); setNewStundensatz(u.stundensatz);}}>✏️</button>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>{setEditStundensatz(u.id);setNewStundensatz(u.stundensatz);}}>✏️</button>
                       </div>
                     )}
                   </td>
-
-                  <td style={{verticalAlign:"middle"}}><div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  <td>
                     {editAbsage === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        <input type="number" step="0.01" value={newAbsage}
-                          onChange={e=>setNewAbsage(e.target.value)}
-                          style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
+                        <input type="number" step="0.01" value={newAbsage} onChange={e=>setNewAbsage(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
                         <button className="btn btn-success btn-sm" onClick={()=>saveAbsage(u.id)}>✓</button>
                         <button className="btn btn-ghost btn-sm" onClick={()=>setEditAbsage(null)}>✕</button>
                       </div>
@@ -122,23 +122,28 @@ export default function Lehrkraefte() {
                       </div>
                     )}
                   </td>
-                  <td><span className="badge" style={{background:u.aktiv?'#e8f5e9':'#fdecea',color:u.aktiv?'#2e7d32':'#c62828'}}>{u.aktiv?'Aktiv':'Inaktiv'}</span></td>
-                  <td style={{verticalAlign:"middle"}}><div style={{display:"flex",flexDirection:"column",gap:6}}>
-                    <button className="btn btn-ghost btn-sm" onClick={()=>openDetail(u)}>👁️ Details</button>
-                    <button className={`btn btn-sm ${u.aktiv?'btn-danger':'btn-success'}`} onClick={()=>toggleAktiv(u)}>
-                      {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
-                    </button>
-                    <button className="btn btn-sm btn-danger" onClick={()=>deleteUser(u)}>🗑️ Löschen</button>
-                  </div></td>
+                  <td>
+                    <span className="badge" style={{background:u.aktiv?'#e8f5e9':'#fdecea',color:u.aktiv?'#2e7d32':'#c62828'}}>
+                      {u.aktiv?'Aktiv':'Inaktiv'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'flex-start'}}>
+                      <button className="btn btn-ghost btn-sm" onClick={()=>openDetail(u)}>👁️ Details</button>
+                      <button className={`btn btn-sm ${u.aktiv?'btn-danger':'btn-success'}`} onClick={()=>toggleAktiv(u)}>
+                        {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
+                      </button>
+                      <button className="btn btn-sm btn-danger" onClick={()=>deleteUser(u)}>🗑️ Löschen</button>
+                    </div>
+                  </td>
                 </tr>
               ))}
-              {users.length===0 && <tr><td colSpan={7} style={{textAlign:'center',color:'var(--text-light)'}}>Noch keine Lehrkräfte</td></tr>}
+              {users.length===0 && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--text-light)'}}>Noch keine Lehrkräfte</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Detail Modal */}
       {detailUser && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setDetailUser(null)}>
           <div className="modal" style={{maxWidth:680}}>
@@ -196,7 +201,6 @@ export default function Lehrkraefte() {
         </div>
       )}
 
-      {/* Neue Lehrkraft Modal */}
       {modal && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setModal(false)}>
           <div className="modal">
