@@ -108,7 +108,10 @@ router.delete('/:id/zuweisung/:lehrkraft_id', auth, adminOnly, async (req, res) 
 
 router.delete('/:id', auth, adminOnly, async (req, res) => {
   try {
+    await pool.query('DELETE FROM but_antraege WHERE schueler_id=$1', [req.params.id]);
     await pool.query('DELETE FROM lehrkraft_schueler WHERE schueler_id=$1', [req.params.id]);
+    await pool.query('DELETE FROM stunden WHERE schueler_id=$1', [req.params.id]);
+    await pool.query('DELETE FROM but_antraege WHERE schueler_id=$1', [req.params.id]);
     await pool.query('DELETE FROM schueler WHERE id=$1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
