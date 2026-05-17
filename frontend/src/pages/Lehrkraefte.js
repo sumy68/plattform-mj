@@ -104,7 +104,7 @@ export default function Lehrkraefte() {
                         <button className="btn btn-ghost btn-sm" onClick={()=>{setEditStundensatz(u.id); setNewStundensatz(u.stundensatz);}}>✏️</button>
                       </div>
                     )}
-                  </td>
+                  </div></td>
 
                   <td style={{verticalAlign:"middle"}}><div style={{display:"flex",flexDirection:"column",gap:6}}>
                     {editAbsage === u.id ? (
