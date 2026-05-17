@@ -24,6 +24,10 @@ export default function AdminProfil() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [exportMonat, setExportMonat] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportError, setExportError] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -42,10 +46,70 @@ export default function AdminProfil() {
     }
   };
 
+  const handleExport = async (monat) => {
+    setExportLoading(true);
+    setExportError('');
+    try {
+      const token = localStorage.getItem('token');
+      const url = monat
+        ? `${API}/api/export/zip?monat=${monat}`
+        : `${API}/api/export/zip`;
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Export fehlgeschlagen');
+      const blob = await response.blob();
+      const filename = monat ? `MJ_Export_${monat}.zip` : `MJ_Export_Gesamt.zip`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      setExportError('Export fehlgeschlagen. Bitte nochmal versuchen.');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div>
-      <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:32,marginBottom:24,color:'var(--text-dark)'}}>Passwort ändern</h2>
+      <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:32,marginBottom:24,color:'var(--text-dark)'}}>Adminbereich</h2>
+
+      {/* EXPORT */}
+      <div className="card" style={{maxWidth:480,marginBottom:32}}>
+        <h3 style={{fontFamily:'Cormorant Garamond,serif',fontSize:22,marginBottom:16,color:'var(--text-dark)'}}>📦 Dokumente exportieren</h3>
+        <p style={{color:'var(--text-light)',marginBottom:16,fontSize:14}}>Alle BuT-Anträge und Lehrkraft-Dokumente als ZIP herunterladen.</p>
+
+        {exportError && <div style={{background:'#fdecea',border:'2px solid #ef9a9a',borderRadius:10,padding:12,marginBottom:16,color:'#c62828',fontWeight:700}}>❌ {exportError}</div>}
+
+        <div style={{display:'flex',gap:12,alignItems:'flex-end',marginBottom:16}}>
+          <div className="form-group" style={{margin:0,flex:1}}>
+            <label>Monat (optional)</label>
+            <input type="month" value={exportMonat} onChange={e=>setExportMonat(e.target.value)} />
+          </div>
+          <button
+            className="btn btn-primary"
+            disabled={exportLoading}
+            onClick={() => handleExport(exportMonat || null)}
+            style={{whiteSpace:'nowrap'}}
+          >
+            {exportLoading ? '⏳ Lädt...' : '⬇️ ZIP herunterladen'}
+          </button>
+        </div>
+        <button
+          className="btn"
+          disabled={exportLoading}
+          onClick={() => handleExport(null)}
+          style={{width:'100%',background:'var(--bg-light)',color:'var(--text-dark)',border:'2px solid var(--border)'}}
+        >
+          {exportLoading ? '⏳ Lädt...' : '📁 Alle Dokumente (gesamt) herunterladen'}
+        </button>
+      </div>
+
+      {/* PASSWORT */}
       <div className="card" style={{maxWidth:480}}>
+        <h3 style={{fontFamily:'Cormorant Garamond,serif',fontSize:22,marginBottom:16,color:'var(--text-dark)'}}>🔒 Passwort ändern</h3>
         {success && <div style={{background:'#e8f5e9',border:'2px solid #a5d6a7',borderRadius:10,padding:16,marginBottom:20,color:'#2e7d32',fontWeight:700}}>✅ Passwort erfolgreich geändert!</div>}
         {error && <div style={{background:'#fdecea',border:'2px solid #ef9a9a',borderRadius:10,padding:16,marginBottom:20,color:'#c62828',fontWeight:700}}>❌ {error}</div>}
         <form onSubmit={handleSubmit}>
