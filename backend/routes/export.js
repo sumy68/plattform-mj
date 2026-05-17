@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const archiver = require('archiver');
 const { pool } = require('../db');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { auth, adminOnly } = require('../middleware/auth');
 
-router.get('/zip', authenticateToken, requireRole('admin'), async (req, res) => {
+router.get('/zip', auth, adminOnly, async (req, res) => {
   try {
     const { monat } = req.query;
     const params = monat ? [monat] : [];
