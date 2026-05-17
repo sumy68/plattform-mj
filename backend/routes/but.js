@@ -102,7 +102,7 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
     }
     const result = await pool.query(
       `UPDATE but_antraege SET gutscheine_gesamt=$1, gutscheine_verbraucht=$2, gueltig_von=$3, gueltig_bis=$4, notizen=$5, behoerde=$6, aktiv=$7
-       WHERE id=$7 RETURNING *`,
+       WHERE id=$8 RETURNING *`,
       [gutscheine_gesamt, verbraucht, gueltig_von, gueltig_bis, notizen, behoerde || null, aktiv, req.params.id]
     );
     res.json(result.rows[0]);
