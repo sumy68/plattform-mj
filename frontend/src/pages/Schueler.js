@@ -74,6 +74,16 @@ export default function Schueler() {
     }
   };
 
+
+  const deleteSchueler = async (s) => {
+    if (!window.confirm(`${s.vorname} ${s.nachname} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+    try {
+      await axios.delete(`${API}/api/schueler/${s.id}`);
+      load();
+    } catch (err) {
+      alert('Fehler beim Löschen: ' + (err.response?.data?.error || err.message));
+    }
+  };
   const saveLkInfos = async () => {
     setLkEditLoading(true);
     try {
@@ -138,6 +148,7 @@ export default function Schueler() {
                       {!isAdmin && <button className="btn btn-ghost btn-sm" onClick={()=>setDetailSchueler(s)}>📋 Details</button>}
                       {isAdmin && <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)} style={{padding:'6px 10px'}}>✏️ Bearbeiten</button>}
                       {isAdmin && <button className="btn btn-primary btn-sm" onClick={()=>openZuweisung(s)}>👩‍🏫 Zuweisen</button>}
+                      {isAdmin && <button className="btn btn-danger btn-sm" onClick={()=>deleteSchueler(s)}>🗑️ Löschen</button>}
                     </div>
                   </td>
                 </tr>
