@@ -129,9 +129,6 @@ export default function Lehrkraefte() {
                       {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
                     </button>
                     <button className="btn btn-sm btn-danger" onClick={()=>deleteUser(u)}>🗑️ Löschen</button>
-                    </button>
-                    <button className="btn btn-sm btn-danger" onClick={()=>deleteUser(u)}>🗑️</button>
-                    </button>
                   </td>
                 </tr>
               ))}
