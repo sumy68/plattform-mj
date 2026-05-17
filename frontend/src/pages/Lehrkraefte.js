@@ -86,7 +86,7 @@ export default function Lehrkraefte() {
                   <td>{u.email}</td>
                   <td style={{whiteSpace:'nowrap'}}>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(u.sprachen) ? u.sprachen : []).slice(0,2).join(', ') || '–'}</td>
-                  <td>
+                  <td style={{verticalAlign:"middle"}}><div style={{display:"flex",flexDirection:"column",gap:6}}>
                     {editStundensatz === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
                         <input
@@ -106,7 +106,7 @@ export default function Lehrkraefte() {
                     )}
                   </td>
 
-                  <td>
+                  <td style={{verticalAlign:"middle"}}><div style={{display:"flex",flexDirection:"column",gap:6}}>
                     {editAbsage === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
                         <input type="number" step="0.01" value={newAbsage}
@@ -123,13 +123,13 @@ export default function Lehrkraefte() {
                     )}
                   </td>
                   <td><span className="badge" style={{background:u.aktiv?'#e8f5e9':'#fdecea',color:u.aktiv?'#2e7d32':'#c62828'}}>{u.aktiv?'Aktiv':'Inaktiv'}</span></td>
-                  <td>
+                  <td style={{verticalAlign:"middle"}}><div style={{display:"flex",flexDirection:"column",gap:6}}>
                     <button className="btn btn-ghost btn-sm" onClick={()=>openDetail(u)}>👁️ Details</button>
                     <button className={`btn btn-sm ${u.aktiv?'btn-danger':'btn-success'}`} onClick={()=>toggleAktiv(u)}>
                       {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
                     </button>
                     <button className="btn btn-sm btn-danger" onClick={()=>deleteUser(u)}>🗑️ Löschen</button>
-                  </td>
+                  </div></td>
                 </tr>
               ))}
               {users.length===0 && <tr><td colSpan={7} style={{textAlign:'center',color:'var(--text-light)'}}>Noch keine Lehrkräfte</td></tr>}
