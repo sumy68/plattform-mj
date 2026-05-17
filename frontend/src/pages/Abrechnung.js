@@ -54,8 +54,10 @@ export default function Abrechnung() {
       gesamt: lk.stunden.length,
       abgerechnet: lk.stunden.filter(s => s.abgerechnet).length,
       offen: lk.stunden.filter(s => !s.abgerechnet).length,
-      betrag_gesamt: lk.stunden.length * lk.stundensatz,
-      betrag_offen: lk.stunden.filter(s => !s.abgerechnet).length * lk.stundensatz,
+      fahrtkosten_gesamt: lk.stunden.reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
+      fahrtkosten_offen: lk.stunden.filter(s => !s.abgerechnet).reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
+      betrag_gesamt: lk.stunden.length * lk.stundensatz + lk.stunden.reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
+      betrag_offen: lk.stunden.filter(s => !s.abgerechnet).length * lk.stundensatz + lk.stunden.filter(s => !s.abgerechnet).reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
     }));
     const honorarkraefte = lehrkraefte.filter(l => l.role === 'honorarkraft');
     const festlehrkraefte = lehrkraefte.filter(l => l.role === 'lehrkraft');
