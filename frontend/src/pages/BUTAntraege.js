@@ -60,7 +60,7 @@ export default function ButAntraege() {
           reader.readAsDataURL(pdfFile);
         });
       }
-      if (editItem) await axios.put(`${API}/api/but/${editItem.id}`, form);
+      if (editItem) await axios.put(`${API}/api/but/${editItem.id}`, { ...form, ...(pdf_name ? { antrag_pdf_name: pdf_name, antrag_pdf_data: pdf_data } : {}) });
       else await axios.post(`${API}/api/but`, { ...form, antrag_pdf_name: pdf_name, antrag_pdf_data: pdf_data });
       setModal(false);
       load();
@@ -201,7 +201,7 @@ export default function ButAntraege() {
                 <label>Notizen</label>
                 <textarea rows={2} value={form.notizen} onChange={e => setForm({ ...form, notizen: e.target.value })} placeholder="z.B. Antrag vom Jobcenter Hannover" />
               </div>
-              {!editItem && (
+              {true && (
                 <div className="form-group">
                   <label>BuT-Bescheid PDF <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>(optional)</span></label>
                   <input ref={fileRef} type="file" accept=".pdf" onChange={e => setPdfFile(e.target.files[0])} style={{ padding: '8px 0', fontSize: 13 }} />
