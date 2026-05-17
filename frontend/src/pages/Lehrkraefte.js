@@ -72,7 +72,7 @@ export default function Lehrkraefte() {
           <table style={{minWidth:800}}>
           
             <thead><tr>
-              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Stundensatz</th><th style={{whiteSpace:"nowrap"}}>Absage-Satz</th><th>Status</th><th style={{whiteSpace:"nowrap"}}>Aktionen</th>
+              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Sprachen</th><th>Stundensatz</th><th style={{whiteSpace:"nowrap"}}>Absage-Satz</th><th>Status</th><th style={{whiteSpace:"nowrap"}}>Aktionen</th>
             </tr></thead>
             <tbody>
               {users.map(u => (
