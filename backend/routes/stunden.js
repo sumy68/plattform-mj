@@ -2,8 +2,6 @@ const router = require('express').Router();
 const { pool } = require('../db');
 const { auth, adminOnly } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
-const path = require('path');
-const fs = require('fs');
 
 // Stunden abrufen
 router.get('/', auth, async (req, res) => {
@@ -43,7 +41,6 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung } = req.body;
   try {
-    // Dauer berechnen
     const [sh, sm] = startzeit.split(':').map(Number);
     const [eh, em] = endzeit.split(':').map(Number);
     const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
@@ -54,7 +51,6 @@ router.post('/', auth, async (req, res) => {
       [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt]
     );
 
-    // BuT-Gutschein automatisch abziehen wenn Schüler BuT hat
     const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [schueler_id]);
     if (schuelerRes.rows[0]?.but_status) {
       const butRes = await pool.query(
@@ -70,8 +66,6 @@ router.post('/', auth, async (req, res) => {
         const dauer_stunden = Math.round(dauer_minuten / 60);
         const neu = antrag.gutscheine_verbraucht + Math.max(1, dauer_stunden);
         await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
-        
-        // Warnung zurückgeben wenn nur noch 1 übrig
         const verbleibend = antrag.gutscheine_gesamt - neu;
         return res.json({ ...result.rows[0], but_warnung: verbleibend <= 1, but_verbleibend: verbleibend });
       }
@@ -83,13 +77,40 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Stunde löschen
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    // BuT-Gutschein zurückbuchen
+    const stundeRes = await pool.query('SELECT * FROM stunden WHERE id=$1', [req.params.id]);
+    if (stundeRes.rows[0]) {
+      const st = stundeRes.rows[0];
+      const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [st.schueler_id]);
+      if (schuelerRes.rows[0]?.but_status) {
+        const butRes = await pool.query(
+          `SELECT * FROM but_antraege WHERE schueler_id=$1 AND aktiv=true AND gutscheine_verbraucht > 0 ORDER BY gueltig_bis DESC LIMIT 1`,
+          [st.schueler_id]
+        );
+        if (butRes.rows[0]) {
+          const dauer_stunden = Math.round((st.dauer_minuten || 60) / 60);
+          const neu = Math.max(0, butRes.rows[0].gutscheine_verbraucht - Math.max(1, dauer_stunden));
+          await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, butRes.rows[0].id]);
+        }
+      }
+    }
+    await pool.query('DELETE FROM stunden WHERE id=$1 AND (lehrkraft_id=$2 OR $3=true)',
+      [req.params.id, req.user.id, req.user.role === 'admin']);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Unterschrift speichern
 router.patch('/:id/unterschrift', auth, async (req, res) => {
   const { unterschrift_data, unterschrift_name } = req.body;
   try {
     const result = await pool.query(
-      `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW()
-       WHERE id=$3 RETURNING *`,
+      `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW() WHERE id=$3 RETURNING *`,
       [unterschrift_data, unterschrift_name, req.params.id]
     );
     res.json(result.rows[0]);
@@ -106,7 +127,7 @@ router.patch('/abrechnen', auth, async (req, res) => {
       'UPDATE stunden SET abgerechnet=true WHERE id=ANY($1) AND lehrkraft_id=$2',
       [stunden_ids, req.user.id]
     );
-    res.json({ success: true, token });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -130,23 +151,15 @@ router.get('/:id/pdf', auth, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=stundennachweis-${st.id}.pdf`);
     doc.pipe(res);
 
-    // Header ohne Logo
     doc.fontSize(20).fillColor('#9b7fd4').font('Helvetica-Bold');
     doc.text('MJ Lernförderung', 50, 40);
     doc.fontSize(10).fillColor('#888').font('Helvetica');
     doc.text('Georgstraße 38 · 30159 Hannover', 50, 65);
     doc.text('info@mj-lernfoerderung.de · www.mj-lernfoerderung.de', 50, 78);
-
-    // Linie
     doc.moveTo(50, 115).lineTo(545, 115).strokeColor('#9b7fd4').stroke();
-
-    // Titel
     doc.fontSize(16).fillColor('#2d2040').font('Helvetica-Bold');
     doc.text('STUNDENNACHWEIS', 50, 130, { align: 'center' });
-
-    // Info Box
     doc.roundedRect(50, 160, 495, 140, 8).fillColor('#f0ebfa').fill();
-    
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
     doc.text('SCHÜLER', 70, 175);
     doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
@@ -155,7 +168,6 @@ router.get('/:id/pdf', auth, async (req, res) => {
     doc.text(`Schule: ${st.schule || '–'}  ·  Klasse: ${st.klasse || '–'}`, 70, 208);
     doc.text(`Eltern: ${st.eltern_name || '–'}  ·  Tel: ${st.eltern_tel || '–'}`, 70, 222);
     doc.text(`BuT-Förderung: ${st.but_status ? 'Ja ✓' : 'Nein'}`, 70, 236);
-
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
     doc.text('LEHRKRAFT', 320, 175);
     doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
@@ -163,10 +175,7 @@ router.get('/:id/pdf', auth, async (req, res) => {
     doc.fontSize(10).fillColor('#666').font('Helvetica');
     doc.text(`E-Mail: ${st.lehrkraft_email || '–'}`, 320, 208);
     doc.text(`Tel: ${st.lehrkraft_tel || '–'}`, 320, 222);
-
-    // Stunden Details
     doc.roundedRect(50, 315, 495, 100, 8).fillColor('#ffffff').stroke('#e8e0f5');
-    
     const details = [
       ['Datum', new Date(st.datum).toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })],
       ['Uhrzeit', `${st.startzeit} – ${st.endzeit} Uhr (${st.dauer_minuten || '–'} Min.)`],
@@ -177,20 +186,15 @@ router.get('/:id/pdf', auth, async (req, res) => {
         ['Fahrtkosten', `${(st.fahrt_km * 0.38).toFixed(2)} € (0,38 €/km)`],
       ] : []),
     ];
-
     let y = 325;
     details.forEach(([label, value]) => {
       doc.fontSize(10).fillColor('#9b7fd4').font('Helvetica-Bold').text(label + ':', 70, y);
       doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(value, 180, y);
       y += 18;
     });
-
-    // Lernfortschritt
     doc.roundedRect(50, 430, 495, 80, 8).fillColor('#f0ebfa').fill();
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('LERNFORTSCHRITT', 70, 442);
     doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(st.inhalt || '–', 70, 458, { width: 455 });
-
-    // Unterschrift
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('UNTERSCHRIFT ELTERNTEIL', 50, 530);
     if (st.unterschrift_data) {
       const imgData = st.unterschrift_data.replace(/^data:image\/png;base64,/, '');
@@ -202,26 +206,10 @@ router.get('/:id/pdf', auth, async (req, res) => {
       doc.rect(50, 548, 240, 70).strokeColor('#e8e0f5').stroke();
       doc.fontSize(10).fillColor('#bbb').text('Unterschrift ausstehend', 70, 578);
     }
-
-    // Footer
     doc.moveTo(50, 700).lineTo(545, 700).strokeColor('#9b7fd4').stroke();
     doc.fontSize(8).fillColor('#888').font('Helvetica');
     doc.text('MJ Lernförderung · Souad Meryem Jaber · Georgstraße 38 · 30159 Hannover · info@mj-lernfoerderung.de', 50, 710, { align: 'center' });
-
     doc.end();
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-module.exports = router;
-
-// Stunde löschen
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM stunden WHERE id=$1 AND (lehrkraft_id=$2 OR $3=true)', 
-      [req.params.id, req.user.id, req.user.role === 'admin']);
-    res.json({ success: true, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -233,8 +221,6 @@ router.post('/:id/signatur-link', auth, async (req, res) => {
   try {
     const crypto = require('crypto');
     const token = crypto.randomBytes(32).toString('hex');
-    
-    // Stunde laden
     const stundeRes = await pool.query(
       `SELECT st.*, s.vorname, s.nachname, u.name as lehrkraft_name
        FROM stunden st
@@ -245,24 +231,17 @@ router.post('/:id/signatur-link', auth, async (req, res) => {
     );
     const st = stundeRes.rows[0];
     if (!st) return res.status(404).json({ error: 'Stunde nicht gefunden' });
-
-    // Token speichern
     await pool.query(
-      `INSERT INTO signatur_tokens (stunde_id, token, email) VALUES ($1,$2,$3)
-       ON CONFLICT DO NOTHING`,
+      `INSERT INTO signatur_tokens (stunde_id, token, email) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
       [req.params.id, token, email]
     );
-
-    // Email senden
     const nodemailer = require('nodemailer');
     const transporter = nodemailer.createTransport({
       host: 'smtp.ionos.de', port: 587, secure: false,
       auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: 'BENQFunk68!' }
     });
-
     const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
     const datum = new Date(st.datum).toLocaleDateString('de-DE');
-
     await transporter.sendMail({
       from: 'MJ Lernförderung <meryem.jaber@mj-lernfoerderung.de>',
       to: email,
@@ -282,7 +261,6 @@ router.post('/:id/signatur-link', auth, async (req, res) => {
         </div>
       `
     });
-
     res.json({ success: true, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -317,15 +295,16 @@ router.post('/signatur/:token', async (req, res) => {
       [req.params.token]
     );
     if (!tokenRes.rows[0]) return res.status(400).json({ error: 'Link ungültig oder bereits verwendet' });
-    
     const stunde_id = tokenRes.rows[0].stunde_id;
     await pool.query(
       `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW() WHERE id=$3`,
       [unterschrift_data, unterschrift_name, stunde_id]
     );
     await pool.query(`UPDATE signatur_tokens SET verwendet=true WHERE token=$1`, [req.params.token]);
-    res.json({ success: true, token });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+module.exports = router;
