@@ -71,7 +71,7 @@ export default function Lehrkraefte() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Stundensatz</th><th>Absage-Satz</th><th>Status</th><th>Aktionen</th>
+              <th>Name</th><th>E-Mail</th><th>Rolle</th><th>Stundensatz</th><th style={{whiteSpace:"nowrap"}}>Absage-Satz</th><th>Status</th><th>Aktionen</th>
             </tr></thead>
             <tbody>
               {users.map(u => (
