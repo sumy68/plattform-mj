@@ -50,6 +50,11 @@ export default function Lehrkraefte() {
     load();
   };
 
+  const deleteUser = async (u) => {
+    if (!window.confirm(`${u.name} wirklich löschen?`)) return;
+    await axios.delete(`${API}/api/auth/users/${u.id}`);
+    load();
+  };
   const openDetail = async (u) => {
     const [profilRes, dokRes] = await Promise.all([
       axios.get(`${API}/api/auth/users/${u.id}/profil`),
@@ -118,10 +123,14 @@ export default function Lehrkraefte() {
                     )}
                   </td>
                   <td><span className="badge" style={{background:u.aktiv?'#e8f5e9':'#fdecea',color:u.aktiv?'#2e7d32':'#c62828'}}>{u.aktiv?'Aktiv':'Inaktiv'}</span></td>
-                  <td style={{display:'flex',gap:8}}>
+                  <td>
                     <button className="btn btn-ghost btn-sm" onClick={()=>openDetail(u)}>👁️ Details</button>
                     <button className={`btn btn-sm ${u.aktiv?'btn-danger':'btn-success'}`} onClick={()=>toggleAktiv(u)}>
                       {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
+                    </button>
+                    <button className="btn btn-sm btn-danger" onClick={()=>deleteUser(u)}>🗑️ Löschen</button>
+                    </button>
+                    <button className="btn btn-sm btn-danger" onClick={()=>deleteUser(u)}>🗑️</button>
                     </button>
                   </td>
                 </tr>
