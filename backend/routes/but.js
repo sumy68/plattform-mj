@@ -89,7 +89,7 @@ router.post('/', auth, adminOnly, async (req, res) => {
 
 // BuT Antrag bearbeiten (nur Admin)
 router.put('/:id', auth, adminOnly, async (req, res) => {
-  const { gutscheine_gesamt, gutscheine_verbraucht, gueltig_von, gueltig_bis, notizen, behoerde, aktiv } = req.body;
+  const { gutscheine_gesamt, gutscheine_verbraucht, gueltig_von, gueltig_bis, notizen, behoerde, aktiv, antrag_pdf_name, antrag_pdf_data } = req.body;
   try {
     // Wenn gutscheine_verbraucht nicht angegeben, rückwirkend aus Stunden berechnen
     let verbraucht = gutscheine_verbraucht;
@@ -101,9 +101,9 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
       verbraucht = parseInt(res2.rows[0].count) || 0;
     }
     const result = await pool.query(
-      `UPDATE but_antraege SET gutscheine_gesamt=$1, gutscheine_verbraucht=$2, gueltig_von=$3, gueltig_bis=$4, notizen=$5, behoerde=$6, aktiv=$7
+      `UPDATE but_antraege SET gutscheine_gesamt=$1, gutscheine_verbraucht=$2, gueltig_von=$3, gueltig_bis=$4, notizen=$5, behoerde=$6, aktiv=$7, antrag_pdf_name=COALESCE($9, antrag_pdf_name), antrag_pdf_data=COALESCE($10, antrag_pdf_data)
        WHERE id=$8 RETURNING *`,
-      [gutscheine_gesamt, verbraucht, gueltig_von, gueltig_bis, notizen, behoerde || null, aktiv, req.params.id]
+      [gutscheine_gesamt, verbraucht, gueltig_von, gueltig_bis, notizen, behoerde || null, aktiv, req.params.id, antrag_pdf_name || null, antrag_pdf_data || null]
     );
     res.json(result.rows[0]);
   } catch (err) {
