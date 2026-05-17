@@ -78,7 +78,7 @@ export default function Lehrkraefte() {
                 <tr key={u.id}>
                   <td><strong>{u.name}</strong></td>
                   <td>{u.email}</td>
-                  <td>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
+                  <td style={{whiteSpace:'nowrap'}}>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(u.sprachen) ? u.sprachen : []).slice(0,2).join(', ') || '–'}</td>
                   <td>
                     {editStundensatz === u.id ? (
