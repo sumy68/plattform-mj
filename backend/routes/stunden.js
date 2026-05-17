@@ -67,7 +67,8 @@ router.post('/', auth, async (req, res) => {
       );
       if (butRes.rows[0]) {
         const antrag = butRes.rows[0];
-        const neu = antrag.gutscheine_verbraucht + 1;
+        const dauer_stunden = Math.round(dauer_minuten / 60);
+        const neu = antrag.gutscheine_verbraucht + Math.max(1, dauer_stunden);
         await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
         
         // Warnung zurückgeben wenn nur noch 1 übrig
