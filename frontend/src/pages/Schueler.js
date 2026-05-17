@@ -78,7 +78,7 @@ export default function Schueler() {
   const deleteSchueler = async (s) => {
     if (!window.confirm(`${s.vorname} ${s.nachname} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
     try {
-      await axios.delete(`${API}/api/schueler/${s.id}`);
+      await axios.delete(`${API}/api/schueler/${s.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       load();
     } catch (err) {
       alert('Fehler beim Löschen: ' + (err.response?.data?.error || err.message));
