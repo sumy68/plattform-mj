@@ -27,7 +27,11 @@ export default function ButAntraege() {
       axios.get(`${API}/api/but`),
       axios.get(`${API}/api/schueler`)
     ]);
-    setAntraege(aRes.data);
+    setAntraege(aRes.data.map(a => ({
+      ...a,
+      gutscheine_offen: a.gutscheine_gesamt - a.gutscheine_verbraucht,
+      warnung: (a.gutscheine_gesamt - a.gutscheine_verbraucht) <= 12 && (a.gutscheine_gesamt - a.gutscheine_verbraucht) > 0
+    })));
     setSchueler(sRes.data);
   };
 
@@ -78,7 +82,7 @@ export default function ButAntraege() {
   };
 
   const filtered = antraege.filter(a => a.schueler_name?.toLowerCase().includes(search.toLowerCase()));
-  const warnungen = antraege.filter(a => a.warnung && a.gutscheine_offen > 0);
+  const warnungen = antraege.filter(a => a.warnung);
 
   const getStatusColor = (a) => {
     if (a.gutscheine_offen <= 0) return { bg: '#fdecea', color: '#c62828' };
@@ -88,7 +92,7 @@ export default function ButAntraege() {
 
   const getStatusText = (a) => {
     if (a.gutscheine_offen <= 0) return 'Aufgebraucht';
-    if (a.warnung) return '⚠️ Nur noch 1 übrig!';
+    if (a.warnung) return `⚠️ Nur noch ${a.gutscheine_offen} übrig!`;
     return 'Aktiv';
   };
 
@@ -114,7 +118,6 @@ export default function ButAntraege() {
         <div className="stat-card"><div className="stat-number">{antraege.length}</div><div className="stat-label">Anträge gesamt</div></div>
         <div className="stat-card"><div className="stat-number" style={{ color: 'var(--success)' }}>{antraege.filter(a => a.gutscheine_offen > 0).length}</div><div className="stat-label">Aktive Anträge</div></div>
         <div className="stat-card"><div className="stat-number" style={{ color: 'var(--warning)' }}>{warnungen.length}</div><div className="stat-label">Warnungen</div></div>
-
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
@@ -140,7 +143,6 @@ export default function ButAntraege() {
                     <td>{new Date(a.gueltig_von).toLocaleDateString('de-DE')}<br/><small style={{ color: 'var(--text-light)' }}>bis {new Date(a.gueltig_bis).toLocaleDateString('de-DE')}</small></td>
                     <td style={{ textAlign: 'center', fontWeight: 700 }}>{a.gutscheine_gesamt}</td>
                     <td style={{ textAlign: 'center' }}>{a.gutscheine_verbraucht}</td>
-
                     <td><span className="badge" style={{ background: style.bg, color: style.color }}>{getStatusText(a)}</span></td>
                     <td>
                       {a.antrag_pdf_name
@@ -178,7 +180,6 @@ export default function ButAntraege() {
                     <option value="">Bitte wählen...</option>
                     {schueler.map(s => <option key={s.id} value={s.id}>{s.vorname} {s.nachname} (Kl. {s.klasse})</option>)}
                   </select>
-                  <small style={{ color: 'var(--text-light)', fontSize: 12 }}>Alle aktiven Schüler werden angezeigt</small>
                 </div>
               )}
               <div className="form-row">
@@ -201,12 +202,10 @@ export default function ButAntraege() {
                 <label>Notizen</label>
                 <textarea rows={2} value={form.notizen} onChange={e => setForm({ ...form, notizen: e.target.value })} placeholder="z.B. Antrag vom Jobcenter Hannover" />
               </div>
-              {true && (
-                <div className="form-group">
-                  <label>BuT-Bescheid PDF <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>(optional)</span></label>
-                  <input ref={fileRef} type="file" accept=".pdf" onChange={e => setPdfFile(e.target.files[0])} style={{ padding: '8px 0', fontSize: 13 }} />
-                </div>
-              )}
+              <div className="form-group">
+                <label>BuT-Bescheid PDF <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>(optional)</span></label>
+                <input ref={fileRef} type="file" accept=".pdf" onChange={e => setPdfFile(e.target.files[0])} style={{ padding: '8px 0', fontSize: 13 }} />
+              </div>
               <div style={{ background: 'var(--purple-pale)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: 'var(--text-mid)' }}>
                 ⚠️ Eine Warnung erscheint automatisch wenn nur noch 12 Stunden übrig sind.
               </div>
