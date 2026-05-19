@@ -31,7 +31,8 @@ router.get('/guthaben/:user_id', auth, async (req, res) => {
     
     const stunden = stundenRes.rows;
     const stundensatz = parseFloat(user.stundensatz) || 0;
-    const gesamtBetrag = stunden.length * stundensatz;
+    const fahrtkosten = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
+    const gesamtBetrag = stunden.length * stundensatz + fahrtkosten;
     
     // Diesen Monat bereits abgerechnet
     const monat = new Date().toISOString().slice(0,7);
