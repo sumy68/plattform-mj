@@ -317,7 +317,16 @@ export default function Abrechnung() {
             <div className="form-row">
               <div className="form-group">
                 <label>Gewünschter Betrag (€) *</label>
-                <input type="number" step="0.01" min="0" value={auszahlungBetrag} onChange={e=>setAuszahlungBetrag(e.target.value)} placeholder="z.B. 450.00"/>
+                <input type="number" step="0.01" min="0" max={guthaben?.gesamt_betrag?.toFixed(2)} value={auszahlungBetrag} onChange={e=>{
+                  const val = parseFloat(e.target.value);
+                  if (guthaben?.gesamt_betrag && val > guthaben.gesamt_betrag) {
+                    setAuszahlungBetrag(guthaben.gesamt_betrag.toFixed(2));
+                  } else {
+                    setAuszahlungBetrag(e.target.value);
+                  }
+                }} placeholder="z.B. 450.00"/>
+                {guthaben?.gesamt_betrag > 0 && <div style={{fontSize:12,color:'var(--text-light)',marginTop:4}}>💡 Offenes Guthaben: <strong>{guthaben.gesamt_betrag.toFixed(2)} €</strong> — Maximum das du beantragen kannst</div>}
+                {auszahlungBetrag && guthaben?.gesamt_betrag && parseFloat(auszahlungBetrag) > guthaben.gesamt_betrag && <div style={{fontSize:12,color:'var(--danger)',marginTop:4}}>⚠️ Betrag überschreitet dein offenes Guthaben von {guthaben.gesamt_betrag.toFixed(2)} €</div>}
               </div>
               <div className="form-group">
                 <label>Leistungszeitraum von</label>
@@ -329,7 +338,7 @@ export default function Abrechnung() {
               </div>
             </div>
             {bereitsEingereicht && <div style={{background:'#fff3e0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:13,color:'#e65100'}}>⚠️ Du hast für diesen Monat bereits einen Auszahlungswunsch eingereicht.</div>}
-            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading || bereitsEingereicht}>
+            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading || bereitsEingereicht || (guthaben?.gesamt_betrag && parseFloat(auszahlungBetrag) > guthaben.gesamt_betrag)}>
               {auszahlungLoading ? 'Wird gesendet...' : '💸 Auszahlung beantragen'}
             </button>
           </div>
