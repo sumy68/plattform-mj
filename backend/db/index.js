@@ -101,7 +101,7 @@ const initDB = async () => {
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_km DECIMAL(10,2)`);
     await client.query(`CREATE TABLE IF NOT EXISTS auszahlungswuensche (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
       betrag DECIMAL(10,2) NOT NULL,
       monat VARCHAR(7) NOT NULL,
       notizen TEXT,

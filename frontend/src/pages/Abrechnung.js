@@ -161,7 +161,7 @@ export default function Abrechnung() {
             <div className="card-title">💸 Auszahlungswünsche Lehrkräfte</div>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>Lehrkraft</th><th>Monat</th><th>Betrag</th><th>Notiz</th><th>Eingereicht</th><th>Status</th></tr></thead>
+                <thead><tr><th>Lehrkraft</th><th>Monat</th><th>Betrag</th><th>Notiz</th><th>Eingereicht</th><th>Status</th><th>Aktionen</th></tr></thead>
                 <tbody>
                   {auszahlungen.map(a => (
                     <tr key={a.id}>
@@ -178,6 +178,13 @@ export default function Abrechnung() {
                             }}>✅ Als erledigt markieren</button>
                           : <span className="badge" style={{background:'#e8f5e9',color:'#2e7d32'}}>✅ Erledigt</span>
                         }
+                      </td>
+                      <td>
+                        <button className="btn btn-danger btn-sm" onClick={async()=>{
+                          if(!window.confirm('Auszahlungswunsch wirklich löschen?')) return;
+                          await axios.delete(`${API}/api/abrechnung/auszahlung/${a.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                          loadAuszahlungen();
+                        }}>🗑️</button>
                       </td>
                     </tr>
                   ))}
