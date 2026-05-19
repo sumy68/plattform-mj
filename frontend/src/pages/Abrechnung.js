@@ -39,8 +39,8 @@ export default function Abrechnung() {
 
   const loadAdminStats = async () => {
     const [stundenRes, usersRes] = await Promise.all([
-      axios.get(`${API}/api/stunden?monat=${monat === 'alle' ? new Date().toISOString().slice(0,7) : monat}`),
-      axios.get(`${API}/api/auth/users`)
+      axios.get(`${API}/api/stunden?monat=${monat === 'alle' ? new Date().toISOString().slice(0,7) : monat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      axios.get(`${API}/api/auth/users`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     ]);
     const allStunden = stundenRes.data;
     const allUsers = usersRes.data.filter(u => u.role !== 'admin');
@@ -109,7 +109,7 @@ export default function Abrechnung() {
     setAuszahlungLoading(true);
     try {
       const notizen = auszahlungVon && auszahlungBis ? `${auszahlungVon} bis ${auszahlungBis}` : '';
-      await axios.post(`${API}/api/abrechnung/auszahlung`, { betrag: parseFloat(auszahlungBetrag), monat, notizen });
+      await axios.post(`${API}/api/abrechnung/auszahlung`, { betrag: parseFloat(auszahlungBetrag), monat, notizen }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setSuccess('✅ Auszahlungswunsch eingereicht!');
       setAuszahlungBetrag('');
       setAuszahlungVon('');
@@ -132,7 +132,7 @@ export default function Abrechnung() {
     if (!window.confirm(`Rechnung über ${selectedBetrag.toFixed(2)}€ erstellen und an MJ senden?`)) return;
     setLoading(true);
     try {
-      const res = await axios.post(`${API}/api/abrechnung/rechnung`, { stunden_ids: selected, betrag: selectedBetrag });
+      const res = await axios.post(`${API}/api/abrechnung/rechnung`, { stunden_ids: selected, betrag: selectedBetrag }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setSuccess(`✅ Rechnung ${res.data.rechnungsnummer} erstellt und per E-Mail gesendet!`);
       setTimeout(() => setSuccess(''), 8000);
       loadGuthaben();
@@ -184,7 +184,7 @@ export default function Abrechnung() {
                       <td>
                         {a.status === 'offen'
                           ? <button className="btn btn-success btn-sm" onClick={async()=>{
-                              await axios.patch(`${API}/api/abrechnung/auszahlung/${a.id}`, {status:'erledigt'});
+                              await axios.patch(`${API}/api/abrechnung/auszahlung/${a.id}`, {status:'erledigt'}, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                               loadAuszahlungen();
                             }}>✅ Als erledigt markieren</button>
                           : <span className="badge" style={{background:'#e8f5e9',color:'#2e7d32'}}>✅ Erledigt</span>
