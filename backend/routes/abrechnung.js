@@ -351,7 +351,7 @@ router.post('/auszahlung', auth, async (req, res) => {
     try {
       await transporter.sendMail({
         from: 'meryem.jaber@mj-lernfoerderung.de',
-        to: 'meryem.jaber@mj-lernfoerderung.de',
+        to: 'info@mj-lernfoerderung.de',
         subject: `Neuer Auszahlungswunsch von ${name}`,
         text: `${name} hat einen Auszahlungswunsch eingereicht.\n\nBetrag: ${betrag} €\nMonat: ${monat}\nLeistungszeitraum: ${notizen || '–'}\n\nBitte im Admin-Bereich prüfen.`
       });
