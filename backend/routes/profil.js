@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 router.get('/', auth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id,name,email,role,stundensatz,profil_komplett,vorname,nachname,geschlecht,adresse,plz,ort,iban,steuernummer,geburtsdatum,telefon,sprachen FROM users WHERE id=$1',
+      'SELECT id,name,email,role,stundensatz,profil_komplett,vorname,nachname,geschlecht,adresse,plz,ort,iban,steuernummer,geburtsdatum,telefon,sprachen,fuehrerschein FROM users WHERE id=$1',
       [req.user.id]
     );
     res.json(result.rows[0]);
