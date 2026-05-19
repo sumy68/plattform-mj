@@ -69,6 +69,7 @@ export default function Abrechnung() {
       total_stunden: allStunden.length,
       total_kosten: lehrkraefte.reduce((sum, l) => sum + l.betrag_gesamt, 0),
       total_offen: lehrkraefte.reduce((sum, l) => sum + l.betrag_offen, 0),
+      auszahlungen_offen: 0,
       honorar_kosten: honorarkraefte.reduce((sum, l) => sum + l.betrag_gesamt, 0),
     });
   };
@@ -152,7 +153,7 @@ export default function Abrechnung() {
         <div className="stats-grid" style={{marginBottom:24}}>
           <div className="stat-card"><div className="stat-number">{adminStats.total_stunden}</div><div className="stat-label">Stunden gesamt</div></div>
           <div className="stat-card"><div className="stat-number" style={{color:'var(--danger)'}}>{adminStats.total_kosten.toFixed(0)} €</div><div className="stat-label">Gesamtkosten</div></div>
-          <div className="stat-card"><div className="stat-number" style={{color:'var(--warning)'}}>{adminStats.total_offen.toFixed(0)} €</div><div className="stat-label">Noch auszuzahlen</div></div>
+          <div className="stat-card"><div className="stat-number" style={{color:'var(--warning)'}}>{auszahlungen.filter(a=>a.status!=='erledigt').reduce((sum,a)=>sum+parseFloat(a.betrag),0).toFixed(0)} €</div><div className="stat-label">Noch auszuzahlen</div></div>
           <div className="stat-card"><div className="stat-number">{adminStats.honorarkraefte.length}</div><div className="stat-label">Aktive Honorarkräfte</div></div>
         </div>
         {auszahlungen.length > 0 && (
