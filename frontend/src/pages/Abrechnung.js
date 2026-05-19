@@ -19,7 +19,9 @@ export default function Abrechnung() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [auszahlungBetrag, setAuszahlungBetrag] = useState('');
-  const [auszahlungNotiz, setAuszahlungNotiz] = useState('');
+  const [auszahlungVon, setAuszahlungVon] = useState('');
+  const [auszahlungBis, setAuszahlungBis] = useState('');
+  const [bereitsEingereicht, setBereitsEingereicht] = useState(false);
   const [auszahlungLoading, setAuszahlungLoading] = useState(false);
 
   useEffect(() => {
@@ -89,10 +91,13 @@ export default function Abrechnung() {
     if (!window.confirm(`Auszahlung von ${parseFloat(auszahlungBetrag).toFixed(2)}€ beantragen?`)) return;
     setAuszahlungLoading(true);
     try {
-      await axios.post(`${API}/api/abrechnung/auszahlung`, { betrag: parseFloat(auszahlungBetrag), monat, notizen: auszahlungNotiz });
+      const notizen = auszahlungVon && auszahlungBis ? `${auszahlungVon} bis ${auszahlungBis}` : '';
+      await axios.post(`${API}/api/abrechnung/auszahlung`, { betrag: parseFloat(auszahlungBetrag), monat, notizen });
       setSuccess('✅ Auszahlungswunsch eingereicht!');
       setAuszahlungBetrag('');
-      setAuszahlungNotiz('');
+      setAuszahlungVon('');
+      setAuszahlungBis('');
+      setBereitsEingereicht(true);
       setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
       alert('Fehler: ' + (err.response?.data?.error || err.message));
@@ -290,11 +295,16 @@ export default function Abrechnung() {
                 <input type="number" step="0.01" min="0" value={auszahlungBetrag} onChange={e=>setAuszahlungBetrag(e.target.value)} placeholder="z.B. 450.00"/>
               </div>
               <div className="form-group">
-                <label>Notiz (optional)</label>
-                <input value={auszahlungNotiz} onChange={e=>setAuszahlungNotiz(e.target.value)} placeholder="z.B. Mai 2026"/>
+                <label>Leistungszeitraum von</label>
+                <input type="date" value={auszahlungVon} onChange={e=>setAuszahlungVon(e.target.value)}/>
+              </div>
+              <div className="form-group">
+                <label>Leistungszeitraum bis</label>
+                <input type="date" value={auszahlungBis} onChange={e=>setAuszahlungBis(e.target.value)}/>
               </div>
             </div>
-            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading}>
+            {bereitsEingereicht && <div style={{background:'#fff3e0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:13,color:'#e65100'}}>⚠️ Du hast für diesen Monat bereits einen Auszahlungswunsch eingereicht.</div>}
+            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading || bereitsEingereicht}>
               {auszahlungLoading ? 'Wird gesendet...' : '💸 Auszahlung beantragen'}
             </button>
           </div>

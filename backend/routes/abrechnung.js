@@ -333,10 +333,31 @@ router.get('/meine-rechnungen', auth, async (req, res) => {
 router.post('/auszahlung', auth, async (req, res) => {
   const { betrag, monat, notizen } = req.body;
   try {
+    // Einmal pro Monat Check
+    const existing = await pool.query(
+      'SELECT id FROM auszahlungswuensche WHERE user_id=$1 AND monat=$2',
+      [req.user.id, monat]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Du hast für diesen Monat bereits einen Auszahlungswunsch eingereicht.' });
+    }
     const result = await pool.query(
       `INSERT INTO auszahlungswuensche (user_id, betrag, monat, notizen) VALUES ($1,$2,$3,$4) RETURNING *`,
       [req.user.id, betrag, monat, notizen || null]
     );
+    // Email an Admin
+    const userRes = await pool.query('SELECT name FROM users WHERE id=$1', [req.user.id]);
+    const name = userRes.rows[0]?.name || 'Lehrkraft';
+    try {
+      await transporter.sendMail({
+        from: 'meryem.jaber@mj-lernfoerderung.de',
+        to: 'meryem.jaber@mj-lernfoerderung.de',
+        subject: `Neuer Auszahlungswunsch von ${name}`,
+        text: `${name} hat einen Auszahlungswunsch eingereicht.\n\nBetrag: ${betrag} €\nMonat: ${monat}\nLeistungszeitraum: ${notizen || '–'}\n\nBitte im Admin-Bereich prüfen.`
+      });
+    } catch (mailErr) {
+      console.error('Email Fehler:', mailErr.message);
+    }
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
