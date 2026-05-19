@@ -90,7 +90,12 @@ export default function Abrechnung() {
     setSelected(selected.length === offeneStunden.length ? [] : offeneStunden.map(s=>s.id));
   };
 
-  const selectedBetrag = selected.length * (guthaben?.stundensatz || 0);
+  const selectedBetrag = selected.reduce((sum, id) => {
+    const st = (guthaben?.stunden || []).find(s => s.id === id);
+    const stundenBetrag = parseFloat(guthaben?.stundensatz || 0);
+    const fahrtBetrag = st?.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
+    return sum + stundenBetrag + fahrtBetrag;
+  }, 0);
 
   // Stunden die in erledigten Auszahlungszeiträumen liegen ausblenden
   const offeneStunden = (guthaben?.stunden || []).filter(st => {

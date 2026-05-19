@@ -29,7 +29,8 @@ export default function Stunden({ adminView }) {
       const geocode = async (addr) => {
         const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`, { headers: { 'Accept-Language': 'de' } });
         const d = await r.json();
-        return d.features[0]?.geometry?.coordinates;
+        if (!d || !d[0]) return null;
+        return [parseFloat(d[0].lon), parseFloat(d[0].lat)];
       };
       const vonAdresse = `${form.fahrt_von||''} ${form.fahrt_von_nr||''}, ${form.fahrt_von_plz||''} ${form.fahrt_von_ort||''}`;
       const nachAdresse = `${form.fahrt_nach||''} ${form.fahrt_nach_nr||''}, ${form.fahrt_nach_plz||''} ${form.fahrt_nach_ort||''}`;
