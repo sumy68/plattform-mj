@@ -335,6 +335,17 @@ export default function Abrechnung() {
           </div>
         )}
 
+        {!isHonorar && meineAuszahlungen.length > 0 && (
+          <div className="card" style={{marginBottom:24,background:'#f3f0ff'}}>
+            <div className="card-title" style={{fontSize:14}}>📋 Bereits eingereichte Auszahlungen</div>
+            {meineAuszahlungen.map(a => (
+              <div key={a.id} style={{fontSize:13,padding:'6px 0',borderBottom:'1px solid var(--lavender)',display:'flex',justifyContent:'space-between'}}>
+                <span>{a.notizen || a.monat}</span>
+                <span style={{fontWeight:700}}>{parseFloat(a.betrag).toFixed(2)} € — <span style={{color: a.status==='erledigt' ? 'var(--success)' : 'var(--warning)'}}>{a.status}</span></span>
+              </div>
+            ))}
+          </div>
+        )}
         {/* Stunden Auswahl */}
         <div className="card">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:12}}>
