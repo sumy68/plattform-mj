@@ -22,7 +22,7 @@ export default function ProfilEinrichten() {
       navigate('/meine-stunden');
       return;
     }
-    axios.get(`${API}/api/profil`).then(res => {
+    axios.get(`${API}/api/profil`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }).then(res => {
       if (res.data.profil_komplett) {
         navigate('/meine-stunden');
       }
@@ -37,7 +37,7 @@ export default function ProfilEinrichten() {
     }
     setLoading(true);
     try {
-      await axios.put(`${API}/api/profil`, form);
+      await axios.put(`${API}/api/profil`, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
       localStorage.setItem('user', JSON.stringify({ ...savedUser, profil_komplett: true }));
       navigate('/meine-stunden');

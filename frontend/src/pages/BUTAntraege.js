@@ -24,8 +24,8 @@ export default function ButAntraege() {
 
   const load = async () => {
     const [aRes, sRes] = await Promise.all([
-      axios.get(`${API}/api/but`),
-      axios.get(`${API}/api/schueler`)
+      axios.get(`${API}/api/but`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      axios.get(`${API}/api/schueler`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     ]);
     setAntraege(aRes.data.map(a => ({
       ...a,
@@ -77,7 +77,7 @@ export default function ButAntraege() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Antrag löschen?')) return;
-    await axios.delete(`${API}/api/but/${id}`);
+    await axios.delete(`${API}/api/but/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     load();
   };
 

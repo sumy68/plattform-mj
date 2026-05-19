@@ -21,8 +21,8 @@ export default function Kalender() {
   useEffect(() => {
     const load = async () => {
       const [stRes, abRes] = await Promise.all([
-        axios.get(`${API}/api/stunden?monat=${monatStr}`),
-        axios.get(`${API}/api/abwesenheiten`)
+        axios.get(`${API}/api/stunden?monat=${monatStr}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+        axios.get(`${API}/api/abwesenheiten`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
       ]);
       setStunden(stRes.data);
       setAbwesenheiten(abRes.data.filter(a => {

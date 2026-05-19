@@ -11,8 +11,8 @@ export default function Freischaltung() {
 
   const load = async () => {
     const [pRes, uRes] = await Promise.all([
-      axios.get(`${API}/api/auth/pending`),
-      axios.get(`${API}/api/abwesenheiten/pending-urlaub`)
+      axios.get(`${API}/api/auth/pending`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      axios.get(`${API}/api/abwesenheiten/pending-urlaub`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     ]);
     setPending(pRes.data);
     setUrlaube(uRes.data);
@@ -20,13 +20,13 @@ export default function Freischaltung() {
   useEffect(() => { load(); }, []);
 
   const freischalten = async (id) => {
-    await axios.patch(`${API}/api/auth/freischalten/${id}`);
+    await axios.patch(`${API}/api/auth/freischalten/${id}`, {}, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     load();
   };
 
   const ablehnen = async (id) => {
     if (!window.confirm('Account ablehnen und löschen?')) return;
-    await axios.delete(`${API}/api/auth/ablehnen/${id}`);
+    await axios.delete(`${API}/api/auth/ablehnen/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     load();
   };
 

@@ -75,7 +75,7 @@ export default function Abrechnung() {
   };
 
   const loadGuthaben = async () => {
-    const res = await axios.get(`${API}/api/abrechnung/guthaben/${user.id}`);
+    const res = await axios.get(`${API}/api/abrechnung/guthaben/${user.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     setGuthaben(res.data);
     setSelected([]);
     try {

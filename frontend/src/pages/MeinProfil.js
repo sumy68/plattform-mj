@@ -23,7 +23,7 @@ export default function MeinProfil() {
   const [showNeu2, setShowNeu2] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await axios.get(`${API}/api/profil`);
+    const res = await axios.get(`${API}/api/profil`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     setProfil(res.data);
     setForm({
       vorname: res.data.vorname || '',
@@ -42,7 +42,7 @@ export default function MeinProfil() {
     });
     if (res.data.role === 'honorarkraft') {
       try {
-        const rRes = await axios.get(`${API}/api/abrechnung/meine-rechnungen`);
+        const rRes = await axios.get(`${API}/api/abrechnung/meine-rechnungen`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
         setRechnungen(rRes.data);
       } catch(e) {}
     }
@@ -59,7 +59,7 @@ export default function MeinProfil() {
     e.preventDefault();
     setLoading(true); setError(''); setSuccess('');
     try {
-      await axios.put(`${API}/api/profil`, form);
+      await axios.put(`${API}/api/profil`, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setSuccess('Profil gespeichert ✅');
     } catch (err) {
       setError(err.response?.data?.error || 'Fehler beim Speichern');
@@ -75,7 +75,7 @@ export default function MeinProfil() {
     if (pwNeu.length < 6) return setPwError('Mindestens 6 Zeichen');
     setPwLoading(true);
     try {
-      await axios.put(`${API}/api/profil/passwort`, { altes_passwort: pwAlt, neues_passwort: pwNeu });
+      await axios.put(`${API}/api/profil/passwort`, { altes_passwort: pwAlt, neues_passwort: pwNeu }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setPwSuccess('Passwort geändert ✅');
       setPwAlt(''); setPwNeu(''); setPwNeu2('');
     } catch (err) {

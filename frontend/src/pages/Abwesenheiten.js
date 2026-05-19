@@ -17,7 +17,7 @@ export default function Abwesenheiten() {
   const fileRef = useRef(null);
 
   const load = async () => {
-    const res = await axios.get(`${API}/api/abwesenheiten`);
+    const res = await axios.get(`${API}/api/abwesenheiten`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     setAbwesenheiten(res.data);
   };
   useEffect(() => { load(); }, []);
@@ -35,7 +35,7 @@ export default function Abwesenheiten() {
           reader.readAsDataURL(auFile);
         });
       }
-      await axios.post(`${API}/api/abwesenheiten`, { ...form, au_pdf_name, au_pdf_data });
+      await axios.post(`${API}/api/abwesenheiten`, { ...form, au_pdf_name, au_pdf_data }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setModal(false);
       setForm({ typ: 'krank', datum_von: '', datum_bis: '', notizen: '' });
       setAuFile(null);
@@ -49,7 +49,7 @@ export default function Abwesenheiten() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Abwesenheit löschen?')) return;
-    await axios.delete(`${API}/api/abwesenheiten/${id}`);
+    await axios.delete(`${API}/api/abwesenheiten/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     load();
   };
 

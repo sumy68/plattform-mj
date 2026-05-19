@@ -62,7 +62,7 @@ export default function Stunden({ adminView }) {
 
   const load = async () => {
     const [st, sc] = await Promise.all([
-      axios.get(`${API}/api/stunden?monat=${monat}`),
+      axios.get(`${API}/api/stunden?monat=${monat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
       axios.get(`${API}/api/schueler`)
     ]);
     setStunden(st.data);
@@ -124,7 +124,7 @@ export default function Stunden({ adminView }) {
   const deleteStunde = async (id) => {
     if (!window.confirm('Stunde wirklich löschen?')) return;
     try {
-      await axios.delete(`${API}/api/stunden/${id}`);
+      await axios.delete(`${API}/api/stunden/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       load();
     } catch (err) {
       alert('Fehler: ' + (err.response?.data?.error || err.message));
