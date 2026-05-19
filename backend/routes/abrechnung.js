@@ -171,7 +171,8 @@ router.post('/rechnung', auth, async (req, res) => {
         y += 18;
         if (st.fahrt_km && parseFloat(st.fahrt_km) > 0) {
           doc.fontSize(8).fillColor('#888');
-          doc.text(`Fahrtkosten (${st.fahrt_km} km × 0,38 €)`, 130, y, { width: 300 });
+          const fahrtRoute = (st.fahrt_von && st.fahrt_nach) ? ` (${st.fahrt_von} → ${st.fahrt_nach})` : '';
+          doc.text(`Fahrtkosten${fahrtRoute}: ${st.fahrt_km} km × 0,38 €`, 130, y, { width: 300 });
           doc.text(`${(parseFloat(st.fahrt_km) * 0.38).toFixed(2)} €`, 490, y);
           doc.fillColor('#333');
           y += 14;
