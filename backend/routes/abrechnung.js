@@ -161,6 +161,13 @@ router.post('/rechnung', auth, async (req, res) => {
         doc.text(st.fach || '–', 380, y);
         doc.text(`${parseFloat(user.stundensatz).toFixed(2)} €`, 490, y);
         y += 18;
+        if (st.fahrt_km && parseFloat(st.fahrt_km) > 0) {
+          doc.fontSize(8).fillColor('#888');
+          doc.text(`Fahrtkosten (${st.fahrt_km} km × 0,38 €)`, 130, y, { width: 300 });
+          doc.text(`${(parseFloat(st.fahrt_km) * 0.38).toFixed(2)} €`, 490, y);
+          doc.fillColor('#333');
+          y += 14;
+        }
       });
       
       // Summe
