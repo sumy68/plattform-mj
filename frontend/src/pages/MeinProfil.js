@@ -38,7 +38,7 @@ export default function MeinProfil() {
       steuernummer: res.data.steuernummer || '',
       geburtsdatum: res.data.geburtsdatum ? res.data.geburtsdatum.split('T')[0] : '',
       sprachen: res.data.sprachen || [],
-      fuehrerschein: res.data.fuehrerschein || false,
+      fuehrerschein: res.data.fuehrerschein === true || res.data.fuehrerschein === 'true' || false,
     });
     if (res.data.role === 'honorarkraft') {
       try {
