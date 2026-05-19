@@ -180,9 +180,21 @@ router.post('/rechnung', auth, async (req, res) => {
       });
       
       // Summe
+      const stundenSumme = stunden.length * parseFloat(user.stundensatz);
+      const fahrtSumme = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
       doc.moveTo(50, y + 5).lineTo(545, y + 5).strokeColor('#9b7fd4').stroke();
+      doc.fontSize(10).font('Helvetica').fillColor('#555');
+      doc.text(`Honorar (${stunden.length} Stunden × ${parseFloat(user.stundensatz).toFixed(2)} €):`, 50, y + 15);
+      doc.text(`${stundenSumme.toFixed(2)} €`, 490, y + 15);
+      if (fahrtSumme > 0) {
+        doc.text(`Fahrtkosten gesamt:`, 50, y + 30);
+        doc.text(`${fahrtSumme.toFixed(2)} €`, 490, y + 30);
+        y += 15;
+      }
+      doc.moveTo(380, y + 35).lineTo(545, y + 35).strokeColor('#9b7fd4').stroke();
       doc.fontSize(12).font('Helvetica-Bold').fillColor('#9b7fd4');
-      doc.text(`Gesamtbetrag: ${finalBetrag.toFixed(2)} €`, 50, y + 15, { align: 'right' });
+      doc.text(`Gesamtbetrag: ${finalBetrag.toFixed(2)} €`, 50, y + 45, { align: 'right' });
+      y += 30;
       
       // IBAN
       doc.fontSize(10).fillColor('#333').font('Helvetica-Bold');
