@@ -333,13 +333,13 @@ router.get('/meine-rechnungen', auth, async (req, res) => {
 router.post('/auszahlung', auth, async (req, res) => {
   const { betrag, monat, notizen } = req.body;
   try {
-    // Einmal pro Monat Check
+    // Check: gleicher Leistungszeitraum bereits eingereicht?
     const existing = await pool.query(
-      'SELECT id FROM auszahlungswuensche WHERE user_id=$1 AND monat=$2',
-      [req.user.id, monat]
+      'SELECT id FROM auszahlungswuensche WHERE user_id=$1 AND notizen=$2',
+      [req.user.id, notizen || null]
     );
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: 'Du hast für diesen Monat bereits einen Auszahlungswunsch eingereicht.' });
+    if (existing.rows.length > 0 && notizen) {
+      return res.status(400).json({ error: 'Du hast für diesen Leistungszeitraum bereits einen Auszahlungswunsch eingereicht.' });
     }
     const result = await pool.query(
       `INSERT INTO auszahlungswuensche (user_id, betrag, monat, notizen) VALUES ($1,$2,$3,$4) RETURNING *`,
