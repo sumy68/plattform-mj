@@ -94,6 +94,14 @@ router.post('/rechnung', auth, async (req, res) => {
     );
     const stunden = stundenRes.rows;
     
+    // Betrag selbst berechnen inkl. Fahrtkosten
+    const berechneterBetrag = stunden.reduce((sum, st) => {
+      const stundenBetrag = parseFloat(user.stundensatz) || 0;
+      const fahrtBetrag = st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
+      return sum + stundenBetrag + fahrtBetrag;
+    }, 0);
+    const finalBetrag = berechneterBetrag;
+
     // Rechnungsnummer generieren
     const rechnungsnr = `MJ-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
     const datum = new Date().toLocaleDateString('de-DE');
@@ -173,7 +181,7 @@ router.post('/rechnung', auth, async (req, res) => {
       // Summe
       doc.moveTo(50, y + 5).lineTo(545, y + 5).strokeColor('#9b7fd4').stroke();
       doc.fontSize(12).font('Helvetica-Bold').fillColor('#9b7fd4');
-      doc.text(`Gesamtbetrag: ${parseFloat(betrag).toFixed(2)} €`, 50, y + 15, { align: 'right' });
+      doc.text(`Gesamtbetrag: ${finalBetrag.toFixed(2)} €`, 50, y + 15, { align: 'right' });
       
       // IBAN
       doc.fontSize(10).fillColor('#333').font('Helvetica-Bold');
@@ -201,7 +209,7 @@ router.post('/rechnung', auth, async (req, res) => {
     // Rechnung in DB speichern
     await pool.query(
       `INSERT INTO rechnungen (user_id, stunden_ids, betrag, rechnungsnummer, pdf_data) VALUES ($1,$2,$3,$4,$5)`,
-      [userId, stunden_ids, betrag, rechnungsnr, pdfBase64]
+      [userId, stunden_ids, finalBetrag, rechnungsnr, pdfBase64]
     );
     
     // Stunden als abgerechnet markieren

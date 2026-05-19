@@ -27,7 +27,7 @@ export default function Stunden({ adminView }) {
     setKmLaden(true);
     try {
       const geocode = async (addr) => {
-        const r = await fetch(`https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${encodeURIComponent(addr)}&size=1`);
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`, { headers: { 'Accept-Language': 'de' } });
         const d = await r.json();
         return d.features[0]?.geometry?.coordinates;
       };
@@ -35,13 +35,9 @@ export default function Stunden({ adminView }) {
       const nachAdresse = `${form.fahrt_nach||''} ${form.fahrt_nach_nr||''}, ${form.fahrt_nach_plz||''} ${form.fahrt_nach_ort||''}`;
       const [from, to] = await Promise.all([geocode(vonAdresse), geocode(nachAdresse)]);
       if (!from || !to) return alert('Adresse nicht gefunden');
-      const r = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', {
-        method: 'POST',
-        headers: { 'Authorization': ORS_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coordinates: [from, to] })
-      });
+      const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${from[0]},${from[1]};${to[0]},${to[1]}?overview=false`);
       const d = await r.json();
-      const km = (d.routes[0].summary.distance / 1000).toFixed(1);
+      const km = (d.routes[0].distance / 1000).toFixed(1);
       setForm(f => ({ ...f, fahrt_km: parseFloat(km) }));
     } catch(e) {
       alert('Fehler bei Berechnung: ' + e.message);
