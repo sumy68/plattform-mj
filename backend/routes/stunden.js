@@ -23,9 +23,8 @@ router.get('/', auth, async (req, res) => {
       query += ` AND st.lehrkraft_id=$${params.length}`;
     }
     if (monat) {
-      params.push(monat + '-01');
-      params.push(monat + '-31');
-      query += ` AND st.datum BETWEEN $${params.length-1} AND $${params.length}`;
+      params.push(monat);
+      query += ` AND to_char(st.datum, 'YYYY-MM') = $${params.length}`;
     }
     if (schueler_id) { params.push(schueler_id); query += ` AND st.schueler_id=$${params.length}`; }
     if (lehrkraft_id && req.user.role === 'admin') { params.push(lehrkraft_id); query += ` AND st.lehrkraft_id=$${params.length}`; }
