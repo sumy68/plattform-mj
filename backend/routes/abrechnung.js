@@ -389,6 +389,16 @@ router.get('/auszahlungen', auth, async (req, res) => {
   }
 });
 
+// Auszahlung löschen (Admin)
+router.delete('/auszahlung/:id', auth, adminOnly, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM auszahlungswuensche WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Auszahlung als erledigt markieren
 router.patch('/auszahlung/:id', auth, async (req, res) => {
   try {
