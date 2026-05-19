@@ -364,6 +364,19 @@ router.post('/auszahlung', auth, async (req, res) => {
   }
 });
 
+// Eigene Auszahlungswünsche (Lehrkraft)
+router.get('/meine-auszahlungen', auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM auszahlungswuensche WHERE user_id=$1 ORDER BY created_at DESC',
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Alle Auszahlungswünsche (Admin)
 router.get('/auszahlungen', auth, async (req, res) => {
   try {

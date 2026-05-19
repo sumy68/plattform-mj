@@ -22,6 +22,7 @@ export default function Abrechnung() {
   const [auszahlungVon, setAuszahlungVon] = useState('');
   const [auszahlungBis, setAuszahlungBis] = useState('');
   const [bereitsEingereicht, setBereitsEingereicht] = useState(false);
+  const [meineAuszahlungen, setMeineAuszahlungen] = useState([]);
   const [auszahlungLoading, setAuszahlungLoading] = useState(false);
 
   useEffect(() => {
@@ -76,6 +77,10 @@ export default function Abrechnung() {
     const res = await axios.get(`${API}/api/abrechnung/guthaben/${user.id}`);
     setGuthaben(res.data);
     setSelected([]);
+    try {
+      const aRes = await axios.get(`${API}/api/abrechnung/meine-auszahlungen`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      setMeineAuszahlungen(aRes.data);
+    } catch(e) {}
   };
 
   const toggleStunde = (id) => setSelected(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
@@ -98,6 +103,7 @@ export default function Abrechnung() {
       setAuszahlungVon('');
       setAuszahlungBis('');
       setBereitsEingereicht(true);
+      loadGuthaben();
       setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
       alert('Fehler: ' + (err.response?.data?.error || err.message));
@@ -285,6 +291,17 @@ export default function Abrechnung() {
         )}
 
         {/* Auszahlung für Festlehrkräfte */}
+        {!isHonorar && meineAuszahlungen.length > 0 && (
+          <div className="card" style={{marginBottom:16,background:'#f3f0ff'}}>
+            <div className="card-title" style={{fontSize:14}}>📋 Bereits eingereichte Auszahlungen</div>
+            {meineAuszahlungen.map(a => (
+              <div key={a.id} style={{fontSize:13,padding:'6px 0',borderBottom:'1px solid var(--lavender)',display:'flex',justifyContent:'space-between'}}>
+                <span>{a.notizen || a.monat}</span>
+                <span style={{fontWeight:700}}>{parseFloat(a.betrag).toFixed(2)} € — <span style={{color: a.status==='erledigt' ? 'var(--success)' : 'var(--warning)'}}>{a.status}</span></span>
+              </div>
+            ))}
+          </div>
+        )}
         {!isHonorar && (
           <div className="card" style={{marginBottom:24}}>
             <div className="card-title">💰 Auszahlung beantragen</div>
