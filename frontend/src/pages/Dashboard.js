@@ -25,9 +25,9 @@ export default function Dashboard() {
 
         if (isAdmin) {
           const [sc, lk, st] = await Promise.all([
-            axios.get(`${API}/api/schueler`),
-            axios.get(`${API}/api/auth/users`),
-            axios.get(`${API}/api/stunden?monat=${heute}`)
+            axios.get(`${API}/api/schueler`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+            axios.get(`${API}/api/auth/users`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+            axios.get(`${API}/api/stunden?monat=${heute}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
           ]);
           setStats({
             schueler: sc.data.length,
@@ -38,7 +38,7 @@ export default function Dashboard() {
           setStunden(st.data.slice(0, 10));
 
           const chartPromises = monate.map(m =>
-            axios.get(`${API}/api/stunden?monat=${m.monat}`).catch(() => ({ data: [] }))
+            axios.get(`${API}/api/stunden?monat=${m.monat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }).catch(() => ({ data: [] }))
           );
           const chartResults = await Promise.all(chartPromises);
           setChartData(monate.map((m, i) => ({
@@ -49,7 +49,7 @@ export default function Dashboard() {
 
         } else {
           // Lehrkraft/Honorarkraft
-          const st = await axios.get(`${API}/api/stunden?monat=${heute}`).catch(() => ({ data: [] }));
+          const st = await axios.get(`${API}/api/stunden?monat=${heute}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }).catch(() => ({ data: [] }));
           const unterschrift = st.data.filter(s => !s.unterschrift_data).length;
           setStats({
             stunden_monat: st.data.length,
@@ -59,7 +59,7 @@ export default function Dashboard() {
           setStunden(st.data.slice(0, 5));
 
           const chartPromises = monate.map(m =>
-            axios.get(`${API}/api/stunden?monat=${m.monat}`).catch(() => ({ data: [] }))
+            axios.get(`${API}/api/stunden?monat=${m.monat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }).catch(() => ({ data: [] }))
           );
           const chartResults = await Promise.all(chartPromises);
           const isHonorar = user?.role === 'honorarkraft';

@@ -38,8 +38,8 @@ export default function Schueler() {
 
   const load = async () => {
     const [sRes, lRes] = await Promise.all([
-      axios.get(`${API}/api/schueler`),
-      isAdmin ? axios.get(`${API}/api/auth/users`) : Promise.resolve({ data: [] })
+      axios.get(`${API}/api/schueler`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      isAdmin ? axios.get(`${API}/api/auth/users`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }) : Promise.resolve({ data: [] })
     ]);
     setSchueler(sRes.data);
     setLehrkraefte(lRes.data.filter(u => u.role !== 'admin'));
@@ -53,7 +53,7 @@ export default function Schueler() {
   };
 
   const openZuweisung = async (s) => {
-    const res = await axios.get(`${API}/api/schueler/${s.id}/zuweisungen`);
+    const res = await axios.get(`${API}/api/schueler/${s.id}/zuweisungen`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     setZuweisungen(res.data);
     setZuweisungModal(s);
   };
@@ -66,8 +66,8 @@ export default function Schueler() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editId) await axios.put(`${API}/api/schueler/${editId}`, form);
-      else await axios.post(`${API}/api/schueler`, form);
+      if (editId) await axios.put(`${API}/api/schueler/${editId}`, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      else await axios.post(`${API}/api/schueler`, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setModal(false); load();
     } catch (err) {
       alert('Fehler: ' + (err.response?.data?.error || err.message));
@@ -87,7 +87,7 @@ export default function Schueler() {
   const saveLkInfos = async () => {
     setLkEditLoading(true);
     try {
-      await axios.put(`${API}/api/schueler/${detailSchueler.id}/infos`, lkEditForm);
+      await axios.put(`${API}/api/schueler/${detailSchueler.id}/infos`, lkEditForm, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setDetailSchueler({...detailSchueler, ...lkEditForm});
       setLkEditForm(null);
     } catch (err) {
@@ -98,13 +98,13 @@ export default function Schueler() {
   };
 
   const addZuweisung = async (lehrkraft_id) => {
-    await axios.post(`${API}/api/schueler/${zuweisungModal.id}/zuweisung`, { lehrkraft_id });
+    await axios.post(`${API}/api/schueler/${zuweisungModal.id}/zuweisung`, { lehrkraft_id }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     const res = await axios.get(`${API}/api/schueler/${zuweisungModal.id}/zuweisungen`);
     setZuweisungen(res.data);
   };
 
   const removeZuweisung = async (lehrkraft_id) => {
-    await axios.delete(`${API}/api/schueler/${zuweisungModal.id}/zuweisung/${lehrkraft_id}`);
+    await axios.delete(`${API}/api/schueler/${zuweisungModal.id}/zuweisung/${lehrkraft_id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     const res = await axios.get(`${API}/api/schueler/${zuweisungModal.id}/zuweisungen`);
     setZuweisungen(res.data);
   };

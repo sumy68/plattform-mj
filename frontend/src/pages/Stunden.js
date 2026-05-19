@@ -63,7 +63,7 @@ export default function Stunden({ adminView }) {
   const load = async () => {
     const [st, sc] = await Promise.all([
       axios.get(`${API}/api/stunden?monat=${monat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
-      axios.get(`${API}/api/schueler`)
+      axios.get(`${API}/api/schueler`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     ]);
     setStunden(st.data);
     setSchueler(sc.data);
@@ -73,7 +73,7 @@ export default function Stunden({ adminView }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API}/api/stunden`, form);
+      const res = await axios.post(`${API}/api/stunden`, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setModal(false);
       setForm(emptyForm);
       if (res.data.but_warnung) {
@@ -108,7 +108,7 @@ export default function Stunden({ adminView }) {
     const email = st.eltern_email || prompt('Eltern E-Mail Adresse:');
     if (!email) return;
     try {
-      const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email });
+      const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       const token = res.data.token;
       const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
       const waText = encodeURIComponent(`Bitte unterschreiben Sie die Nachhilfestunde hier: ${link}`);
@@ -184,7 +184,7 @@ export default function Stunden({ adminView }) {
                         <button className="btn btn-ghost btn-sm" onClick={()=>sendSignaturLink(st)}>📧 Link</button>
                         <button className="btn btn-ghost btn-sm" onClick={async()=>{
                           try {
-                            const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email: st.eltern_email || 'noemail@noemail.de' });
+                            const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email: st.eltern_email || 'noemail@noemail.de' }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                             const token = res.data.token;
                             const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
                             const waText = encodeURIComponent(`Bitte unterschreiben Sie die Nachhilfestunde hier: ${link}`);

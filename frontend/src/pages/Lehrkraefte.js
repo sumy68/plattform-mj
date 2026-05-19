@@ -15,7 +15,7 @@ export default function Lehrkraefte() {
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
-    const res = await axios.get(`${API}/api/auth/users`);
+    const res = await axios.get(`${API}/api/auth/users`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     setUsers(res.data.filter(u => u.role !== 'admin'));
   };
   useEffect(() => { load(); }, []);
@@ -23,7 +23,7 @@ export default function Lehrkraefte() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/auth/register`, form);
+      await axios.post(`${API}/api/auth/register`, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setModal(false);
       setForm(emptyForm);
       load();
@@ -33,32 +33,32 @@ export default function Lehrkraefte() {
   };
 
   const toggleAktiv = async (u) => {
-    await axios.patch(`${API}/api/auth/users/${u.id}`, { aktiv: !u.aktiv });
+    await axios.patch(`${API}/api/auth/users/${u.id}`, { aktiv: !u.aktiv }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     load();
   };
 
   const saveStundensatz = async (id) => {
-    await axios.patch(`${API}/api/auth/users/${id}`, { stundensatz: parseFloat(newStundensatz) });
+    await axios.patch(`${API}/api/auth/users/${id}`, { stundensatz: parseFloat(newStundensatz) }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     setEditStundensatz(null);
     load();
   };
 
   const saveAbsage = async (id) => {
-    await axios.patch(`${API}/api/auth/users/${id}`, { absage_stundensatz: parseFloat(newAbsage) });
+    await axios.patch(`${API}/api/auth/users/${id}`, { absage_stundensatz: parseFloat(newAbsage) }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     setEditAbsage(null);
     load();
   };
 
   const deleteUser = async (u) => {
     if (!window.confirm(`${u.name} wirklich löschen?`)) return;
-    await axios.delete(`${API}/api/auth/users/${u.id}`);
+    await axios.delete(`${API}/api/auth/users/${u.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     load();
   };
 
   const openDetail = async (u) => {
     const [profilRes, dokRes] = await Promise.all([
-      axios.get(`${API}/api/auth/users/${u.id}/profil`),
-      axios.get(`${API}/api/dokumente?user_id=${u.id}`)
+      axios.get(`${API}/api/auth/users/${u.id}/profil`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      axios.get(`${API}/api/dokumente?user_id=${u.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     ]);
     setDetailUser({ ...u, ...profilRes.data, dokumente: dokRes.data });
   };
