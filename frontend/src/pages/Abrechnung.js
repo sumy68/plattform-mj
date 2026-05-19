@@ -87,10 +87,21 @@ export default function Abrechnung() {
   const toggleStunde = (id) => setSelected(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
   const toggleAll = () => {
     if (!guthaben) return;
-    setSelected(selected.length === guthaben.stunden.length ? [] : guthaben.stunden.map(s=>s.id));
+    setSelected(selected.length === offeneStunden.length ? [] : offeneStunden.map(s=>s.id));
   };
 
   const selectedBetrag = selected.length * (guthaben?.stundensatz || 0);
+
+  // Stunden die in erledigten Auszahlungszeiträumen liegen ausblenden
+  const offeneStunden = (guthaben?.stunden || []).filter(st => {
+    const stDatum = new Date(st.datum);
+    const istAbgedeckt = meineAuszahlungen.some(a => {
+      if (a.status !== 'erledigt' || !a.notizen || !a.notizen.includes(' bis ')) return false;
+      const [von, bis] = a.notizen.split(' bis ');
+      return stDatum >= new Date(von) && stDatum <= new Date(bis);
+    });
+    return !istAbgedeckt && !st.abgerechnet;
+  });
 
   const handleAuszahlung = async () => {
     if (!auszahlungBetrag || parseFloat(auszahlungBetrag) <= 0) return alert('Bitte Betrag eingeben');
@@ -299,17 +310,6 @@ export default function Abrechnung() {
         )}
 
         {/* Auszahlung für Festlehrkräfte */}
-        {!isHonorar && meineAuszahlungen.length > 0 && (
-          <div className="card" style={{marginBottom:16,background:'#f3f0ff'}}>
-            <div className="card-title" style={{fontSize:14}}>📋 Bereits eingereichte Auszahlungen</div>
-            {meineAuszahlungen.map(a => (
-              <div key={a.id} style={{fontSize:13,padding:'6px 0',borderBottom:'1px solid var(--lavender)',display:'flex',justifyContent:'space-between'}}>
-                <span>{a.notizen || a.monat}</span>
-                <span style={{fontWeight:700}}>{parseFloat(a.betrag).toFixed(2)} € — <span style={{color: a.status==='erledigt' ? 'var(--success)' : 'var(--warning)'}}>{a.status}</span></span>
-              </div>
-            ))}
-          </div>
-        )}
         {!isHonorar && (
           <div className="card" style={{marginBottom:24}}>
             <div className="card-title">💰 Auszahlung beantragen</div>
@@ -355,7 +355,7 @@ export default function Abrechnung() {
                 </tr>
               </thead>
               <tbody>
-                {guthaben.stunden.map(st => (
+                {offeneStunden.map(st => (
                   <tr key={st.id} onClick={isHonorar ? ()=>toggleStunde(st.id) : undefined} style={{cursor: isHonorar ? 'pointer' : 'default'}}>
                     {isHonorar && <td><input type="checkbox" checked={selected.includes(st.id)} onChange={()=>toggleStunde(st.id)} onClick={e=>e.stopPropagation()}/></td>}
                     <td>{new Date(st.datum).toLocaleDateString('de-DE')}</td>
@@ -366,7 +366,7 @@ export default function Abrechnung() {
                     <td>{st.unterschrift_name ? <span className="badge badge-unterschrift">✓ {st.unterschrift_name}</span> : <span className="badge badge-ausstehend">⚠ Fehlt</span>}</td>
                   </tr>
                 ))}
-                {guthaben.stunden.length === 0 && <tr><td colSpan={isHonorar ? 7 : 6} style={{textAlign:'center',color:'var(--text-light)'}}>Keine offenen Stunden</td></tr>}
+                {offeneStunden.length === 0 && <tr><td colSpan={isHonorar ? 7 : 6} style={{textAlign:'center',color:'var(--text-light)'}}>Keine offenen Stunden</td></tr>}
               </tbody>
             </table>
           </div>
