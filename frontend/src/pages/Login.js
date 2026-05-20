@@ -61,8 +61,8 @@ export default function Login() {
         </div>
       </div>
     <div style={{textAlign:'center',marginTop:24}}>
-        <a href="/impressum" style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginRight:16}}>Impressum</a>
-        <a href="/datenschutz" style={{color:'rgba(255,255,255,0.5)',fontSize:12}}>Datenschutz</a>
+        <a href="/impressum" style={{color:'#9b7fd4',fontSize:12,marginRight:16}}>Impressum</a>
+        <a href="/datenschutz" style={{color:'#9b7fd4',fontSize:12}}>Datenschutz</a>
       </div>
     </div>
   );
