@@ -3,6 +3,20 @@ const { pool } = require('../db');
 const { auth, adminOnly } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
 
+// Google Maps Proxy
+router.get('/maps/directions', auth, async (req, res) => {
+  try {
+    const { origin, destination } = req.query;
+    const key = process.env.GOOGLE_MAPS_KEY;
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&mode=driving&key=${key}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    res.json(d);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Stunden abrufen
 router.get('/', auth, async (req, res) => {
   try {

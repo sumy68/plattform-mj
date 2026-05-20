@@ -28,7 +28,7 @@ export default function Stunden({ adminView }) {
     try {
       const vonAdresse = `${form.fahrt_von||''} ${form.fahrt_von_nr||''}, ${form.fahrt_von_plz||''} ${form.fahrt_von_ort||''}`;
       const nachAdresse = `${form.fahrt_nach||''} ${form.fahrt_nach_nr||''}, ${form.fahrt_nach_plz||''} ${form.fahrt_nach_ort||''}`;
-      const r = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(vonAdresse)}&destination=${encodeURIComponent(nachAdresse)}&mode=driving&key=${process.env.REACT_APP_GOOGLE_MAPS_KEY}`);
+      const r = await fetch(`${API}/api/stunden/maps/directions?origin=${encodeURIComponent(vonAdresse)}&destination=${encodeURIComponent(nachAdresse)}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       const d = await r.json();
       if (!d.routes || !d.routes[0]) return alert('Route nicht gefunden');
       const km = (d.routes[0].legs[0].distance.value / 1000).toFixed(1);
