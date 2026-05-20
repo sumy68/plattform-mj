@@ -45,9 +45,9 @@ router.post('/', auth, async (req, res) => {
     const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
 
     const result = await pool.query(
-      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt]
+      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null]
     );
 
     const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [schueler_id]);
