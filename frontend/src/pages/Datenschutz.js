@@ -80,7 +80,7 @@ export default function Datenschutz() {
             <li>IBAN (für Auszahlungen), Steuernummer (optional)</li>
             <li>Geburtsdatum, Sprachen, Führerschein (Ja/Nein)</li>
             <li>Unterrichtsstunden (Datum, Uhrzeit, Fach, Ort, Lernfortschritt)</li>
-            <li>Digitale Elternunterschriften, Fahrtkosten</li>
+            <li>Digitale Elternunterschriften, Fahrtkosten inkl. Start- und Zieladresse der Fahrt</li>
             <li>Krankmeldungen, Urlaubsanträge</li>
           </ul>
           <strong>Schülerinnen und Schüler:</strong>
@@ -104,8 +104,12 @@ export default function Datenschutz() {
           Diese Plattform verwendet ausschließlich technisch notwendige Cookies für die Authentifizierung (Login-Token, §25 Abs. 2 TTDSG). Es werden keine Tracking-, Analyse- oder Werbe-Cookies eingesetzt.
         </Section>
 
-        <Section title="11. Webhosting">
-          Die Plattform wird über Render.com (USA, EU-Rechenzentrum) gehostet. Die Datenbank wird über Neon PostgreSQL (EU) betrieben. Beide Anbieter verarbeiten technische Daten (z.B. IP-Adressen, Serverprotokolle) zur Bereitstellung und Absicherung des Dienstes (Art. 6 Abs. 1 lit. f DSGVO). Mit beiden Anbietern bestehen Auftragsverarbeitungsverträge gem. Art. 28 DSGVO.
+        <Section title="11. Webhosting und Drittdienste">
+          <strong>Render.com</strong> – Die Plattform wird über Render (Render Services, Inc., 525 Brannan Street, San Francisco, CA 94107, USA) gehostet. Render betreibt EU-Rechenzentren. Technische Daten (IP-Adressen, Serverprotokolle) werden zur Bereitstellung des Dienstes verarbeitet (Art. 6 Abs. 1 lit. f DSGVO). Es besteht ein Auftragsverarbeitungsvertrag gem. Art. 28 DSGVO.<br/><br/>
+          <strong>Neon PostgreSQL</strong> – Die Datenbank wird über Neon (Neon Inc., EU-Region) betrieben. Alle personenbezogenen Daten werden ausschließlich in der EU gespeichert. Es besteht ein Auftragsverarbeitungsvertrag gem. Art. 28 DSGVO.<br/><br/>
+          <strong>IONOS</strong> – Der E-Mail-Versand (z.B. Unterschriften-Links, Benachrichtigungen, Rechnungen) erfolgt über IONOS SE, Elgendorfer Str. 57, 56410 Montabaur, Deutschland. IONOS verarbeitet E-Mail-Adressen und Nachrichteninhalte im Auftrag (Art. 6 Abs. 1 lit. b DSGVO). Es besteht ein Auftragsverarbeitungsvertrag gem. Art. 28 DSGVO.<br/><br/>
+          <strong>GitHub</strong> – Der Quellcode der Plattform wird auf GitHub (GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA) verwaltet. Auf GitHub werden keine personenbezogenen Daten der Nutzer gespeichert. Die Nutzung erfolgt auf Grundlage berechtigter Interessen (Art. 6 Abs. 1 lit. f DSGVO).<br/><br/>
+          <strong>Google Maps Directions API</strong> – Zur Berechnung von Fahrtkilometern wird die Google Maps Directions API (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland) genutzt. Dabei werden Start- und Zieladressen zur Routenberechnung an Google übermittelt. Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO. Google verarbeitet die Daten gemäß seiner Datenschutzrichtlinie (policies.google.com/privacy).
         </Section>
 
         <Section title="12. Schlusswort">
