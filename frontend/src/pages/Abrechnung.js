@@ -237,7 +237,7 @@ export default function Abrechnung() {
                     <td></td>
                     <td><strong>{adminStats.honorarkraefte.reduce((sum,l)=>sum+l.fahrtkosten_gesamt,0).toFixed(2)} €</strong></td>
                     <td><strong>{adminStats.honorar_kosten.toFixed(2)} €</strong></td>
-                    <td><strong style={{color:'var(--danger)'}}>{adminStats.total_offen.toFixed(2)} €</strong></td>
+                    <td><strong style={{color:'var(--danger)'}}>{adminStats.honorarkraefte.reduce((sum,l)=>sum+l.betrag_offen,0).toFixed(2)} €</strong></td>
                   </tr>
                 )}
               </tbody>
