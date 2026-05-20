@@ -174,7 +174,6 @@ router.get('/:id/pdf', auth, async (req, res) => {
     doc.fontSize(10).fillColor('#666').font('Helvetica');
     doc.text(`E-Mail: ${st.lehrkraft_email || '–'}`, 320, 208);
     doc.text(`Tel: ${st.lehrkraft_tel || '–'}`, 320, 222);
-    doc.roundedRect(50, 315, 495, 100, 8).fillColor('#ffffff').stroke('#e8e0f5');
     const details = [
       ['Datum', new Date(st.datum).toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })],
       ['Uhrzeit', `${st.startzeit} – ${st.endzeit} Uhr (${st.dauer_minuten || '–'} Min.)`],
@@ -182,28 +181,32 @@ router.get('/:id/pdf', auth, async (req, res) => {
       ['Ort', st.ort === 'online' ? 'Online' : 'Vor Ort'],
       ...(st.ort !== 'online' && st.fahrt_km ? [
         ['Fahrtweg', `${st.fahrt_km} km (Hinfahrt)`],
-        ['Fahrtkosten', `${(st.fahrt_km * 0.38).toFixed(2)} € (0,38 €/km)`],
+        ['Fahrtkosten', `${(parseFloat(st.fahrt_km) * 0.38).toFixed(2)} € (0,38 €/km)`],
       ] : []),
     ];
+    const detailBoxHeight = details.length * 18 + 20;
+    doc.roundedRect(50, 315, 495, detailBoxHeight, 8).fillColor('#ffffff').stroke('#e8e0f5');
     let y = 325;
     details.forEach(([label, value]) => {
       doc.fontSize(10).fillColor('#9b7fd4').font('Helvetica-Bold').text(label + ':', 70, y);
       doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(value, 180, y);
       y += 18;
     });
-    doc.roundedRect(50, 430, 495, 80, 8).fillColor('#f0ebfa').fill();
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('LERNFORTSCHRITT', 70, 442);
-    doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(st.inhalt || '–', 70, 458, { width: 455 });
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('UNTERSCHRIFT ELTERNTEIL', 50, 530);
+    const lernY = y + 15;
+    doc.roundedRect(50, lernY, 495, 80, 8).fillColor('#f0ebfa').fill();
+    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('LERNFORTSCHRITT', 70, lernY + 12);
+    doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(st.inhalt || '–', 70, lernY + 28, { width: 455 });
+    const unterschriftY = lernY + 100;
+    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('UNTERSCHRIFT ELTERNTEIL', 50, unterschriftY);
     if (st.unterschrift_data) {
       const imgData = st.unterschrift_data.replace(/^data:image\/png;base64,/, '');
-      doc.image(Buffer.from(imgData, 'base64'), 50, 548, { width: 200, height: 70 });
+      doc.image(Buffer.from(imgData, 'base64'), 50, unterschriftY + 18, { width: 200, height: 70 });
       doc.fontSize(10).fillColor('#666').font('Helvetica');
-      doc.text(`Name: ${st.unterschrift_name}`, 50, 625);
-      doc.text(`Datum: ${new Date(st.unterschrift_datum).toLocaleString('de-DE')}`, 50, 638);
+      doc.text(`Name: ${st.unterschrift_name}`, 50, unterschriftY + 95);
+      doc.text(`Datum: ${new Date(st.unterschrift_datum).toLocaleString('de-DE')}`, 50, unterschriftY + 108);
     } else {
-      doc.rect(50, 548, 240, 70).strokeColor('#e8e0f5').stroke();
-      doc.fontSize(10).fillColor('#bbb').text('Unterschrift ausstehend', 70, 578);
+      doc.rect(50, unterschriftY + 18, 240, 70).strokeColor('#e8e0f5').stroke();
+      doc.fontSize(10).fillColor('#bbb').text('Unterschrift ausstehend', 70, unterschriftY + 48);
     }
     doc.moveTo(50, 700).lineTo(545, 700).strokeColor('#9b7fd4').stroke();
     doc.fontSize(8).fillColor('#888').font('Helvetica');
