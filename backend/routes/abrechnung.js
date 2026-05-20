@@ -104,7 +104,9 @@ router.post('/rechnung', auth, async (req, res) => {
     const finalBetrag = berechneterBetrag;
 
     // Rechnungsnummer generieren
-    const rechnungsnr = `MJ-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    const countRes = await pool.query("SELECT COUNT(*) as count FROM rechnungen");
+    const rechnungsnummer = parseInt(countRes.rows[0].count) + 1;
+    const rechnungsnr = `MJ-${new Date().getFullYear()}-${String(rechnungsnummer).padStart(4, '0')}`;
     const datum = new Date().toLocaleDateString('de-DE');
     const monat = new Date().toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
     
@@ -118,8 +120,7 @@ router.post('/rechnung', auth, async (req, res) => {
       doc.on('error', reject);
       
       // Logo
-      const logoPath = path.join(__dirname, '../logo_mj.png');
-      if (fs.existsSync(logoPath)) doc.image(logoPath, 450, 30, { width: 80 });
+
       
       // Absender
       doc.fontSize(10).fillColor('#666').font('Helvetica');
