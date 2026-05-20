@@ -233,7 +233,9 @@ export default function Abrechnung() {
                   ))}
                 {adminStats.honorarkraefte.length > 0 && (
                   <tr style={{background:'var(--purple-pale)'}}>
-                    <td colSpan={5}><strong>Gesamt Honorarkräfte</strong></td>
+                    <td colSpan={4}><strong>Gesamt Honorarkräfte</strong></td>
+                    <td></td>
+                    <td><strong>{adminStats.honorarkraefte.reduce((sum,l)=>sum+l.fahrtkosten_gesamt,0).toFixed(2)} €</strong></td>
                     <td><strong>{adminStats.honorar_kosten.toFixed(2)} €</strong></td>
                     <td><strong style={{color:'var(--danger)'}}>{adminStats.total_offen.toFixed(2)} €</strong></td>
                   </tr>
