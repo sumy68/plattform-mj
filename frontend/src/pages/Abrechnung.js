@@ -378,7 +378,7 @@ export default function Abrechnung() {
               <thead>
                 <tr>
                   {isHonorar && <th><input type="checkbox" checked={selected.length === guthaben.stunden.length && guthaben.stunden.length > 0} onChange={toggleAll}/></th>}
-                  <th>Datum</th><th>Schüler</th><th>Zeit</th><th>Fach</th><th>Betrag</th><th>Unterschrift</th>
+                  <th>Datum</th><th>Schüler</th><th>Zeit</th><th>Fach</th><th>Honorar</th><th>Fahrtkosten</th><th>Gesamt</th><th>Unterschrift</th>
                 </tr>
               </thead>
               <tbody>
@@ -390,10 +390,12 @@ export default function Abrechnung() {
                     <td>{st.startzeit}–{st.endzeit}</td>
                     <td>{st.fach}</td>
                     <td style={{fontWeight:600}}>{guthaben.stundensatz.toFixed(2)} €</td>
+                    <td style={{fontSize:12,color:'var(--text-light)'}}>{st.fahrt_km ? `${st.fahrt_km} km = ${(parseFloat(st.fahrt_km)*0.38).toFixed(2)} €` : '–'}</td>
+                    <td style={{fontWeight:700,color:'var(--purple)'}}>{(guthaben.stundensatz + (st.fahrt_km ? parseFloat(st.fahrt_km)*0.38 : 0)).toFixed(2)} €</td>
                     <td>{st.unterschrift_name ? <span className="badge badge-unterschrift">✓ {st.unterschrift_name}</span> : <span className="badge badge-ausstehend">⚠ Fehlt</span>}</td>
                   </tr>
                 ))}
-                {offeneStunden.length === 0 && <tr><td colSpan={isHonorar ? 7 : 6} style={{textAlign:'center',color:'var(--text-light)'}}>Keine offenen Stunden</td></tr>}
+                {offeneStunden.length === 0 && <tr><td colSpan={isHonorar ? 9 : 8} style={{textAlign:'center',color:'var(--text-light)'}}>Keine offenen Stunden</td></tr>}
               </tbody>
             </table>
           </div>
