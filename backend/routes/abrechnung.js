@@ -410,9 +410,15 @@ router.get('/meine-auszahlungen', auth, async (req, res) => {
 // Alle Auszahlungswünsche (Admin)
 router.get('/auszahlungen', auth, async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT a.*, u.name, u.role FROM auszahlungswuensche a JOIN users u ON a.user_id=u.id ORDER BY a.created_at DESC`
-    );
+    const { monat } = req.query;
+    let query = `SELECT a.*, u.name, u.role FROM auszahlungswuensche a JOIN users u ON a.user_id=u.id`;
+    const params = [];
+    if (monat) {
+      params.push(monat);
+      query += ` WHERE a.monat=$1`;
+    }
+    query += ` ORDER BY a.created_at DESC`;
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });

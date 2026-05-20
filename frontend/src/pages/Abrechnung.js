@@ -32,7 +32,7 @@ export default function Abrechnung() {
 
   const loadAuszahlungen = async () => {
     try {
-      const res = await axios.get(`${API}/api/abrechnung/auszahlungen`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      const res = await axios.get(`${API}/api/abrechnung/auszahlungen?monat=${monat === 'alle' ? '' : monat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setAuszahlungen(res.data);
     } catch(e) {}
   };
