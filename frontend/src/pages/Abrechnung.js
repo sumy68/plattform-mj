@@ -215,7 +215,7 @@ export default function Abrechnung() {
           <div className="card-title">📄 Honorarkräfte</div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Name</th><th>Stundensatz</th><th>Stunden</th><th>Abgerechnet</th><th>Offen</th><th>Fahrtkosten</th><th>Betrag gesamt</th><th>Noch offen</th></tr></thead>
+              <thead><tr><th>Name</th><th>Stundensatz</th><th>Stunden</th><th>Abgerechnet</th><th>Offen</th><th>Fahrtkosten</th><th>Betrag gesamt</th></tr></thead>
               <tbody>
                 {adminStats.honorarkraefte.length === 0
                   ? <tr><td colSpan={7} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Honorarkräfte diesen Monat</td></tr>
