@@ -26,19 +26,12 @@ export default function Stunden({ adminView }) {
     if (!form.fahrt_von || !form.fahrt_nach) return;
     setKmLaden(true);
     try {
-      const geocode = async (addr) => {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1&countrycodes=de`, { headers: { 'Accept-Language': 'de', 'User-Agent': 'MJLernfoerderung/1.0' } });
-        const d = await r.json();
-        if (!d || !d[0]) return null;
-        return [parseFloat(d[0].lon), parseFloat(d[0].lat)];
-      };
       const vonAdresse = `${form.fahrt_von||''} ${form.fahrt_von_nr||''}, ${form.fahrt_von_plz||''} ${form.fahrt_von_ort||''}`;
       const nachAdresse = `${form.fahrt_nach||''} ${form.fahrt_nach_nr||''}, ${form.fahrt_nach_plz||''} ${form.fahrt_nach_ort||''}`;
-      const [from, to] = await Promise.all([geocode(vonAdresse), geocode(nachAdresse)]);
-      if (!from || !to) return alert('Adresse nicht gefunden');
-      const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${from[0]},${from[1]};${to[0]},${to[1]}?overview=false`);
+      const r = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(vonAdresse)}&destination=${encodeURIComponent(nachAdresse)}&mode=driving&key=${process.env.REACT_APP_GOOGLE_MAPS_KEY}`);
       const d = await r.json();
-      const km = (d.routes[0].distance / 1000).toFixed(1);
+      if (!d.routes || !d.routes[0]) return alert('Route nicht gefunden');
+      const km = (d.routes[0].legs[0].distance.value / 1000).toFixed(1);
       setForm(f => ({ ...f, fahrt_km: parseFloat(km) }));
     } catch(e) {
       alert('Fehler bei Berechnung: ' + e.message);
