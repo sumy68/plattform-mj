@@ -228,7 +228,7 @@ export default function Abrechnung() {
                       <td><span className="badge badge-ausstehend">{lk.offen}</span></td>
                       <td style={{fontSize:12,color:'var(--text-light)'}}>{lk.fahrtkosten_gesamt > 0 ? lk.fahrtkosten_gesamt.toFixed(2)+' €' : '–'}</td>
                       <td><strong>{lk.betrag_gesamt.toFixed(2)} €</strong></td>
-                      <td style={{color:'var(--danger)',fontWeight:700}}>{lk.betrag_offen.toFixed(2)} €</td>
+
                     </tr>
                   ))}
                 {adminStats.honorarkraefte.length > 0 && (
@@ -237,7 +237,7 @@ export default function Abrechnung() {
                     <td></td>
                     <td><strong>{adminStats.honorarkraefte.reduce((sum,l)=>sum+l.fahrtkosten_gesamt,0).toFixed(2)} €</strong></td>
                     <td><strong>{adminStats.honorar_kosten.toFixed(2)} €</strong></td>
-                    <td><strong style={{color:'var(--danger)'}}>{adminStats.honorarkraefte.reduce((sum,l)=>sum+l.betrag_offen,0).toFixed(2)} €</strong></td>
+
                   </tr>
                 )}
               </tbody>
