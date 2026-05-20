@@ -27,7 +27,7 @@ export default function Stunden({ adminView }) {
     setKmLaden(true);
     try {
       const geocode = async (addr) => {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`, { headers: { 'Accept-Language': 'de' } });
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1&countrycodes=de`, { headers: { 'Accept-Language': 'de', 'User-Agent': 'MJLernfoerderung/1.0' } });
         const d = await r.json();
         if (!d || !d[0]) return null;
         return [parseFloat(d[0].lon), parseFloat(d[0].lat)];
