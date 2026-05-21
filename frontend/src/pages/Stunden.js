@@ -332,11 +332,17 @@ export default function Stunden({ adminView }) {
                 <label>Lernfortschritt</label>
                 <textarea rows={3} value={form.lernfortschritt} onChange={e=>setForm({...form,lernfortschritt:e.target.value})} placeholder="Was wurde heute erarbeitet? Welche Fortschritte hat der Schüler gemacht?"/>
               </div>
-              <div className="form-group">
-                <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
-                  <input type="checkbox" checked={form.kurzfristige_absage||false} onChange={e=>setForm({...form,kurzfristige_absage:e.target.checked})}/>
-                  ⚠️ Als kurzfristige Absage markieren
-                </label>
+              <div
+                onClick={()=>setForm({...form,kurzfristige_absage:!form.kurzfristige_absage})}
+                style={{
+                  marginTop:8,padding:'10px 14px',borderRadius:10,
+                  border: form.kurzfristige_absage ? '2px solid #c62828' : '2px solid #ffcdd2',
+                  background: form.kurzfristige_absage ? '#fdecea' : '#fff9f9',
+                  color: form.kurzfristige_absage ? '#c62828' : '#e57373',
+                  fontWeight:700,fontSize:14,cursor:'pointer',
+                  display:'flex',alignItems:'center',gap:8,userSelect:'none'
+                }}>
+                {form.kurzfristige_absage ? '✅' : '⬜'} Als kurzfristige Absage markieren
               </div>
               <div style={{display:'flex',gap:12,justifyContent:'flex-end',flexWrap:'wrap'}}>
                 <button type="button" className="btn btn-ghost" onClick={()=>setModal(false)}>Abbrechen</button>
