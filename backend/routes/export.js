@@ -46,6 +46,28 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
       archive.append(buffer, { name: `Lehrkraft-Dokumente/${row.monat}/${safe}/${row.name || 'dokument.pdf'}` });
     }
 
+    // Stundennachweise
+    const filterS = monat ? "AND TO_CHAR(st.datum, 'YYYY-MM') = $1" : '';
+    const stundenResult = await pool.query(
+      `SELECT st.unterschrift_data, st.datum, st.fach,
+              s.vorname as s_vorname, s.nachname as s_nachname,
+              u.name as lehrkraft_name,
+              TO_CHAR(st.datum, 'YYYY-MM') as monat
+       FROM stunden st
+       JOIN schueler s ON st.schueler_id = s.id
+       JOIN users u ON st.lehrkraft_id = u.id
+       WHERE st.unterschrift_data IS NOT NULL ${filterS}`, params);
+
+    for (const row of stundenResult.rows) {
+      if (!row.unterschrift_data) continue;
+      const base64 = row.unterschrift_data.replace(/^data:application\/pdf;base64,/, '');
+      const buffer = Buffer.from(base64, 'base64');
+      const safe_lk = row.lehrkraft_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safe_s = `${row.s_vorname}_${row.s_nachname}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const datum = new Date(row.datum).toISOString().slice(0,10);
+      archive.append(buffer, { name: `Stundennachweise/${row.monat}/${safe_lk}/${datum}_${safe_s}.pdf` });
+    }
+
     await archive.finalize();
   } catch (err) {
     console.error('Export Fehler:', err);
