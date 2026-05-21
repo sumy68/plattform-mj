@@ -68,6 +68,23 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
       archive.append(buffer, { name: `Stundennachweise/${row.monat}/${safe_lk}/${datum}_${safe_s}.pdf` });
     }
 
+    // Rechnungen
+    const filterR = monat ? "AND TO_CHAR(r.erstellt_am, 'YYYY-MM') = $1" : '';
+    const rechnungResult = await pool.query(
+      `SELECT r.rechnungsnummer, r.pdf_data, r.erstellt_am,
+              u.name as lehrkraft_name,
+              TO_CHAR(r.erstellt_am, 'YYYY-MM') as monat
+       FROM rechnungen r JOIN users u ON r.user_id = u.id
+       WHERE r.pdf_data IS NOT NULL ${filterR}`, params);
+
+    for (const row of rechnungResult.rows) {
+      if (!row.pdf_data) continue;
+      const base64 = row.pdf_data.replace(/^data:application\/pdf;base64,/, '');
+      const buffer = Buffer.from(base64, 'base64');
+      const safe_lk = row.lehrkraft_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      archive.append(buffer, { name: `Rechnungen/${row.monat}/${safe_lk}/${row.rechnungsnummer}.pdf` });
+    }
+
     await archive.finalize();
   } catch (err) {
     console.error('Export Fehler:', err);
