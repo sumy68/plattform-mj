@@ -132,11 +132,11 @@ export default function Kalender() {
                   {tagAb.slice(0,2).map((a,i) => (
                     <div key={i} style={{
                       fontSize:9,borderRadius:3,padding:'1px 4px',marginBottom:1,
-                      background: a.typ==='krank'?'#fdecea':a.typ==='urlaub'?'#e3f2fd':'#f5f5f5',
-                      color: a.typ==='krank'?'#c62828':a.typ==='urlaub'?'#1565c0':'#555',
+                      background: '#f0ebfa',
+                      color: '#6b4fa0',
                       whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'
                     }}>
-                      {a.typ==='krank'?'🤒':a.typ==='urlaub'?'🏖️':'📋'} {a.user_name?.split(' ')[0]}
+                      🗓️ {a.user_name?.split(' ')[0]}
                     </div>
                   ))}
                 </div>
@@ -178,11 +178,11 @@ export default function Kalender() {
                 {selectedDaten.abwesenheiten.map(a => (
                   <div key={a.id} style={{
                     display:'flex',justifyContent:'space-between',alignItems:'center',
-                    background: a.typ==='krank'?'#fdecea':a.typ==='urlaub'?'#e3f2fd':'#f5f5f5',
+                    background: '#f0ebfa',
                     borderRadius:8,padding:'8px 12px',marginBottom:6
                   }}>
                     <span style={{fontWeight:700}}>{a.user_name}</span>
-                    <span style={{fontSize:12}}>{a.typ==='krank'?'🤒 Krank':a.typ==='urlaub'?'🏖️ Urlaub':'📋 Sonstiges'}</span>
+                    <span style={{fontSize:12}}>🗓️ Abwesend</span>
                   </div>
                 ))}
               </div>
