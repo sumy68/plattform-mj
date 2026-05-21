@@ -90,9 +90,16 @@ export default function Abrechnung() {
     setSelected(selected.length === offeneStunden.length ? [] : offeneStunden.map(s=>s.id));
   };
 
+  const calcStunden = (st) => {
+    if (!st?.startzeit || !st?.endzeit) return 1;
+    const [sh, sm] = st.startzeit.split(':').map(Number);
+    const [eh, em] = st.endzeit.split(':').map(Number);
+    return Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60);
+  };
   const selectedBetrag = selected.reduce((sum, id) => {
     const st = (guthaben?.stunden || []).find(s => s.id === id);
-    const stundenBetrag = parseFloat(guthaben?.stundensatz || 0);
+    const stunden = calcStunden(st);
+    const stundenBetrag = parseFloat(guthaben?.stundensatz || 0) * stunden;
     const fahrtBetrag = st?.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
     return sum + stundenBetrag + fahrtBetrag;
   }, 0);
