@@ -338,7 +338,7 @@ export default function Stunden({ adminView }) {
                   ⚠️ Als kurzfristige Absage markieren
                 </label>
               </div>
-              <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
+              <div style={{display:'flex',gap:12,justifyContent:'flex-end',flexWrap:'wrap'}}>
                 <button type="button" className="btn btn-ghost" onClick={()=>setModal(false)}>Abbrechen</button>
                 <button type="submit" className="btn btn-primary">Speichern</button>
               </div>
@@ -387,7 +387,7 @@ export default function Stunden({ adminView }) {
               <label>Name in Druckschrift *</label>
               <input value={unterschriftName} onChange={e=>setUnterschriftName(e.target.value)} placeholder="Vor- und Nachname"/>
             </div>
-            <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
+            <div style={{display:'flex',gap:12,justifyContent:'flex-end',flexWrap:'wrap'}}>
               <button className="btn btn-ghost" onClick={()=>setUnterschriftModal(null)}>Abbrechen</button>
               <button className="btn btn-primary" onClick={saveUnterschrift}>Unterschrift speichern</button>
             </div>
