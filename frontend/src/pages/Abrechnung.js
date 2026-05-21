@@ -271,7 +271,7 @@ export default function Abrechnung() {
   return (
     <div>
       <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:32,marginBottom:24,color:'var(--text-dark)'}}>
-        {isHonorar ? 'Mein Guthaben & Rechnung' : 'Meine Stunden'}
+        {isHonorar ? 'Mein Guthaben & Rechnung' : 'Abrechnung'}
       </h2>
 
       {success && <div style={{background:'#e8f5e9',border:'2px solid #a5d6a7',borderRadius:12,padding:16,marginBottom:20,fontWeight:700,color:'#2e7d32'}}>{success}</div>}
@@ -284,6 +284,10 @@ export default function Abrechnung() {
             <div className="stat-card"><div className="stat-number" style={{color:'var(--success)'}}>{guthaben.gesamt_betrag.toFixed(2)} €</div><div className="stat-label">Offenes Guthaben</div></div>
             <div className="stat-card"><div className="stat-number" style={{color:'var(--purple)'}}>{guthaben.bereits_abgerechnet.toFixed(2)} €</div><div className="stat-label">Bereits abgerechnet</div></div>
             <div className="stat-card"><div className="stat-number" style={{color: guthaben.noch_moeglich < 100 ? 'var(--danger)' : 'var(--success)'}}>{guthaben.noch_moeglich.toFixed(2)} €</div><div className="stat-label">Noch möglich (603€ Grenze)</div></div>
+          </>}
+          {!isHonorar && <>
+            <div className="stat-card"><div className="stat-number" style={{color:'var(--success)'}}>{meineAuszahlungen.filter(a=>a.status==='erledigt').reduce((sum,a)=>sum+parseFloat(a.betrag),0).toFixed(2)} €</div><div className="stat-label">Bereits ausgezahlt</div></div>
+            <div className="stat-card"><div className="stat-number" style={{color:'var(--purple)'}}>{guthaben.gesamt_betrag.toFixed(2)} €</div><div className="stat-label">Offenes Guthaben</div></div>
           </>}
         </div>
 
@@ -322,7 +326,8 @@ export default function Abrechnung() {
         {!isHonorar && (
           <div className="card" style={{marginBottom:24}}>
             <div className="card-title">💰 Auszahlung beantragen</div>
-            <p style={{fontSize:13,color:'var(--text-light)',marginBottom:16}}>Als Lehrkraft kannst du einmal im Monat deinen Auszahlungswunsch einreichen. Der Admin wird benachrichtigt.</p>
+            <p style={{fontSize:13,color:'var(--text-light)',marginBottom:8}}>Als Lehrkraft kannst du bis zu 2x im Monat deinen Auszahlungswunsch einreichen. Der Admin wird benachrichtigt.</p>
+            <div style={{background:'#f3f0ff',borderRadius:8,padding:'8px 14px',marginBottom:16,fontSize:13,color:'var(--purple)',fontWeight:600}}>💡 Auszahlungen von MJ werden nur am 15. oder zum 30. eines Monats getätigt.</div>
             <div className="form-row">
               <div className="form-group">
                 <label>Gewünschter Betrag (€) *</label>
@@ -346,8 +351,8 @@ export default function Abrechnung() {
                 <input type="date" value={auszahlungBis} onChange={e=>setAuszahlungBis(e.target.value)}/>
               </div>
             </div>
-            {bereitsEingereicht && <div style={{background:'#fff3e0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:13,color:'#e65100'}}>⚠️ Du hast für diesen Monat bereits einen Auszahlungswunsch eingereicht.</div>}
-            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading || bereitsEingereicht || (guthaben?.gesamt_betrag && parseFloat(auszahlungBetrag) > guthaben.gesamt_betrag)}>
+            {meineAuszahlungen.filter(a=>a.monat===monat).length >= 2 && <div style={{background:'#fff3e0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:13,color:'#e65100'}}>⚠️ Du hast für diesen Monat bereits 2 Auszahlungswünsche eingereicht (Maximum erreicht).</div>}
+            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading || meineAuszahlungen.filter(a=>a.monat===monat).length >= 2 || (guthaben?.gesamt_betrag && parseFloat(auszahlungBetrag) > guthaben.gesamt_betrag)}>
               {auszahlungLoading ? 'Wird gesendet...' : '💸 Auszahlung beantragen'}
             </button>
           </div>
