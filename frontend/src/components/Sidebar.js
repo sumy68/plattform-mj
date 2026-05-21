@@ -55,7 +55,7 @@ export default function Sidebar({ onClose }) {
 
   const lehrkraftLinks = [
     { path: '/dashboard', icon: '📊', label: 'Dashboard' },
-    { path: '/meine-stunden', icon: '📅', label: 'Abrechnung' },
+    { path: '/meine-stunden', icon: '📅', label: 'Meine Stunden' },
     { path: '/kalender', icon: '🗓️', label: 'Kalender' },
     { path: '/meine-schueler', icon: '👧', label: 'Meine Schüler' },
     { path: '/but', icon: '📋', label: 'BuT Anträge', badge: butWarnungen, badgeColor: 'var(--warning)' },
