@@ -145,7 +145,7 @@ export default function ButAntraege() {
                     <td style={{ textAlign: 'center' }}>{a.gutscheine_verbraucht}</td>
                     <td><span className="badge" style={{ background: style.bg, color: style.color }}>{getStatusText(a)}</span></td>
                     <td>
-                      {a.antrag_pdf_name
+                      {a.antrag_pdf_name && user?.role === 'admin'
                         ? <a href={`${API}/api/but/${a.id}/pdf?token=${localStorage.getItem('token')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">📄 PDF</a>
                         : <span style={{ fontSize: 12, color: 'var(--text-light)' }}>–</span>}
                     </td>
