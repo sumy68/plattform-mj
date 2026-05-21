@@ -28,7 +28,7 @@ export default function Datenschutz() {
         </Section>
 
         <Section title="2. Anwendungsbereich">
-          Diese Datenschutzerklärung gilt für die interne Verwaltungsplattform von MJ Lernförderung unter plattform-mj-1.onrender.com sowie für alle damit verbundenen E-Mail-Kommunikationen und Datenverarbeitungsprozesse.
+          Diese Datenschutzerklärung gilt für die interne Verwaltungsplattform von MJ Lernförderung unter plattform.mj-lernfoerderung.de sowie für alle damit verbundenen E-Mail-Kommunikationen und Datenverarbeitungsprozesse.
         </Section>
 
         <Section title="3. Rechtsgrundlagen">

@@ -100,7 +100,7 @@ export default function Stunden({ adminView }) {
     try {
       const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       const token = res.data.token;
-      const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
+      const link = `https://plattform.mj-lernfoerderung.de/unterschreiben/${token}`;
       const waText = encodeURIComponent(`Bitte unterschreiben Sie die Nachhilfestunde hier: ${link}`);
       const copied = await navigator.clipboard.writeText(link).then(()=>true).catch(()=>false);
       const waUrl = `https://wa.me/?text=${waText}`;
@@ -176,7 +176,7 @@ export default function Stunden({ adminView }) {
                           try {
                             const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email: st.eltern_email || 'noemail@noemail.de' }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                             const token = res.data.token;
-                            const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
+                            const link = `https://plattform.mj-lernfoerderung.de/unterschreiben/${token}`;
                             const waText = encodeURIComponent(`Bitte unterschreiben Sie die Nachhilfestunde hier: ${link}`);
                             window.open(`https://wa.me/?text=${waText}`, '_blank');
                           } catch(e) { alert('Fehler: ' + e.message); }
