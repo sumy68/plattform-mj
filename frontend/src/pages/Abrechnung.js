@@ -405,7 +405,7 @@ export default function Abrechnung() {
                     <td>{st.fach}</td>
                     <td style={{fontWeight:600}}>{guthaben.stundensatz.toFixed(2)} €</td>
                     <td style={{fontSize:12,color:'var(--text-light)'}}>{st.fahrt_km ? `${st.fahrt_km} km = ${(parseFloat(st.fahrt_km)*0.38).toFixed(2)} €` : '–'}</td>
-                    <td style={{fontWeight:700,color:'var(--purple)'}}>{(guthaben.stundensatz + (st.fahrt_km ? parseFloat(st.fahrt_km)*0.38 : 0)).toFixed(2)} €</td>
+                    <td style={{fontWeight:700,color:'var(--purple)'}}>{(calcStunden(st) * guthaben.stundensatz + (st.fahrt_km ? parseFloat(st.fahrt_km)*0.38 : 0)).toFixed(2)} €</td>
                     <td>{st.unterschrift_name ? <span className="badge badge-unterschrift">✓ {st.unterschrift_name}</span> : <span className="badge badge-ausstehend">⚠ Fehlt</span>}</td>
                   </tr>
                 ))}
