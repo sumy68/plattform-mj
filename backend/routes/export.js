@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const archiver = require('archiver');
+const { create: archiverCreate } = require('archiver');
 const { pool } = require('../db');
 const { auth, adminOnly } = require('../middleware/auth');
 
@@ -27,7 +27,7 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    const archive = archiver('zip', { zlib: { level: 9 } });
+    const archive = archiverCreate('zip', { zlib: { level: 9 } });
     archive.pipe(res);
 
     for (const row of butResult.rows) {
