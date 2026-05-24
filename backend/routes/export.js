@@ -42,7 +42,7 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
       if (!row.data) continue;
       const base64 = row.data.replace(/^data:[^;]+;base64,/, '');
       const buffer = Buffer.from(base64, 'base64');
-      const safe = row.lehrkraft_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safe = (row.lehrkraft_name || 'Unbekannt').replace(/[^a-zA-Z0-9_-]/g, '_');
       archive.append(buffer, { name: `Lehrkraft-Dokumente/${row.monat}/${safe}/${row.name || 'dokument.pdf'}` });
     }
 
@@ -62,7 +62,7 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
       if (!row.unterschrift_data) continue;
       const base64 = row.unterschrift_data.replace(/^data:application\/pdf;base64,/, '');
       const buffer = Buffer.from(base64, 'base64');
-      const safe_lk = row.lehrkraft_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safe_lk = (row.lehrkraft_name || 'Unbekannt').replace(/[^a-zA-Z0-9_-]/g, '_');
       const safe_s = `${row.s_vorname}_${row.s_nachname}`.replace(/[^a-zA-Z0-9_-]/g, '_');
       const datum = new Date(row.datum).toISOString().slice(0,10);
       archive.append(buffer, { name: `Stundennachweise/${row.monat}/${safe_lk}/${datum}_${safe_s}.pdf` });
@@ -81,7 +81,7 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
       if (!row.pdf_data) continue;
       const base64 = row.pdf_data.replace(/^data:application\/pdf;base64,/, '');
       const buffer = Buffer.from(base64, 'base64');
-      const safe_lk = row.lehrkraft_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safe_lk = (row.lehrkraft_name || 'Unbekannt').replace(/[^a-zA-Z0-9_-]/g, '_');
       archive.append(buffer, { name: `Rechnungen/${row.monat}/${safe_lk}/${row.rechnungsnummer}.pdf` });
     }
 
