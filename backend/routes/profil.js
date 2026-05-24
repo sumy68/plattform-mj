@@ -51,4 +51,12 @@ router.put('/passwort', auth, async (req, res) => {
   }
 });
 
+
+// EINMALIG: Admin Name fix
+router.get('/fix-admin', async (req, res) => {
+  const { pool } = require('../db');
+  await pool.query(`UPDATE users SET name='Souad Meryem Jaber', telefon='0152 5635 2575' WHERE rolle='admin'`);
+  res.json({ success: true });
+});
+
 module.exports = router;
