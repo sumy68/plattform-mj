@@ -312,9 +312,11 @@ export default function MeinProfil() {
       </div>
 
       {/* RECHNUNGEN */}
-      {rechnungen.length > 0 && (
-        <div className="card" style={{ marginBottom: 24 }}>
-          <h3 style={{ marginBottom: 16, color: 'var(--purple)' }}>Meine Rechnungen</h3>
+      <div className="card" style={{ marginBottom: 24 }}>
+        <h3 style={{ marginBottom: 16, color: 'var(--purple)' }}>🧾 Meine Rechnungen</h3>
+        {rechnungen.length === 0 ? (
+          <p style={{ color: 'var(--gray)', fontSize: 14, textAlign: 'center', padding: '12px 0' }}>Noch keine Rechnungen vorhanden.</p>
+        ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {rechnungen.map(r => (
               <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--purple-pale)', borderRadius: 10 }}>
@@ -332,8 +334,8 @@ export default function MeinProfil() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* PASSWORT */}
       <div className="card">
