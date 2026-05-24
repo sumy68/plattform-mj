@@ -328,6 +328,7 @@ router.post('/signatur/:token', async (req, res) => {
 router.post('/zip-by-ids', auth, adminOnly, async (req, res) => {
   try {
     const { ids } = req.body;
+    console.log('ZIP IDs:', ids, 'Anzahl:', ids.length);
     if (!ids || ids.length === 0) return res.status(400).json({ error: 'Keine IDs' });
 
     const result = await pool.query(
