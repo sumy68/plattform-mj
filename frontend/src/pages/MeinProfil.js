@@ -50,7 +50,7 @@ export default function MeinProfil() {
 
   const loadRechnungen = async () => {
     try {
-      const res = await axios.get(`${API}/api/rechnungen/meine`);
+      const res = await axios.get(`${API}/api/abrechnung/meine-rechnungen`);
       setRechnungen(res.data || []);
     } catch (e) {}
   };
