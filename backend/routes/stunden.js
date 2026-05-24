@@ -340,7 +340,7 @@ router.post('/zip-by-ids', auth, adminOnly, async (req, res) => {
        FROM stunden st
        JOIN schueler s ON st.schueler_id = s.id
        JOIN users u ON st.lehrkraft_id = u.id
-       WHERE st.id = ANY($1) AND st.unterschrift_data IS NOT NULL`, [ids]
+       WHERE st.id = ANY($1::int[]) AND st.unterschrift_data IS NOT NULL`, [ids]
     );
 
     const archiver = require('archiver');
