@@ -323,4 +323,118 @@ router.post('/signatur/:token', async (req, res) => {
   }
 });
 
+
+// ZIP Download für ausgewählte Stunden-IDs (nur Admin)
+router.post('/zip-by-ids', auth, adminOnly, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || ids.length === 0) return res.status(400).json({ error: 'Keine IDs' });
+
+    const result = await pool.query(
+      `SELECT st.*, st.unterschrift_data, st.unterschrift_name, st.unterschrift_datum,
+              st.datum, st.fach, st.startzeit, st.endzeit, st.dauer_minuten,
+              st.ort, st.fahrt_km, st.inhalt,
+              s.vorname as s_vorname, s.nachname as s_nachname,
+              s.schule, s.klasse, s.but_status, s.eltern_name, s.eltern_tel,
+              u.name as lehrkraft_name, u.email as lehrkraft_email, u.telefon as lehrkraft_tel
+       FROM stunden st
+       JOIN schueler s ON st.schueler_id = s.id
+       JOIN users u ON st.lehrkraft_id = u.id
+       WHERE st.id = ANY($1) AND st.unterschrift_data IS NOT NULL`, [ids]
+    );
+
+    const archiver = require('archiver');
+    const PDFDocument = require('pdfkit');
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="Stundennachweise.zip"');
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.pipe(res);
+
+    for (const st of result.rows) {
+      const pdfBuffer = await genPDF(st);
+      const safe_lk = (st.lehrkraft_name || 'Unbekannt').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safe_s = `${st.s_vorname}_${st.s_nachname}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const datum = new Date(st.datum).toISOString().slice(0,10);
+      archive.append(pdfBuffer, { name: `${datum}_${safe_s}_${safe_lk}.pdf` });
+    }
+
+    await archive.finalize();
+  } catch (err) {
+    console.error('ZIP Fehler:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+function genPDF(st) {
+  return new Promise((resolve, reject) => {
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+    doc.fontSize(20).fillColor('#9b7fd4').font('Helvetica-Bold');
+    doc.text('MJ Lernförderung', 50, 40);
+    doc.fontSize(10).fillColor('#888').font('Helvetica');
+    doc.text('Georgstraße 38 · 30159 Hannover', 50, 65);
+    doc.text('info@mj-lernfoerderung.de · www.mj-lernfoerderung.de', 50, 78);
+    doc.moveTo(50, 115).lineTo(545, 115).strokeColor('#9b7fd4').stroke();
+    doc.fontSize(16).fillColor('#2d2040').font('Helvetica-Bold');
+    doc.text('STUNDENNACHWEIS', 50, 130, { align: 'center' });
+    doc.roundedRect(50, 160, 495, 140, 8).fillColor('#f0ebfa').fill();
+    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
+    doc.text('SCHÜLER', 70, 175);
+    doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
+    doc.text(`${st.s_vorname} ${st.s_nachname}`, 70, 190);
+    doc.fontSize(10).fillColor('#666').font('Helvetica');
+    doc.text(`Schule: ${st.schule || '–'}  ·  Klasse: ${st.klasse || '–'}`, 70, 208);
+    doc.text(`Eltern: ${st.eltern_name || '–'}  ·  Tel: ${st.eltern_tel || '–'}`, 70, 222);
+    doc.text(`BuT-Förderung: ${st.but_status ? 'Ja' : 'Nein'}`, 70, 236);
+    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
+    doc.text('LEHRKRAFT', 320, 175);
+    doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
+    doc.text(st.lehrkraft_name || '–', 320, 190);
+    doc.fontSize(10).fillColor('#666').font('Helvetica');
+    doc.text(`E-Mail: ${st.lehrkraft_email || '–'}`, 320, 208);
+    doc.text(`Tel: ${st.lehrkraft_tel || '–'}`, 320, 222);
+    const details = [
+      ['Datum', new Date(st.datum).toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })],
+      ['Uhrzeit', `${st.startzeit || '–'} – ${st.endzeit || '–'} Uhr (${st.dauer_minuten || '–'} Min.)`],
+      ['Fach', st.fach || '–'],
+      ['Ort', st.ort === 'online' ? 'Online' : 'Vor Ort'],
+      ...(st.ort !== 'online' && st.fahrt_km ? [
+        ['Fahrtweg', `${st.fahrt_km} km (Hinfahrt)`],
+        ['Fahrtkosten', `${(parseFloat(st.fahrt_km) * 0.38).toFixed(2)} € (0,38 €/km)`],
+      ] : []),
+    ];
+    const detailBoxHeight = details.length * 18 + 20;
+    doc.roundedRect(50, 315, 495, detailBoxHeight, 8).fillColor('#ffffff').stroke('#e8e0f5');
+    let y = 325;
+    details.forEach(([label, value]) => {
+      doc.fontSize(10).fillColor('#9b7fd4').font('Helvetica-Bold').text(label + ':', 70, y);
+      doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(value, 180, y);
+      y += 18;
+    });
+    const lernY = y + 15;
+    doc.roundedRect(50, lernY, 495, 80, 8).fillColor('#f0ebfa').fill();
+    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('LERNFORTSCHRITT', 70, lernY + 12);
+    doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(st.inhalt || '–', 70, lernY + 28, { width: 455 });
+    const unterschriftY = lernY + 100;
+    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('UNTERSCHRIFT ELTERNTEIL', 50, unterschriftY);
+    if (st.unterschrift_data) {
+      const imgData = st.unterschrift_data.replace(/^data:image\/png;base64,/, '');
+      doc.image(Buffer.from(imgData, 'base64'), 50, unterschriftY + 18, { width: 200, height: 70 });
+      doc.fontSize(10).fillColor('#666').font('Helvetica');
+      doc.text(`Name: ${st.unterschrift_name || ''}`, 50, unterschriftY + 95);
+      doc.text(`Datum: ${st.unterschrift_datum ? new Date(st.unterschrift_datum).toLocaleString('de-DE') : ''}`, 50, unterschriftY + 108);
+    }
+    doc.moveTo(50, 700).lineTo(545, 700).strokeColor('#9b7fd4').stroke();
+    doc.fontSize(8).fillColor('#888').font('Helvetica');
+    doc.text('MJ Lernförderung · Souad Meryem Jaber · Georgstraße 38 · 30159 Hannover · info@mj-lernfoerderung.de', 50, 710, { align: 'center' });
+    doc.end();
+  });
+}
+
 module.exports = router;

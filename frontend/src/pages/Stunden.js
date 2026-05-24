@@ -21,6 +21,9 @@ export default function Stunden({ adminView }) {
   const [absagePopup, setAbsagePopup] = useState(false);
   const [kmLaden, setKmLaden] = useState(false);
   const sigRef = useRef(null);
+  const [filterSchueler, setFilterSchueler] = useState('');
+  const [filterNurBut, setFilterNurBut] = useState(false);
+  const [zipLoading, setZipLoading] = useState(false);
 
   const berechneKm = async () => {
     if (!form.fahrt_von || !form.fahrt_nach) return;
@@ -59,6 +62,37 @@ export default function Stunden({ adminView }) {
     setSchueler(sc.data);
   };
   useEffect(() => { load(); }, [monat]);
+
+  const gefilterteStunden = stunden.filter(st => {
+    if (filterSchueler && String(st.schueler_id) !== String(filterSchueler)) return false;
+    if (filterNurBut && !st.but_status) return false;
+    return true;
+  });
+
+  const downloadZipGefiltert = async () => {
+    setZipLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const ids = gefilterteStunden.filter(st => st.unterschrift_name).map(st => st.id);
+      if (ids.length === 0) return alert('Keine unterschriebenen Stunden in der Auswahl.');
+      const response = await fetch(`${API}/api/stunden/zip-by-ids`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      });
+      if (!response.ok) throw new Error('Fehler');
+      const blob = await response.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Stundennachweise.zip';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      alert('Fehler beim Download: ' + err.message);
+    } finally {
+      setZipLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -139,6 +173,32 @@ export default function Stunden({ adminView }) {
         </div>
       </div>
 
+      {adminView && (
+        <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:16,flexWrap:'wrap'}}>
+          <select
+            value={filterSchueler}
+            onChange={e=>setFilterSchueler(e.target.value)}
+            style={{padding:'8px 12px',borderRadius:8,border:'2px solid var(--border)',fontFamily:'inherit',fontSize:14}}
+          >
+            <option value="">👤 Alle Schüler</option>
+            {schueler.map(s => (
+              <option key={s.id} value={s.id}>{s.vorname} {s.nachname}</option>
+            ))}
+          </select>
+          <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontWeight:600,fontSize:14}}>
+            <input type="checkbox" checked={filterNurBut} onChange={e=>setFilterNurBut(e.target.checked)} style={{width:16,height:16}}/>
+            Nur BuT-Stunden
+          </label>
+          <button
+            className="btn btn-primary"
+            onClick={downloadZipGefiltert}
+            disabled={zipLoading}
+            style={{marginLeft:'auto'}}
+          >
+            {zipLoading ? '⏳ Lädt...' : '📦 PDFs als ZIP herunterladen'}
+          </button>
+        </div>
+      )}
       <div className="card">
         <div className="table-wrap">
           <table>
@@ -146,7 +206,7 @@ export default function Stunden({ adminView }) {
               <th>Datum</th><th>Schüler</th>{adminView&&<th>Lehrkraft</th>}<th>Zeit</th><th>Dauer</th><th>Fach</th><th>Ort</th><th>BuT</th><th>Unterschrift</th><th>Aktionen</th>
             </tr></thead>
             <tbody>
-              {stunden.map(st => (
+              {gefilterteStunden.map(st => (
                 <tr key={st.id}>
                   <td>{new Date(st.datum).toLocaleDateString('de-DE')}</td>
                   <td><strong>{st.schueler_name}</strong></td>
