@@ -358,7 +358,7 @@ router.post('/zip-by-ids', auth, adminOnly, async (req, res) => {
       const safe_lk = (st.lehrkraft_name || 'Unbekannt').replace(/[^a-zA-Z0-9_-]/g, '_');
       const safe_s = `${st.s_vorname}_${st.s_nachname}`.replace(/[^a-zA-Z0-9_-]/g, '_');
       const datum = new Date(st.datum).toISOString().slice(0,10);
-      archive.append(pdfBuffer, { name: `${datum}_${safe_s}_${safe_lk}.pdf` });
+      archive.append(pdfBuffer, { name: `${datum}_${safe_s}_${safe_lk}_${st.id}.pdf` });
     }
 
     await archive.finalize();
