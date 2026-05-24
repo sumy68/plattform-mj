@@ -12,7 +12,8 @@ app.use(express.json({ limit: '10mb' })); // groß wegen Unterschrift Base64
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/schueler', require('./routes/schueler'));
 app.use('/api/stunden', require('./routes/stunden'));
-app.use('/api/abrechnung', require('./routes/abrechnung'));
+app.use("/api/abrechnung", require("./routes/abrechnung"));
+app.use("/api/rechnungen", require("./routes/rechnungen"));
 app.use('/api/profil/dokumente', require('./routes/profilDokumente'));
 app.use('/api/profil', require('./routes/profil'));
 app.use('/api/dokumente', require('./routes/dokumente'));
