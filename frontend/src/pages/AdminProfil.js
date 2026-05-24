@@ -83,27 +83,13 @@ export default function AdminProfil() {
 
         {exportError && <div style={{background:'#fdecea',border:'2px solid #ef9a9a',borderRadius:10,padding:12,marginBottom:16,color:'#c62828',fontWeight:700}}>❌ {exportError}</div>}
 
-        <div style={{display:'flex',gap:12,alignItems:'flex-end',marginBottom:16}}>
-          <div className="form-group" style={{margin:0,flex:1}}>
-            <label>Monat (optional)</label>
-            <input type="month" value={exportMonat} onChange={e=>setExportMonat(e.target.value)} />
-          </div>
-          <button
-            className="btn btn-primary"
-            disabled={exportLoading}
-            onClick={() => handleExport(exportMonat || null)}
-            style={{whiteSpace:'nowrap'}}
-          >
-            {exportLoading ? '⏳ Lädt...' : '⬇️ ZIP herunterladen'}
-          </button>
-        </div>
         <button
-          className="btn"
+          className="btn btn-primary"
           disabled={exportLoading}
           onClick={() => handleExport(null)}
-          style={{width:'100%',background:'var(--bg-light)',color:'var(--text-dark)',border:'2px solid var(--border)'}}
+          style={{width:'100%'}}
         >
-          {exportLoading ? '⏳ Lädt...' : '📁 Alle Dokumente (gesamt) herunterladen'}
+          {exportLoading ? '⏳ Lädt...' : '📁 Alle Dokumente herunterladen'}
         </button>
       </div>
 
