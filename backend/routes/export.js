@@ -26,13 +26,24 @@ function generateStundenPDF(st) {
     doc.text(`${st.s_vorname} ${st.s_nachname}`, 70, 190);
     doc.fontSize(10).fillColor('#666').font('Helvetica');
     doc.text(`Schule: ${st.schule || '–'}  ·  Klasse: ${st.klasse || '–'}`, 70, 208);
+    doc.text(`Eltern: ${st.eltern_name || '–'}  ·  Tel: ${st.eltern_tel || '–'}`, 70, 222);
+    doc.text(`BuT-Förderung: ${st.but_status ? 'Ja' : 'Nein'}`, 70, 236);
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
     doc.text('LEHRKRAFT', 320, 175);
     doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
     doc.text(st.lehrkraft_name || '–', 320, 190);
+    doc.fontSize(10).fillColor('#666').font('Helvetica');
+    doc.text(`E-Mail: ${st.lehrkraft_email || '–'}`, 320, 208);
+    doc.text(`Tel: ${st.lehrkraft_tel || '–'}`, 320, 222);
     const details = [
       ['Datum', new Date(st.datum).toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })],
+      ['Uhrzeit', `${st.startzeit || '–'} – ${st.endzeit || '–'} Uhr (${st.dauer_minuten || '–'} Min.)`],
       ['Fach', st.fach || '–'],
+      ['Ort', st.ort === 'online' ? 'Online' : 'Vor Ort'],
+      ...(st.ort !== 'online' && st.fahrt_km ? [
+        ['Fahrtweg', `${st.fahrt_km} km (Hinfahrt)`],
+        ['Fahrtkosten', `${(parseFloat(st.fahrt_km) * 0.38).toFixed(2)} € (0,38 €/km)`],
+      ] : []),
     ];
     const detailBoxHeight = details.length * 18 + 20;
     doc.roundedRect(50, 315, 495, detailBoxHeight, 8).fillColor('#ffffff').stroke('#e8e0f5');
@@ -42,13 +53,18 @@ function generateStundenPDF(st) {
       doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(value, 180, y);
       y += 18;
     });
-    const unterschriftY = y + 30;
+    const lernY = y + 15;
+    doc.roundedRect(50, lernY, 495, 80, 8).fillColor('#f0ebfa').fill();
+    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('LERNFORTSCHRITT', 70, lernY + 12);
+    doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(st.inhalt || '–', 70, lernY + 28, { width: 455 });
+    const unterschriftY = lernY + 100;
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('UNTERSCHRIFT ELTERNTEIL', 50, unterschriftY);
     if (st.unterschrift_data) {
       const imgData = st.unterschrift_data.replace(/^data:image\/png;base64,/, '');
       doc.image(Buffer.from(imgData, 'base64'), 50, unterschriftY + 18, { width: 200, height: 70 });
       doc.fontSize(10).fillColor('#666').font('Helvetica');
       doc.text(`Name: ${st.unterschrift_name || ''}`, 50, unterschriftY + 95);
+      doc.text(`Datum: ${st.unterschrift_datum ? new Date(st.unterschrift_datum).toLocaleString('de-DE') : ''}`, 50, unterschriftY + 108);
     }
     doc.moveTo(50, 700).lineTo(545, 700).strokeColor('#9b7fd4').stroke();
     doc.fontSize(8).fillColor('#888').font('Helvetica');
@@ -104,9 +120,12 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
     // Stundennachweise
     const filterS = monat ? "AND TO_CHAR(st.datum, 'YYYY-MM') = $1" : '';
     const stundenResult = await pool.query(
-      `SELECT st.unterschrift_data, st.datum, st.fach,
+      `SELECT st.unterschrift_data, st.unterschrift_name, st.unterschrift_datum,
+              st.datum, st.fach, st.startzeit, st.endzeit, st.dauer_minuten,
+              st.ort, st.fahrt_km, st.inhalt,
               s.vorname as s_vorname, s.nachname as s_nachname,
-              u.name as lehrkraft_name,
+              s.schule, s.klasse, s.but_status, s.eltern_name, s.eltern_tel,
+              u.name as lehrkraft_name, u.email as lehrkraft_email, u.telefon as lehrkraft_tel,
               TO_CHAR(st.datum, 'YYYY-MM') as monat
        FROM stunden st
        JOIN schueler s ON st.schueler_id = s.id
