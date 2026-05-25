@@ -48,7 +48,7 @@ export default function Abrechnung() {
     allStunden.forEach(st => {
       if (!byLehrkraft[st.lehrkraft_id]) {
         const lk = allUsers.find(u => u.id === st.lehrkraft_id);
-        byLehrkraft[st.lehrkraft_id] = { id: st.lehrkraft_id, name: st.lehrkraft_name, role: lk?.role || 'lehrkraft', stundensatz: parseFloat(lk?.stundensatz || 0), stunden: [] };
+        byLehrkraft[st.lehrkraft_id] = { id: st.lehrkraft_id, name: st.lehrkraft_name, role: lk?.role || 'lehrkraft', stundensatz: parseFloat(st.lehrkraft_stundensatz || lk?.stundensatz || 0), absage_stundensatz: parseFloat(st.lehrkraft_absage_stundensatz || lk?.absage_stundensatz || 0), stunden: [] };
       }
       byLehrkraft[st.lehrkraft_id].stunden.push(st);
     });
@@ -59,8 +59,8 @@ export default function Abrechnung() {
       offen: lk.stunden.filter(s => !s.abgerechnet).length,
       fahrtkosten_gesamt: lk.stunden.reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
       fahrtkosten_offen: lk.stunden.filter(s => !s.abgerechnet).reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
-      betrag_gesamt: lk.stunden.length * lk.stundensatz + lk.stunden.reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
-      betrag_offen: lk.stunden.filter(s => !s.abgerechnet).length * lk.stundensatz + lk.stunden.filter(s => !s.abgerechnet).reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
+      betrag_gesamt: lk.stunden.reduce((sum, s) => { const satz = s.kurzfristige_absage ? (lk.absage_stundensatz || lk.stundensatz) : lk.stundensatz; return sum + (parseFloat(s.dauer_minuten)||0)/60*satz + (s.fahrt_km ? parseFloat(s.fahrt_km)*0.38 : 0); }, 0),
+      betrag_offen: lk.stunden.filter(s => !s.abgerechnet).reduce((sum, s) => { const satz = s.kurzfristige_absage ? (lk.absage_stundensatz || lk.stundensatz) : lk.stundensatz; return sum + (parseFloat(s.dauer_minuten)||0)/60*satz + (s.fahrt_km ? parseFloat(s.fahrt_km)*0.38 : 0); }, 0),
     }));
     const honorarkraefte = lehrkraefte.filter(l => l.role === 'honorarkraft');
     const festlehrkraefte = lehrkraefte.filter(l => l.role === 'lehrkraft');

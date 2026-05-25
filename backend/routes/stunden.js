@@ -24,6 +24,8 @@ router.get('/', auth, async (req, res) => {
     let query = `
       SELECT st.*, 
         u.name as lehrkraft_name,
+        u.stundensatz as lehrkraft_stundensatz,
+        u.absage_stundensatz as lehrkraft_absage_stundensatz,
         s.vorname||' '||s.nachname as schueler_name,
         s.but_status, s.schule, s.klasse
       FROM stunden st
