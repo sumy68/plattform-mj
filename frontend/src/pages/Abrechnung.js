@@ -352,16 +352,8 @@ export default function Abrechnung() {
             <div className="form-row">
               <div className="form-group">
                 <label>Gewünschter Betrag (€) *</label>
-                <input type="number" step="0.01" min="0" max={guthaben?.gesamt_betrag?.toFixed(2)} value={auszahlungBetrag} onChange={e=>{
-                  const val = parseFloat(e.target.value);
-                  if (guthaben?.gesamt_betrag && val > guthaben.gesamt_betrag) {
-                    setAuszahlungBetrag(guthaben.gesamt_betrag.toFixed(2));
-                  } else {
-                    setAuszahlungBetrag(e.target.value);
-                  }
-                }} placeholder="z.B. 450.00"/>
-                {guthaben?.gesamt_betrag > 0 && <div style={{fontSize:12,color:'var(--text-light)',marginTop:4}}>💡 Offenes Guthaben: <strong>{guthaben.gesamt_betrag.toFixed(2)} €</strong> — Maximum das du beantragen kannst</div>}
-                {auszahlungBetrag && guthaben?.gesamt_betrag && parseFloat(auszahlungBetrag) > guthaben.gesamt_betrag && <div style={{fontSize:12,color:'var(--danger)',marginTop:4}}>⚠️ Betrag überschreitet dein offenes Guthaben von {guthaben.gesamt_betrag.toFixed(2)} €</div>}
+                <input type="number" step="0.01" min="0" value={auszahlungBetrag} onChange={e=>setAuszahlungBetrag(e.target.value)} placeholder="z.B. 450.00"/>
+                {offeneStunden.length > 0 && <div style={{fontSize:12,color:'var(--text-light)',marginTop:4}}>💡 Offene Stunden ergeben max. <strong>{offeneStunden.reduce((sum,st)=>{const s=calcStunden(st);const f=st.fahrt_km?parseFloat(st.fahrt_km)*0.38:0;return sum+parseFloat(guthaben?.stundensatz||0)*s+f;},0).toFixed(2)} €</strong></div>}
               </div>
               <div className="form-group">
                 <label>Leistungszeitraum von</label>
