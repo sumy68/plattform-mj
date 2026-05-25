@@ -123,19 +123,20 @@ export default function Abrechnung() {
   });
 
   const handleAuszahlung = async () => {
-    if (!auszahlungBetrag || parseFloat(auszahlungBetrag) <= 0) return alert('Bitte Betrag eingeben');
+    const cleanBetrag = parseFloat(String(auszahlungBetrag).replace(',', '.'));
+    if (!cleanBetrag || isNaN(cleanBetrag) || cleanBetrag <= 0) return alert('Bitte Betrag eingeben');
     const stundensatz = parseFloat(guthaben?.stundensatz || 0);
     const maxBetrag = offeneStunden.reduce((sum, st) => {
       const stunden = calcStunden(st);
       const fahrt = st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
       return sum + stundensatz * stunden + fahrt;
     }, 0);
-    if (parseFloat(auszahlungBetrag) > maxBetrag) return alert(`Betrag zu hoch! Deine offenen Stunden ergeben maximal ${maxBetrag.toFixed(2)}€.`);
-    if (!window.confirm(`Auszahlung von ${parseFloat(auszahlungBetrag).toFixed(2)}€ beantragen?`)) return;
+    if (cleanBetrag > maxBetrag) return alert(`Betrag zu hoch! Deine offenen Stunden ergeben maximal ${maxBetrag.toFixed(2)}€.`);
+    if (!window.confirm(`Auszahlung von ${cleanBetrag.toFixed(2)}€ beantragen?`)) return;
     setAuszahlungLoading(true);
     try {
       const notizen = auszahlungVon && auszahlungBis ? `${auszahlungVon} bis ${auszahlungBis}` : '';
-      await axios.post(`${API}/api/abrechnung/auszahlung`, { betrag: parseFloat(auszahlungBetrag), monat, notizen }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      await axios.post(`${API}/api/abrechnung/auszahlung`, { betrag: cleanBetrag, monat, notizen }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setSuccess('✅ Auszahlungswunsch eingereicht!');
       setAuszahlungBetrag('');
       setAuszahlungVon('');
