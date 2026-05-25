@@ -174,7 +174,9 @@ router.post('/rechnung', auth, async (req, res) => {
         doc.text(st.schueler_name, 130, y, { width: 140 });
         doc.text(`${st.startzeit}–${st.endzeit}`, 280, y);
         doc.text(st.fach || '–', 380, y);
-        doc.text(`${parseFloat(user.stundensatz).toFixed(2)} €`, 490, y);
+        const zeileSatz = st.kurzfristige_absage ? (parseFloat(user.absage_stundensatz) || parseFloat(user.stundensatz)) : parseFloat(user.stundensatz);
+        const zeileStunden = (parseFloat(st.dauer_minuten) || 0) / 60;
+        doc.text(`${(zeileSatz * zeileStunden).toFixed(2)} €`, 490, y);
         y += 18;
         if (st.fahrt_km && parseFloat(st.fahrt_km) > 0) {
           doc.fontSize(8).fillColor('#888');
