@@ -32,7 +32,7 @@ router.get('/guthaben/:user_id', auth, async (req, res) => {
     const stunden = stundenRes.rows;
     const stundensatz = parseFloat(user.stundensatz) || 0;
     const fahrtkosten = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
-    const gesamtBetrag = stunden.length * stundensatz + fahrtkosten;
+    const gesamtBetrag = stunden.reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60 * stundensatz, 0) + fahrtkosten;
     
     // Diesen Monat bereits abgerechnet
     const monat = new Date().toISOString().slice(0,7);
@@ -182,11 +182,12 @@ router.post('/rechnung', auth, async (req, res) => {
       });
       
       // Summe
-      const stundenSumme = stunden.length * parseFloat(user.stundensatz);
+      const stundenSumme = stunden.reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60 * parseFloat(user.stundensatz), 0);
       const fahrtSumme = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
       doc.moveTo(50, y + 5).lineTo(545, y + 5).strokeColor('#9b7fd4').stroke();
       doc.fontSize(10).font('Helvetica').fillColor('#555');
-      doc.text(`Honorar (${stunden.length} Stunden × ${parseFloat(user.stundensatz).toFixed(2)} €):`, 50, y + 15);
+      const gesamtStunden = stunden.reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60, 0);
+      doc.text(`Honorar (${gesamtStunden.toFixed(1)} Stunden × ${parseFloat(user.stundensatz).toFixed(2)} €):`, 50, y + 15);
       doc.text(`${stundenSumme.toFixed(2)} €`, 490, y + 15);
       if (fahrtSumme > 0) {
         doc.text(`Fahrtkosten gesamt:`, 50, y + 30);
