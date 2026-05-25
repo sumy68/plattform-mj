@@ -88,7 +88,7 @@ export default function Abrechnung() {
         const res = await axios.get(`${API}/api/abrechnung/guthaben/${user.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
         setGuthaben(res.data);
       }
-    } catch(e) {}
+    } catch(e) { console.log("FEHLER:", e.message, e.response?.data); }
   };
 
   const toggleStunde = (id) => setSelected(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
