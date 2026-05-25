@@ -100,9 +100,11 @@ router.post('/rechnung', auth, async (req, res) => {
     );
     const stunden = stundenRes.rows;
     
-    // Betrag selbst berechnen inkl. Fahrtkosten
+    // Betrag selbst berechnen inkl. Fahrtkosten und Absage-Stundensatz
+    const absageSatzRechnung = parseFloat(user.absage_stundensatz) || parseFloat(user.stundensatz) || 0;
     const berechneterBetrag = stunden.reduce((sum, st) => {
-      const stundenBetrag = parseFloat(user.stundensatz) || 0;
+      const satz = st.kurzfristige_absage ? absageSatzRechnung : (parseFloat(user.stundensatz) || 0);
+      const stundenBetrag = (parseFloat(st.dauer_minuten) || 0) / 60 * satz;
       const fahrtBetrag = st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
       return sum + stundenBetrag + fahrtBetrag;
     }, 0);
