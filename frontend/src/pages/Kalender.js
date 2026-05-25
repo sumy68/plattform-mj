@@ -6,6 +6,17 @@ const API = 'https://plattform-mj.onrender.com';
 const WOCHENTAGE = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 
+const ABWESENHEIT_STYLE = {
+  krank:     { bg: '#fdecea', color: '#c62828', label: '🤒 Krank' },
+  urlaub:    { bg: '#e3f2fd', color: '#1565c0', label: '🏖️ Urlaub' },
+  sonstiges: { bg: '#f5f5f5', color: '#424242', label: '📋 Sonstiges' },
+};
+
+const getAbwStyle = (typ, isAdmin) => {
+  if (!isAdmin) return { bg: '#f0ebfa', color: '#6b4fa0', label: '🗓️ Abwesend' };
+  return ABWESENHEIT_STYLE[typ] || ABWESENHEIT_STYLE.sonstiges;
+};
+
 export default function Kalender() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -34,10 +45,9 @@ export default function Kalender() {
     load();
   }, [monatStr]);
 
-  // Kalender-Grid aufbauen
   const ersterTag = new Date(jahr, monat, 1);
   const letzterTag = new Date(jahr, monat + 1, 0);
-  const startWochentag = (ersterTag.getDay() + 6) % 7; // Mo=0
+  const startWochentag = (ersterTag.getDay() + 6) % 7;
   const tage = [];
 
   for (let i = 0; i < startWochentag; i++) tage.push(null);
@@ -76,7 +86,6 @@ export default function Kalender() {
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr',gap:16}}>
-        {/* Legende */}
         <div style={{display:'flex',gap:16,flexWrap:'wrap',fontSize:12}}>
           <span style={{display:'flex',alignItems:'center',gap:6}}><span style={{width:12,height:12,borderRadius:3,background:'#9b7fd4',display:'inline-block'}}/>Stunden</span>
           <span style={{display:'flex',alignItems:'center',gap:6}}><span style={{width:12,height:12,borderRadius:3,background:'#ef9a9a',display:'inline-block'}}/>Krank</span>
@@ -84,19 +93,16 @@ export default function Kalender() {
           <span style={{display:'flex',alignItems:'center',gap:6}}><span style={{width:12,height:12,borderRadius:3,background:'#e0e0e0',display:'inline-block'}}/>Sonstiges</span>
         </div>
 
-        {/* Kalender Grid */}
         <div className="card" style={{padding:0,overflow:'hidden'}}>
-          {/* Wochentage Header */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',background:'var(--purple-pale)'}}>
             {WOCHENTAGE.map(w => (
               <div key={w} style={{padding:'10px 0',textAlign:'center',fontSize:12,fontWeight:700,color:'var(--text-mid)'}}>{w}</div>
             ))}
           </div>
 
-          {/* Tage */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)'}}>
             {tage.map((tag, i) => {
-              if (!tag) return <div key={`empty-${i}`} style={{minHeight:80,borderBottom:'1px solid var(--lavender)',borderRight:'1px solid var(--lavender)'}}/>;
+              if (!tag) return <div key={`empty-${i}`} style={{minHeight:80,borderBottom:'1px solid var(--lavender)',borderRight:'1px solid var(--lavender)'}}/>; 
               const { stunden: tagSt, abwesenheiten: tagAb } = getTagDaten(tag);
               const heute = isHeute(tag);
               const isSelected = selectedTag === tag;
@@ -110,15 +116,13 @@ export default function Kalender() {
                 }}>
                   <div style={{
                     fontWeight:heute?700:400, fontSize:13,
-                    color: heute ? 'var(--purple)' : 'var(--text-dark)',
-                    marginBottom:4,
                     width:24,height:24,borderRadius:50,
                     background: heute ? 'var(--purple)' : 'transparent',
                     color: heute ? 'white' : 'var(--text-dark)',
-                    display:'flex',alignItems:'center',justifyContent:'center'
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                    marginBottom:4
                   }}>{tag}</div>
 
-                  {/* Stunden Punkte */}
                   {tagSt.length > 0 && (
                     <div style={{display:'flex',flexWrap:'wrap',gap:2,marginBottom:2}}>
                       {tagSt.slice(0,3).map((s,i) => (
@@ -128,24 +132,25 @@ export default function Kalender() {
                     </div>
                   )}
 
-                  {/* Abwesenheiten */}
-                  {tagAb.slice(0,2).map((a,i) => (
-                    <div key={i} style={{
-                      fontSize:9,borderRadius:3,padding:'1px 4px',marginBottom:1,
-                      background: '#f0ebfa',
-                      color: '#6b4fa0',
-                      whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'
-                    }}>
-                      🗓️ {a.user_name?.split(' ')[0]}
-                    </div>
-                  ))}
+                  {tagAb.slice(0,2).map((a,i) => {
+                    const style = getAbwStyle(a.typ, isAdmin);
+                    return (
+                      <div key={i} style={{
+                        fontSize:9,borderRadius:3,padding:'1px 4px',marginBottom:1,
+                        background: style.bg,
+                        color: style.color,
+                        whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'
+                      }}>
+                        {isAdmin ? `${style.label.split(' ')[0]} ` : ''}{a.user_name?.split(' ')[0]}
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Detail Panel */}
         {selectedTag && selectedDaten && (
           <div className="card">
             <div className="card-title">📅 {selectedDatumStr}</div>
@@ -175,16 +180,19 @@ export default function Kalender() {
             {selectedDaten.abwesenheiten.length > 0 && (
               <div>
                 <div style={{fontSize:13,fontWeight:700,color:'var(--text-mid)',marginBottom:8}}>Abwesenheiten</div>
-                {selectedDaten.abwesenheiten.map(a => (
-                  <div key={a.id} style={{
-                    display:'flex',justifyContent:'space-between',alignItems:'center',
-                    background: '#f0ebfa',
-                    borderRadius:8,padding:'8px 12px',marginBottom:6
-                  }}>
-                    <span style={{fontWeight:700}}>{a.user_name}</span>
-                    <span style={{fontSize:12}}>🗓️ Abwesend</span>
-                  </div>
-                ))}
+                {selectedDaten.abwesenheiten.map(a => {
+                  const style = getAbwStyle(a.typ, isAdmin);
+                  return (
+                    <div key={a.id} style={{
+                      display:'flex',justifyContent:'space-between',alignItems:'center',
+                      background: style.bg,
+                      borderRadius:8,padding:'8px 12px',marginBottom:6
+                    }}>
+                      <span style={{fontWeight:700}}>{a.user_name}</span>
+                      <span style={{fontSize:12,color:style.color,fontWeight:600}}>{style.label}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
