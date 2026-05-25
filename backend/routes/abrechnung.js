@@ -398,6 +398,8 @@ router.post('/auszahlung', auth, async (req, res) => {
 // Offene Stunden für Lehrkraft (nicht Honorarkraft)
 router.get('/meine-offenen-stunden', auth, async (req, res) => {
   try {
+    const userRes = await pool.query('SELECT stundensatz FROM users WHERE id=$1', [req.user.id]);
+    const stundensatz = parseFloat(userRes.rows[0]?.stundensatz) || 0;
     const result = await pool.query(
       `SELECT st.*, s.vorname||' '||s.nachname as schueler_name
        FROM stunden st JOIN schueler s ON st.schueler_id=s.id
@@ -405,7 +407,10 @@ router.get('/meine-offenen-stunden', auth, async (req, res) => {
        ORDER BY st.datum DESC`,
       [req.user.id]
     );
-    res.json(result.rows);
+    const stunden = result.rows;
+    const fahrtkosten = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
+    const gesamt_betrag = stunden.length * stundensatz + fahrtkosten;
+    res.json({ stunden, stundensatz, gesamt_betrag });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
