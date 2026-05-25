@@ -199,7 +199,6 @@ export default function Lehrkraefte() {
                 })}
                 {(detailUser.profilDokumente||[]).length > 0 && (
                   <>
-                    <div style={{fontSize:12,fontWeight:700,color:'var(--text-light)',marginTop:8,textTransform:'uppercase'}}>Weitere Dokumente</div>
                     {(detailUser.profilDokumente||[]).map(dok => (
                       <div key={dok.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'#f0ebfa',borderRadius:8,padding:'8px 14px'}}>
                         <span style={{fontSize:13,fontWeight:600}}>📄 {dok.dateiname}</span>
