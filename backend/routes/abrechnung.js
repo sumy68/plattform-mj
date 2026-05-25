@@ -410,7 +410,7 @@ router.get('/meine-offenen-stunden', auth, async (req, res) => {
     const stunden = result.rows;
     const fahrtkosten = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
     const gesamt_betrag = stunden.length * stundensatz + fahrtkosten;
-    res.json({ stunden, stundensatz, gesamt_betrag });
+    res.json({ stunden, stundensatz, gesamt_betrag, gesamt_stunden: stunden.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
