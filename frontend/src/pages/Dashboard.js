@@ -66,9 +66,9 @@ export default function Dashboard() {
           setChartData(monate.map((m, i) => {
             const data = chartResults[i].data;
             if (isHonorar) {
-              return { monat: m.label, Stunden: data.length, Abgerechnet: data.filter(s => s.abgerechnet).length };
+              return { monat: m.label, Stunden: data.reduce((sum,s)=>sum+Math.round((s.dauer_minuten||0)/60),0), Abgerechnet: data.filter(s=>s.abgerechnet).reduce((sum,s)=>sum+Math.round((s.dauer_minuten||0)/60),0) };
             } else {
-              return { monat: m.label, Stunden: data.length };
+              return { monat: m.label, Stunden: data.reduce((sum,s)=>sum+Math.round((s.dauer_minuten||0)/60),0) };
             }
           }));
         }
