@@ -461,6 +461,17 @@ router.delete('/auszahlung/:id', auth, adminOnly, async (req, res) => {
 router.patch('/auszahlung/:id', auth, async (req, res) => {
   try {
     await pool.query('UPDATE auszahlungswuensche SET status=$1 WHERE id=$2', [req.body.status, req.params.id]);
+    // Wenn erledigt: alle Stunden des Users in diesem Monat als abgerechnet markieren
+    if (req.body.status === 'erledigt') {
+      const aw = await pool.query('SELECT user_id, monat FROM auszahlungswuensche WHERE id=$1', [req.params.id]);
+      if (aw.rows.length > 0) {
+        const { user_id, monat } = aw.rows[0];
+        await pool.query(
+          "UPDATE stunden SET abgerechnet=true WHERE lehrkraft_id=$1 AND TO_CHAR(datum,'YYYY-MM')=$2 AND abgerechnet=false",
+          [user_id, monat]
+        );
+      }
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
