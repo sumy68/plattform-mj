@@ -113,6 +113,7 @@ export default function Abrechnung() {
 
   // Stunden die in erledigten Auszahlungszeiträumen liegen ausblenden
   const offeneStunden = (guthaben?.stunden || []).filter(st => {
+    if (!isHonorar) return !st.abgerechnet;
     const stDatum = new Date(st.datum);
     const istAbgedeckt = meineAuszahlungen.some(a => {
       if (a.status !== 'erledigt' || !a.notizen || !a.notizen.includes(' bis ')) return false;
