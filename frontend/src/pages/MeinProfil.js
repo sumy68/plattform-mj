@@ -10,6 +10,7 @@ export default function MeinProfil() {
   const [profil, setProfil] = useState(null);
   const [form, setForm] = useState({});
   const [pwForm, setPwForm] = useState({ altes_passwort: '', neues_passwort: '', neues_passwort2: '' });
+  const [showPw, setShowPw] = useState({ altes: false, neues: false, neues2: false });
   const [rechnungen, setRechnungen] = useState([]);
   const [dokumente, setDokumente] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -344,15 +345,24 @@ export default function MeinProfil() {
         <form onSubmit={handlePwChange}>
           <div className="form-group">
             <label>Aktuelles Passwort</label>
-            <input type="password" value={pwForm.altes_passwort} onChange={e => setPwForm({ ...pwForm, altes_passwort: e.target.value })} required />
+            <div style={{position:'relative'}}>
+              <input type={showPw.altes ? 'text' : 'password'} value={pwForm.altes_passwort} onChange={e => setPwForm({ ...pwForm, altes_passwort: e.target.value })} required style={{paddingRight:40,width:'100%'}}/>
+              <button type="button" onClick={()=>setShowPw({...showPw,altes:!showPw.altes})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16}}>{showPw.altes ? '🙈' : '👁️'}</button>
+            </div>
           </div>
           <div className="form-group">
             <label>Neues Passwort</label>
-            <input type="password" value={pwForm.neues_passwort} onChange={e => setPwForm({ ...pwForm, neues_passwort: e.target.value })} required />
+            <div style={{position:'relative'}}>
+              <input type={showPw.neues ? 'text' : 'password'} value={pwForm.neues_passwort} onChange={e => setPwForm({ ...pwForm, neues_passwort: e.target.value })} required style={{paddingRight:40,width:'100%'}}/>
+              <button type="button" onClick={()=>setShowPw({...showPw,neues:!showPw.neues})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16}}>{showPw.neues ? '🙈' : '👁️'}</button>
+            </div>
           </div>
           <div className="form-group">
             <label>Neues Passwort wiederholen</label>
-            <input type="password" value={pwForm.neues_passwort2} onChange={e => setPwForm({ ...pwForm, neues_passwort2: e.target.value })} required />
+            <div style={{position:'relative'}}>
+              <input type={showPw.neues2 ? 'text' : 'password'} value={pwForm.neues_passwort2} onChange={e => setPwForm({ ...pwForm, neues_passwort2: e.target.value })} required style={{paddingRight:40,width:'100%'}}/>
+              <button type="button" onClick={()=>setShowPw({...showPw,neues2:!showPw.neues2})} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16}}>{showPw.neues2 ? '🙈' : '👁️'}</button>
+            </div>
           </div>
           {pwSuccess && <div className="alert alert-success">{pwSuccess}</div>}
           {pwError && <div className="alert alert-danger">{pwError}</div>}
