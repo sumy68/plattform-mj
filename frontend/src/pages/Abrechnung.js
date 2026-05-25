@@ -76,6 +76,7 @@ export default function Abrechnung() {
 
   const loadGuthaben = async () => {
     setSelected([]);
+    console.log('USER ROLE:', user?.role);
     try {
       const aRes = await axios.get(`${API}/api/abrechnung/meine-auszahlungen`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setMeineAuszahlungen(aRes.data);
