@@ -105,7 +105,8 @@ export default function Abrechnung() {
   const selectedBetrag = selected.reduce((sum, id) => {
     const st = (guthaben?.stunden || []).find(s => s.id === id);
     const stunden = calcStunden(st);
-    const stundenBetrag = parseFloat(guthaben?.stundensatz || 0) * stunden;
+    const satz = st?.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz || guthaben?.stundensatz || 0) : parseFloat(guthaben?.stundensatz || 0);
+    const stundenBetrag = satz * stunden;
     const fahrtBetrag = st?.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
     return sum + stundenBetrag + fahrtBetrag;
   }, 0);
@@ -125,11 +126,11 @@ export default function Abrechnung() {
   const handleAuszahlung = async () => {
     const cleanBetrag = parseFloat(String(auszahlungBetrag).replace(',', '.'));
     if (!cleanBetrag || isNaN(cleanBetrag) || cleanBetrag <= 0) return alert('Bitte Betrag eingeben');
-    const stundensatz = parseFloat(guthaben?.stundensatz || 0);
     const maxBetrag = offeneStunden.reduce((sum, st) => {
+      const satz = st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz || guthaben?.stundensatz || 0) : parseFloat(guthaben?.stundensatz || 0);
       const stunden = calcStunden(st);
       const fahrt = st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
-      return sum + stundensatz * stunden + fahrt;
+      return sum + satz * stunden + fahrt;
     }, 0);
     if (cleanBetrag > maxBetrag) return alert(`Betrag zu hoch! Deine offenen Stunden ergeben maximal ${maxBetrag.toFixed(2)}€.`);
     if (!window.confirm(`Auszahlung von ${cleanBetrag.toFixed(2)}€ beantragen?`)) return;

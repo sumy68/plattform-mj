@@ -51,6 +51,7 @@ router.get('/guthaben/:user_id', auth, async (req, res) => {
       user,
       stunden,
       stundensatz,
+      absage_stundensatz: parseFloat(user.absage_stundensatz) || 0,
       gesamt_stunden: stunden.length,
       gesamt_betrag: gesamtBetrag,
       bereits_abgerechnet: bereitsAbgerechnet,
