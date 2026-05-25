@@ -23,12 +23,11 @@ export default function Sidebar({ onClose }) {
         axios.get(`${API}/api/abwesenheiten/pending-urlaub`).catch(() => ({ data: [] }))
       ]).then(([p, u]) => setPendingCount(p.data.length + u.data.length));
       axios.get(`${API}/api/abwesenheiten`).then(res => {
-        const heute = new Date().toISOString().split('T')[0];
-        const neu = res.data.filter(a => a.typ === 'krank' && a.created_at?.split('T')[0] === heute).length;
-        const gesehen = parseInt(localStorage.getItem('krank_badge_gesehen') || '0');
-        const ungesehen = Math.max(0, neu - gesehen);
-        setKrankCount(ungesehen);
-        localStorage.setItem('krank_badge', ungesehen);
+        const kranke = res.data.filter(a => a.typ === 'krank' && a.status === 'ausstehend');
+        const gesehenIds = JSON.parse(localStorage.getItem('krank_gesehen_ids') || '[]');
+        const ungesehen = kranke.filter(a => !gesehenIds.includes(a.id));
+        setKrankCount(ungesehen.length);
+        localStorage.setItem('krank_badge', ungesehen.length);
       }).catch(() => {});
     }
     axios.get(`${API}/api/but`).then(res => {
@@ -71,8 +70,13 @@ export default function Sidebar({ onClose }) {
     setMobileOpen(false);
     setTimeout(() => navigate(path), 10);
     if (path === '/abwesenheiten') {
-      setKrankCount(0);
-      localStorage.setItem('krank_badge', '0');
+      axios.get(`${API}/api/abwesenheiten`).then(res => {
+        const kranke = res.data.filter(a => a.typ === 'krank' && a.status === 'ausstehend');
+        const ids = kranke.map(a => a.id);
+        localStorage.setItem('krank_gesehen_ids', JSON.stringify(ids));
+        setKrankCount(0);
+        localStorage.setItem('krank_badge', '0');
+      }).catch(() => {});
     }
   };
 
