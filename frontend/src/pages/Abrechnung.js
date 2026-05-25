@@ -80,6 +80,10 @@ export default function Abrechnung() {
     setSelected([]);
     try {
       const aRes = await axios.get(`${API}/api/abrechnung/meine-auszahlungen`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      if (user?.role === 'lehrkraft') {
+        const offenRes = await axios.get(`${API}/api/abrechnung/meine-offenen-stunden`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+        setGuthaben({ stunden: offenRes.data, stundensatz: 0, bereits_abgerechnet: 0, gesamt_betrag: 0 });
+      }
       setMeineAuszahlungen(aRes.data);
     } catch(e) {}
   };

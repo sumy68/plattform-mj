@@ -394,6 +394,23 @@ router.post('/auszahlung', auth, async (req, res) => {
   }
 });
 
+
+// Offene Stunden für Lehrkraft (nicht Honorarkraft)
+router.get('/meine-offenen-stunden', auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT st.*, s.vorname||' '||s.nachname as schueler_name
+       FROM stunden st JOIN schueler s ON st.schueler_id=s.id
+       WHERE st.lehrkraft_id=$1 AND st.abgerechnet=false
+       ORDER BY st.datum DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Eigene Auszahlungswünsche (Lehrkraft)
 router.get('/meine-auszahlungen', auth, async (req, res) => {
   try {
