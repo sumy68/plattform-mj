@@ -22,10 +22,15 @@ export default function Hilfe() {
             />
           </div>
         ) : (
-          <div style={{background:'#f0ebfa',borderRadius:12,padding:48,display:'flex',flexDirection:'column',alignItems:'center',gap:12}}>
-            <div style={{fontSize:56}}>▶️</div>
-            <p style={{fontSize:14,color:'#888',margin:0}}>Video-Tutorial wird bald verfügbar sein</p>
-            <p style={{fontSize:12,color:'#aaa',margin:0}}>YouTube-Link folgt</p>
+          <div style={{borderRadius:12,overflow:'hidden',position:'relative',paddingTop:'56.25%'}}>
+            <iframe
+              src="https://www.youtube.com/embed/DFTMZxF0-rs"
+              title="Tutorial für Lehrkräfte"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',borderRadius:12}}
+            />
           </div>
         )}
       </div>
