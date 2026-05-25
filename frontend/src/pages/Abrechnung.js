@@ -373,7 +373,7 @@ export default function Abrechnung() {
               </div>
             </div>
             {meineAuszahlungen.filter(a=>a.monat===monat).length >= 2 && <div style={{background:'#fff3e0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:13,color:'#e65100'}}>⚠️ Du hast für diesen Monat bereits 2 Auszahlungswünsche eingereicht (Maximum erreicht).</div>}
-            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading || meineAuszahlungen.filter(a=>a.monat===monat).length >= 2 || (guthaben?.gesamt_betrag && parseFloat(auszahlungBetrag) > guthaben.gesamt_betrag)}>
+            <button className="btn btn-primary" onClick={handleAuszahlung} disabled={auszahlungLoading || meineAuszahlungen.filter(a=>a.monat===monat).length >= 2}>
               {auszahlungLoading ? 'Wird gesendet...' : '💸 Auszahlung beantragen'}
             </button>
           </div>
