@@ -56,11 +56,13 @@ export default function Lehrkraefte() {
   };
 
   const openDetail = async (u) => {
-    const [profilRes, dokRes] = await Promise.all([
-      axios.get(`${API}/api/auth/users/${u.id}/profil`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
-      axios.get(`${API}/api/dokumente?user_id=${u.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+    const [profilRes, dokRes, profilDokRes] = await Promise.all([
+      axios.get(`${API}/api/auth/users/${u.id}/profil`, { headers }),
+      axios.get(`${API}/api/dokumente?user_id=${u.id}`, { headers }),
+      axios.get(`${API}/api/profil/dokumente?user_id=${u.id}`, { headers }).catch(() => ({ data: [] }))
     ]);
-    setDetailUser({ ...u, ...profilRes.data, dokumente: dokRes.data });
+    setDetailUser({ ...u, ...profilRes.data, dokumente: dokRes.data, profilDokumente: profilDokRes.data });
   };
 
   const DOKUMENT_LABELS = { lebenslauf: 'Lebenslauf', fuehrungszeugnis: 'Führungszeugnis', immatrikulation: 'Immatrikulationsbescheinigung', vertrag: 'Vertrag' };
@@ -195,6 +197,17 @@ export default function Lehrkraefte() {
                     </div>
                   );
                 })}
+                {(detailUser.profilDokumente||[]).length > 0 && (
+                  <>
+                    <div style={{fontSize:12,fontWeight:700,color:'var(--text-light)',marginTop:8,textTransform:'uppercase'}}>Weitere Dokumente</div>
+                    {(detailUser.profilDokumente||[]).map(dok => (
+                      <div key={dok.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'#f0ebfa',borderRadius:8,padding:'8px 14px'}}>
+                        <span style={{fontSize:13,fontWeight:600}}>📄 {dok.dateiname}</span>
+                        <a href={`${API}/api/profil/dokumente/${dok.id}?token=${localStorage.getItem('token')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">⬇️ Download</a>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>

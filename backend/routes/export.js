@@ -141,6 +141,22 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
       archive.append(pdfBuffer, { name: `Stundennachweise/${row.monat}/${safe_lk}/${datum}_${safe_s}.pdf` });
     }
 
+    // Profil-Dokumente (von Lehrkräften hochgeladen)
+    const filterP = monat ? "AND TO_CHAR(pd.erstellt_am, 'YYYY-MM') = $1" : '';
+    const profilDokResult = await pool.query(
+      `SELECT pd.dateiname, pd.daten, pd.dateityp, u.name as lehrkraft_name,
+              TO_CHAR(pd.erstellt_am, 'YYYY-MM') as monat
+       FROM profil_dokumente pd JOIN users u ON pd.user_id = u.id
+       WHERE pd.daten IS NOT NULL ${filterP}`, params);
+
+    for (const row of profilDokResult.rows) {
+      if (!row.daten) continue;
+      const base64 = row.daten.replace(/^data:[^;]+;base64,/, '');
+      const buffer = Buffer.from(base64, 'base64');
+      const safe = (row.lehrkraft_name || 'Unbekannt').replace(/[^a-zA-Z0-9_-]/g, '_');
+      archive.append(buffer, { name: `Lehrkraft-Dokumente/${row.monat}/${safe}/${row.dateiname || 'dokument.pdf'}` });
+    }
+
     // Rechnungen
     const filterR = monat ? "AND TO_CHAR(r.erstellt_am, 'YYYY-MM') = $1" : '';
     const rechnungResult = await pool.query(

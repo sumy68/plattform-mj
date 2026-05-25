@@ -26,9 +26,10 @@ createTable().catch(console.error);
 // GET /api/profil/dokumente — eigene Dokumente laden
 router.get('/', auth, async (req, res) => {
   try {
+    const id = req.query.user_id && req.user.role === 'admin' ? req.query.user_id : req.user.id;
     const result = await pool.query(
       'SELECT id, dateiname, dateityp, dateigroesse, erstellt_am FROM profil_dokumente WHERE user_id = $1 ORDER BY erstellt_am DESC',
-      [req.user.id]
+      [id]
     );
     res.json(result.rows);
   } catch (e) {
@@ -37,15 +38,24 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// GET /api/profil/dokumente/:id — einzelnes Dokument mit Daten (für Download)
+// GET /api/profil/dokumente/:id — einzelnes Dokument (Admin: alle, Lehrkraft: nur eigene)
 router.get('/:id', auth, async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM profil_dokumente WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.user.id]
-    );
+    const query = req.user.role === 'admin'
+      ? 'SELECT * FROM profil_dokumente WHERE id = $1'
+      : 'SELECT * FROM profil_dokumente WHERE id = $1 AND user_id = $2';
+    const params = req.user.role === 'admin' ? [req.params.id] : [req.params.id, req.user.id];
+    const result = await pool.query(query, params);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Nicht gefunden' });
-    res.json(result.rows[0]);
+    const dok = result.rows[0];
+    // Als Datei senden
+    const base64 = (dok.daten || '').split(',')[1] || dok.daten || '';
+    const buffer = Buffer.from(base64, 'base64');
+    const ext = (dok.dateiname || '').split('.').pop().toLowerCase();
+    const mime = ext === 'pdf' ? 'application/pdf' : ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${dok.dateiname || 'dokument'}"`);
+    res.send(buffer);
   } catch (e) {
     res.status(500).json({ error: 'Fehler' });
   }
