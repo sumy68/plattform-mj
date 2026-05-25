@@ -66,7 +66,7 @@ export default function Abrechnung() {
     const festlehrkraefte = lehrkraefte.filter(l => l.role === 'lehrkraft');
     setAdminStats({
       lehrkraefte, honorarkraefte, festlehrkraefte,
-      total_stunden: allStunden.length,
+      total_stunden: allStunden.reduce((sum, s) => sum + Math.round((parseFloat(s.dauer_minuten) || 0) / 60), 0),
       total_kosten: lehrkraefte.reduce((sum, l) => sum + l.betrag_gesamt, 0),
       total_offen: lehrkraefte.reduce((sum, l) => sum + l.betrag_offen, 0),
       auszahlungen_offen: 0,
