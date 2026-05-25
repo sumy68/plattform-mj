@@ -32,7 +32,7 @@ export default function Dashboard() {
           setStats({
             schueler: sc.data.length,
             lehrkraefte: lk.data.filter(u => u.role !== 'admin').length,
-            stunden_monat: st.data.length,
+            stunden_monat: st.data.reduce((sum, s) => sum + Math.round((s.dauer_minuten || 0) / 60), 0),
             but_schueler: sc.data.filter(s => s.but_status).length,
           });
           setStunden(st.data.slice(0, 10));
@@ -52,7 +52,7 @@ export default function Dashboard() {
           const st = await axios.get(`${API}/api/stunden?monat=${heute}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }).catch(() => ({ data: [] }));
           const unterschrift = st.data.filter(s => !s.unterschrift_data).length;
           setStats({
-            stunden_monat: st.data.length,
+            stunden_monat: st.data.reduce((sum, s) => sum + Math.round((s.dauer_minuten || 0) / 60), 0),
             offen: st.data.filter(s => !s.abgerechnet).length,
             unterschrift,
           });
