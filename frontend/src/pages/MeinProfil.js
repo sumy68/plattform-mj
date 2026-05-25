@@ -312,7 +312,7 @@ export default function MeinProfil() {
       </div>
 
       {/* RECHNUNGEN */}
-      <div className="card" style={{ marginBottom: 24 }}>
+      {profil?.role === 'honorarkraft' && <div className="card" style={{ marginBottom: 24 }}>
         <h3 style={{ marginBottom: 16, color: 'var(--purple)' }}>🧾 Meine Rechnungen</h3>
         {rechnungen.length === 0 ? (
           <p style={{ color: 'var(--gray)', fontSize: 14, textAlign: 'center', padding: '12px 0' }}>Noch keine Rechnungen vorhanden.</p>
@@ -337,6 +337,7 @@ export default function MeinProfil() {
         )}
       </div>
 
+      }
       {/* PASSWORT */}
       <div className="card">
         <h3 style={{ marginBottom: 16, color: 'var(--purple)' }}>Passwort ändern</h3>
