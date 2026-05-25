@@ -135,11 +135,8 @@ export default function Stunden({ adminView }) {
       const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       const token = res.data.token;
       const link = `https://plattform.mj-lernfoerderung.de/unterschreiben/${token}`;
-      const waText = encodeURIComponent(`Bitte unterschreiben Sie die Nachhilfestunde hier: ${link}`);
       const copied = await navigator.clipboard.writeText(link).then(()=>true).catch(()=>false);
-      const waUrl = `https://wa.me/?text=${waText}`;
       alert(`✅ Link per E-Mail gesendet!${copied ? '\n\n🔗 Link wurde in die Zwischenablage kopiert.' : ''}\n\n${link}`);
-      window.open(waUrl, '_blank');
     } catch (err) {
       alert('Fehler: ' + (err.response?.data?.error || err.message));
     }
