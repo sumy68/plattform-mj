@@ -352,8 +352,15 @@ export default function Abrechnung() {
             <div className="form-row">
               <div className="form-group">
                 <label>Gewünschter Betrag (€) *</label>
-                <input type="number" step="0.01" min="0" value={auszahlungBetrag} onChange={e=>setAuszahlungBetrag(e.target.value)} placeholder="z.B. 450.00"/>
-                {offeneStunden.length > 0 && <div style={{fontSize:12,color:'var(--text-light)',marginTop:4}}>💡 Offene Stunden ergeben max. <strong>{offeneStunden.reduce((sum,st)=>{const s=calcStunden(st);const f=st.fahrt_km?parseFloat(st.fahrt_km)*0.38:0;return sum+parseFloat(guthaben?.stundensatz||0)*s+f;},0).toFixed(2)} €</strong></div>}
+                <input type="number" step="0.01" min="0"
+                  max={offeneStunden.reduce((sum,st)=>{const s=calcStunden(st);const f=st.fahrt_km?parseFloat(st.fahrt_km)*0.38:0;return sum+parseFloat(guthaben?.stundensatz||0)*s+f;},0).toFixed(2)}
+                  value={auszahlungBetrag}
+                  onChange={e=>{
+                    const max = offeneStunden.reduce((sum,st)=>{const s=calcStunden(st);const f=st.fahrt_km?parseFloat(st.fahrt_km)*0.38:0;return sum+parseFloat(guthaben?.stundensatz||0)*s+f;},0);
+                    const val = parseFloat(e.target.value);
+                    setAuszahlungBetrag(val > max ? max.toFixed(2) : e.target.value);
+                  }}
+                  placeholder="z.B. 450.00"/>
               </div>
               <div className="form-group">
                 <label>Leistungszeitraum von</label>
