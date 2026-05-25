@@ -83,10 +83,12 @@ router.get('/:id/download', auth, async (req, res) => {
     const result = await pool.query('SELECT * FROM dokumente WHERE id=$1', [req.params.id]);
     const dok = result.rows[0];
     if (!dok) return res.status(404).json({ error: 'Nicht gefunden' });
-    const base64Data = dok.datei_data.split(',')[1] || dok.datei_data;
+    const base64Data = (dok.data || '').split(',')[1] || dok.data || '';
     const buffer = Buffer.from(base64Data, 'base64');
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${dok.datei_name}"`);
+    const ext = (dok.name || '').split('.').pop().toLowerCase();
+    const mime = ext === 'pdf' ? 'application/pdf' : ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${dok.name || 'dokument'}"`);
     res.send(buffer);
   } catch (err) {
     res.status(500).json({ error: err.message });
