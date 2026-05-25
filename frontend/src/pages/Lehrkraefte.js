@@ -185,28 +185,15 @@ export default function Lehrkraefte() {
             <div>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text-mid)',marginBottom:8}}>Dokumente</div>
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                {Object.entries(DOKUMENT_LABELS).map(([key, label]) => {
-                  const dok = (detailUser.dokumente||[]).find(d => d.typ === key);
-                  return (
-                    <div key={key} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--purple-pale)',borderRadius:8,padding:'8px 14px'}}>
-                      <span style={{fontSize:13,fontWeight:600}}>{label}</span>
-                      {dok
-                        ? <a href={`${API}/api/dokumente/${dok.id}/download?token=${localStorage.getItem('token')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">⬇️ Download</a>
-                        : <span style={{fontSize:12,color:'var(--text-light)'}}>Nicht hochgeladen</span>
-                      }
-                    </div>
-                  );
-                })}
-                {(detailUser.profilDokumente||[]).length > 0 && (
-                  <>
-                    {(detailUser.profilDokumente||[]).map(dok => (
-                      <div key={dok.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'#f0ebfa',borderRadius:8,padding:'8px 14px'}}>
-                        <span style={{fontSize:13,fontWeight:600}}>📄 {dok.dateiname}</span>
-                        <a href={`${API}/api/profil/dokumente/${dok.id}?token=${localStorage.getItem('token')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">⬇️ Download</a>
-                      </div>
-                    ))}
-                  </>
+                {(detailUser.profilDokumente||[]).length === 0 && (
+                  <span style={{fontSize:13,color:'var(--text-light)'}}>Keine Dokumente hochgeladen</span>
                 )}
+                {(detailUser.profilDokumente||[]).map(dok => (
+                  <div key={dok.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--purple-pale)',borderRadius:8,padding:'8px 14px'}}>
+                    <span style={{fontSize:13,fontWeight:600}}>📄 {dok.dateiname}</span>
+                    <a href={`${API}/api/profil/dokumente/${dok.id}?token=${localStorage.getItem('token')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">⬇️ Download</a>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
