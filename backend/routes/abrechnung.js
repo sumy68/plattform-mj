@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 router.get('/guthaben/:user_id', auth, async (req, res) => {
   try {
     const userId = req.params.user_id;
-    const userRes = await pool.query('SELECT name, stundensatz, email, vorname, nachname, adresse, plz, ort, iban, steuernummer FROM users WHERE id=$1', [userId]);
+    const userRes = await pool.query('SELECT name, stundensatz, absage_stundensatz, email, vorname, nachname, adresse, plz, ort, iban, steuernummer FROM users WHERE id=$1', [userId]);
     const user = userRes.rows[0];
     
     // Alle offenen (nicht abgerechneten) Stunden
@@ -32,7 +32,11 @@ router.get('/guthaben/:user_id', auth, async (req, res) => {
     const stunden = stundenRes.rows;
     const stundensatz = parseFloat(user.stundensatz) || 0;
     const fahrtkosten = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
-    const gesamtBetrag = stunden.reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60 * stundensatz, 0) + fahrtkosten;
+    const absageSatz = parseFloat(user.absage_stundensatz) || stundensatz;
+    const gesamtBetrag = stunden.reduce((sum, s) => {
+      const satz = s.kurzfristige_absage ? absageSatz : stundensatz;
+      return sum + (parseFloat(s.dauer_minuten) || 0) / 60 * satz;
+    }, 0) + fahrtkosten;
     
     // Diesen Monat bereits abgerechnet
     const monat = new Date().toISOString().slice(0,7);
@@ -182,7 +186,11 @@ router.post('/rechnung', auth, async (req, res) => {
       });
       
       // Summe
-      const stundenSumme = stunden.reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60 * parseFloat(user.stundensatz), 0);
+      const absageSatzPDF = parseFloat(user.absage_stundensatz) || parseFloat(user.stundensatz);
+      const stundenSumme = stunden.reduce((sum, s) => {
+        const satz = s.kurzfristige_absage ? absageSatzPDF : parseFloat(user.stundensatz);
+        return sum + (parseFloat(s.dauer_minuten) || 0) / 60 * satz;
+      }, 0);
       const fahrtSumme = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
       doc.moveTo(50, y + 5).lineTo(545, y + 5).strokeColor('#9b7fd4').stroke();
       doc.fontSize(10).font('Helvetica').fillColor('#555');

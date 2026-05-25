@@ -52,16 +52,16 @@ router.get('/', auth, async (req, res) => {
 
 // Stunde eintragen
 router.post('/', auth, async (req, res) => {
-  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung } = req.body;
+  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage } = req.body;
   try {
     const [sh, sm] = startzeit.split(':').map(Number);
     const [eh, em] = endzeit.split(':').map(Number);
     const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
 
     const result = await pool.query(
-      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
-      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null]
+      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false]
     );
 
     const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [schueler_id]);
