@@ -183,3 +183,5 @@ tr:hover td { background: var(--purple-pale); }
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr !important; }
 }
+
+td { vertical-align: middle; }
