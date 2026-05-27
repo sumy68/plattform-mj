@@ -72,26 +72,34 @@ router.post('/', auth, async (req, res) => {
       [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen]
     );
 
-    const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [schueler_id]);
-    if (schuelerRes.rows[0]?.but_status) {
+    // Alle Schüler dieser Stunde sammeln (Hauptschüler + Gruppenschüler)
+    const alleSchuelerIds = [schueler_id, ...(gruppeIds || [])].filter(Boolean);
+    const dauer_stunden = Math.max(1, Math.round(dauer_minuten / 60));
+    let but_warnung = false;
+    let but_verbleibend = null;
+
+    for (const sid of alleSchuelerIds) {
+      const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [sid]);
+      if (!schuelerRes.rows[0]?.but_status) continue;
       const butRes = await pool.query(
         `SELECT * FROM but_antraege 
          WHERE schueler_id=$1 AND aktiv=true 
          AND NOW() BETWEEN gueltig_von AND gueltig_bis + INTERVAL '1 day'
          AND gutscheine_verbraucht < gutscheine_gesamt
          ORDER BY gueltig_bis ASC LIMIT 1`,
-        [schueler_id]
+        [sid]
       );
-      if (butRes.rows[0]) {
-        const antrag = butRes.rows[0];
-        const dauer_stunden = Math.round(dauer_minuten / 60);
-        const neu = antrag.gutscheine_verbraucht + Math.max(1, dauer_stunden);
-        await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
-        const verbleibend = antrag.gutscheine_gesamt - neu;
-        return res.json({ ...result.rows[0], but_warnung: verbleibend <= 1, but_verbleibend: verbleibend });
-      }
+      if (!butRes.rows[0]) continue;
+      const antrag = butRes.rows[0];
+      const neu = antrag.gutscheine_verbraucht + dauer_stunden;
+      await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
+      const verbleibend = antrag.gutscheine_gesamt - neu;
+      if (verbleibend <= 1) { but_warnung = true; but_verbleibend = verbleibend; }
     }
 
+    if (but_warnung) {
+      return res.json({ ...result.rows[0], but_warnung: true, but_verbleibend });
+    }
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
