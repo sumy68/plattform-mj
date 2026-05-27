@@ -103,7 +103,7 @@ router.post('/rechnung', auth, async (req, res) => {
     
     // Stunden abrufen
     const stundenRes = await pool.query(
-      `SELECT st.*, s.vorname||' '||s.nachname as schueler_name
+      `SELECT st.*, s.vorname||' '||s.nachname as schueler_name, st.gruppe_schueler_namen, st.unterrichtsform
        FROM stunden st JOIN schueler s ON st.schueler_id=s.id
        WHERE st.id=ANY($1)`, [stunden_ids]
     );
@@ -188,7 +188,10 @@ router.post('/rechnung', auth, async (req, res) => {
       stunden.forEach(st => {
         doc.fontSize(9);
         doc.text(new Date(st.datum).toLocaleDateString('de-DE'), 50, y);
-        doc.text(st.schueler_name, 130, y, { width: 140 });
+        const alleNamen = st.unterrichtsform && st.unterrichtsform !== 'einzel' && st.gruppe_schueler_namen
+          ? st.schueler_name + ', ' + st.gruppe_schueler_namen
+          : st.schueler_name;
+        doc.text(alleNamen, 130, y, { width: 140 });
         doc.text(`${st.startzeit}–${st.endzeit}`, 280, y);
         doc.text(st.fach || '–', 380, y);
         const zeileSatz = st.kurzfristige_absage ? (parseFloat(user.absage_stundensatz) || parseFloat(user.stundensatz)) : st.unterrichtsform === '2er' ? (parseFloat(user.stundensatz_2er) || parseFloat(user.stundensatz)) : st.unterrichtsform === '3er' ? (parseFloat(user.stundensatz_3er) || parseFloat(user.stundensatz)) : parseFloat(user.stundensatz);
