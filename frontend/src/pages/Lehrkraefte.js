@@ -92,13 +92,12 @@ export default function Lehrkraefte() {
 
       <div className="card">
         <div className="table-wrap" style={{overflowX:'auto'}}>
-          <table>
+          <table style={{minWidth:900}}>
             <thead>
               <tr>
                 <th>Name</th>
                 <th>E-Mail</th>
                 <th>Rolle</th>
-                <th>Sprachen</th>
                 <th style={{whiteSpace:'nowrap'}}>Einzel</th>
                 <th style={{whiteSpace:'nowrap'}}>2er-Gruppe</th>
                 <th style={{whiteSpace:'nowrap'}}>3er-Gruppe</th>
@@ -113,17 +112,16 @@ export default function Lehrkraefte() {
                   <td><strong>{u.name}</strong></td>
                   <td>{u.email}</td>
                   <td style={{whiteSpace:'nowrap'}}>{u.role === 'lehrkraft' ? '👩‍🏫 Lehrkraft' : '📄 Honorarkraft'}</td>
-                  <td style={{fontSize:12}}>{(Array.isArray(u.sprachen) ? u.sprachen : []).slice(0,2).join(', ') || '–'}</td>
                   <td>
                     {editStundensatz === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        <input type="number" step="0.01" value={newStundensatz} onChange={e=>setNewStundensatz(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
+                        <input type="number" step="0.01" value={newStundensatz} onChange={e=>setNewStundensatz(e.target.value)} style={{width:60,padding:'2px 6px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
                         <button className="btn btn-success btn-sm" onClick={()=>saveStundensatz(u.id)}>✓</button>
                         <button className="btn btn-ghost btn-sm" onClick={()=>setEditStundensatz(null)}>✕</button>
                       </div>
                     ) : (
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <span>{u.stundensatz} €/Std.</span>
+                        <span>{u.stundensatz} €</span>
                         <button className="btn btn-ghost btn-sm" onClick={()=>{setEditStundensatz(u.id);setNewStundensatz(u.stundensatz);}}>✏️</button>
                       </div>
                     )}
@@ -131,13 +129,13 @@ export default function Lehrkraefte() {
                   <td>
                     {edit2er === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        <input type="number" step="0.01" value={new2er} onChange={e=>setNew2er(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
+                        <input type="number" step="0.01" value={new2er} onChange={e=>setNew2er(e.target.value)} style={{width:60,padding:'2px 6px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
                         <button className="btn btn-success btn-sm" onClick={()=>save2er(u.id)}>✓</button>
                         <button className="btn btn-ghost btn-sm" onClick={()=>setEdit2er(null)}>✕</button>
                       </div>
                     ) : (
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <span>{u.stundensatz_2er || 0} €/Std.</span>
+                        <span>{u.stundensatz_2er || 0} €</span>
                         <button className="btn btn-ghost btn-sm" onClick={()=>{setEdit2er(u.id);setNew2er(u.stundensatz_2er||0);}}>✏️</button>
                       </div>
                     )}
@@ -145,13 +143,13 @@ export default function Lehrkraefte() {
                   <td>
                     {edit3er === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        <input type="number" step="0.01" value={new3er} onChange={e=>setNew3er(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
+                        <input type="number" step="0.01" value={new3er} onChange={e=>setNew3er(e.target.value)} style={{width:60,padding:'2px 6px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
                         <button className="btn btn-success btn-sm" onClick={()=>save3er(u.id)}>✓</button>
                         <button className="btn btn-ghost btn-sm" onClick={()=>setEdit3er(null)}>✕</button>
                       </div>
                     ) : (
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <span>{u.stundensatz_3er || 0} €/Std.</span>
+                        <span>{u.stundensatz_3er || 0} €</span>
                         <button className="btn btn-ghost btn-sm" onClick={()=>{setEdit3er(u.id);setNew3er(u.stundensatz_3er||0);}}>✏️</button>
                       </div>
                     )}
@@ -159,13 +157,13 @@ export default function Lehrkraefte() {
                   <td>
                     {editAbsage === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        <input type="number" step="0.01" value={newAbsage} onChange={e=>setNewAbsage(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
+                        <input type="number" step="0.01" value={newAbsage} onChange={e=>setNewAbsage(e.target.value)} style={{width:60,padding:'2px 6px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
                         <button className="btn btn-success btn-sm" onClick={()=>saveAbsage(u.id)}>✓</button>
                         <button className="btn btn-ghost btn-sm" onClick={()=>setEditAbsage(null)}>✕</button>
                       </div>
                     ) : (
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <span>{u.absage_stundensatz || 0} €/Std.</span>
+                        <span>{u.absage_stundensatz || 0} €</span>
                         <button className="btn btn-ghost btn-sm" onClick={()=>{setEditAbsage(u.id);setNewAbsage(u.absage_stundensatz||0);}}>✏️</button>
                       </div>
                     )}
@@ -175,8 +173,8 @@ export default function Lehrkraefte() {
                       {u.aktiv?'Aktiv':'Inaktiv'}
                     </span>
                   </td>
-                  <td style={{minWidth:120}}>
-                    <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'flex-start'}}>
+                  <td>
+                    <div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'flex-start'}}>
                       <button className="btn btn-ghost btn-sm" onClick={()=>openDetail(u)}>👁️ Details</button>
                       <button className={`btn btn-sm ${u.aktiv?'btn-danger':'btn-success'}`} onClick={()=>toggleAktiv(u)}>
                         {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
@@ -203,9 +201,7 @@ export default function Lehrkraefte() {
               {[
                 ['E-Mail', detailUser.email],
                 ['Rolle', detailUser.role],
-                ['Stundensatz Einzel', `${detailUser.stundensatz} €/Std.`],
-                ['Stundensatz 2er-Gruppe', `${detailUser.stundensatz_2er || 0} €/Std.`],
-                ['Stundensatz 3er-Gruppe', `${detailUser.stundensatz_3er || 0} €/Std.`],
+                ['Stundensatz', `${detailUser.stundensatz} €/Std.`],
                 ['Telefon', detailUser.telefon || '–'],
                 ['Geburtsdatum', detailUser.geburtsdatum ? new Date(detailUser.geburtsdatum).toLocaleDateString('de-DE') : '–'],
                 ['Geschlecht', detailUser.geschlecht || '–'],
