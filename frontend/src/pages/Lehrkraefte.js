@@ -91,8 +91,8 @@ export default function Lehrkraefte() {
       </div>
 
       <div className="card">
-        <div className="table-wrap" style={{overflowX:'auto',width:'100%'}}>
-          <table style={{minWidth:1200,width:'100%'}}>
+        <div className="table-wrap" style={{overflowX:'auto'}}>
+          <table>
             <thead>
               <tr>
                 <th>Name</th>
