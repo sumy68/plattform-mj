@@ -38,6 +38,20 @@ export default function Hilfe() {
       <div style={{background:'white',borderRadius:16,padding:32,boxShadow:'0 4px 24px rgba(155,127,212,0.1)',marginBottom:24}}>
         <p style={{fontSize:15,fontWeight:700,color:'#2d2040',marginBottom:24}}>📚 Schritt-für-Schritt Anleitung</p>
 
+        <div style={{background:'#f0ebfa',borderRadius:12,padding:20,marginBottom:20,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+          <div>
+            <div style={{fontWeight:700,fontSize:15,color:'#2d2040',marginBottom:4}}>📁 Lehrmaterialien</div>
+            <div style={{fontSize:13,color:'#666',lineHeight:1.6}}>
+              Hier findest du alle Unterrichtsmaterialien, Arbeitsblätter und Vorlagen für deinen Unterricht.<br/>
+              <span style={{color:'#9b7fd4',fontWeight:600}}>Einfach klicken, herunterladen und direkt einsetzen.</span>
+            </div>
+          </div>
+          <a href="ONEDRIVE_LINK_HIER" target="_blank" rel="noreferrer"
+            style={{background:'#9b7fd4',color:'white',padding:'10px 20px',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:14,whiteSpace:'nowrap'}}>
+            📂 Zu den Lehrmaterialien
+          </a>
+        </div>
+
         <HilfeSection nr="1" titel="Anmelden & Profil einrichten">
 {isHonorar ? <>
             Beim ersten Login wirst du aufgefordert, dein Profil auszufüllen. Das ist wichtig für deine Rechnungen:
