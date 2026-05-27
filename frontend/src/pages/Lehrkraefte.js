@@ -175,8 +175,8 @@ export default function Lehrkraefte() {
                       {u.aktiv?'Aktiv':'Inaktiv'}
                     </span>
                   </td>
-                  <td>
-                    <div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'flex-start'}}>
+                  <td style={{minWidth:120}}>
+                    <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'flex-start'}}>
                       <button className="btn btn-ghost btn-sm" onClick={()=>openDetail(u)}>👁️ Details</button>
                       <button className={`btn btn-sm ${u.aktiv?'btn-danger':'btn-success'}`} onClick={()=>toggleAktiv(u)}>
                         {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
