@@ -68,7 +68,7 @@ router.post('/', auth, async (req, res) => {
           ${attachments.length > 0 ? '<p style="color:#888;font-size:13px">📎 Screenshot im Anhang</p>' : ''}
 
           <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e0d4f5;font-size:12px;color:#888;text-align:center">
-            Antworten auf diese Mail gehen direkt an ${req.user.email}
+            Antworten auf diese Mail gehen direkt an den Absender (${req.user.name || 'Nutzer'})
           </div>
         </div>
       `,
