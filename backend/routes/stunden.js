@@ -1,456 +1,167 @@
-const router = require('express').Router();
-const { pool } = require('../db');
-const { auth, adminOnly } = require('../middleware/auth');
-const PDFDocument = require('pdfkit');
+import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import SignatureCanvas from 'react-signature-canvas';
+import { useAuth } from '../context/AuthContext';
 
-// Google Maps Proxy
-router.get('/maps/directions', auth, async (req, res) => {
-  try {
-    const { origin, destination } = req.query;
-    const key = process.env.GOOGLE_MAPS_KEY;
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&mode=driving&key=${key}`;
-    const r = await fetch(url);
-    const d = await r.json();
-    res.json(d);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', inhalt:'' };
 
-// Stunden abrufen
-router.get('/', auth, async (req, res) => {
-  try {
-    const { monat, schueler_id, lehrkraft_id } = req.query;
-    let query = `
-      SELECT st.*, 
-        u.name as lehrkraft_name,
-        u.stundensatz as lehrkraft_stundensatz,
-        u.stundensatz_2er as lehrkraft_stundensatz_2er,
-        u.stundensatz_3er as lehrkraft_stundensatz_3er,
-        u.absage_stundensatz as lehrkraft_absage_stundensatz,
-        s.vorname||' '||s.nachname as schueler_name,
-        s.but_status, s.schule, s.klasse
-      FROM stunden st
-      JOIN users u ON st.lehrkraft_id=u.id
-      JOIN schueler s ON st.schueler_id=s.id
-      WHERE 1=1
-    `;
-    const params = [];
-    if (req.user.role !== 'admin') {
-      params.push(req.user.id);
-      query += ` AND st.lehrkraft_id=$${params.length}`;
-    }
-    if (monat) {
-      params.push(monat);
-      query += ` AND to_char(st.datum, 'YYYY-MM') = $${params.length}`;
-    }
-    if (schueler_id) { params.push(schueler_id); query += ` AND st.schueler_id=$${params.length}`; }
-    if (lehrkraft_id && req.user.role === 'admin') { params.push(lehrkraft_id); query += ` AND st.lehrkraft_id=$${params.length}`; }
-    query += ' ORDER BY st.datum DESC, st.startzeit DESC';
-    const result = await pool.query(query, params);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+export default function Stunden({ adminView }) {
+  const { user } = useAuth();
+  const [stunden, setStunden] = useState([]);
+  const [schueler, setSchueler] = useState([]);
+  const [modal, setModal] = useState(false);
+  const [unterschriftModal, setUnterschriftModal] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [monat, setMonat] = useState(new Date().toISOString().slice(0,7));
+  const [unterschriftName, setUnterschriftName] = useState('');
+  const sigRef = useRef(null);
 
-// Stunde eintragen
-router.post('/', auth, async (req, res) => {
-  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage, unterrichtsform, gruppe_schueler_ids, gruppe_schueler_namen } = req.body;
-  try {
-    const [sh, sm] = startzeit.split(':').map(Number);
-    const [eh, em] = endzeit.split(':').map(Number);
-    const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
+  const load = async () => {
+    const [st, sc] = await Promise.all([
+      axios.get(`/api/stunden?monat=${monat}`),
+      axios.get('/api/schueler')
+    ]);
+    setStunden(st.data);
+    setSchueler(sc.data);
+  };
+  useEffect(() => { load(); }, [monat]);
 
-    const form = unterrichtsform || 'einzel';
-    const gruppeIds = (form !== 'einzel' && gruppe_schueler_ids?.length) ? gruppe_schueler_ids : [];
-    const gruppeNamen = (form !== 'einzel' && gruppe_schueler_namen) ? gruppe_schueler_namen : '';
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await axios.post('/api/stunden', form);
+    setModal(false);
+    setForm(emptyForm);
+    load();
+  };
 
-    const result = await pool.query(
-      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage,unterrichtsform,gruppe_schueler_ids,gruppe_schueler_namen)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
-      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen]
-    );
-
-    // Alle Schüler dieser Stunde sammeln (Hauptschüler + Gruppenschüler)
-    const alleSchuelerIds = [schueler_id, ...(gruppeIds || [])].filter(Boolean);
-    const dauer_stunden = Math.max(1, Math.round(dauer_minuten / 60));
-    let but_warnung = false;
-    let but_verbleibend = null;
-
-    for (const sid of alleSchuelerIds) {
-      const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [sid]);
-      if (!schuelerRes.rows[0]?.but_status) continue;
-      const butRes = await pool.query(
-        `SELECT * FROM but_antraege 
-         WHERE schueler_id=$1 AND aktiv=true 
-         AND NOW() BETWEEN gueltig_von AND gueltig_bis + INTERVAL '1 day'
-         AND gutscheine_verbraucht < gutscheine_gesamt
-         ORDER BY gueltig_bis ASC LIMIT 1`,
-        [sid]
-      );
-      if (!butRes.rows[0]) continue;
-      const antrag = butRes.rows[0];
-      const neu = antrag.gutscheine_verbraucht + dauer_stunden;
-      await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
-      const verbleibend = antrag.gutscheine_gesamt - neu;
-      if (verbleibend <= 1) { but_warnung = true; but_verbleibend = verbleibend; }
-    }
-
-    if (but_warnung) {
-      return res.json({ ...result.rows[0], but_warnung: true, but_verbleibend });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Stunde löschen
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const stundeRes = await pool.query('SELECT * FROM stunden WHERE id=$1', [req.params.id]);
-    if (stundeRes.rows[0]) {
-      const st = stundeRes.rows[0];
-      const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [st.schueler_id]);
-      if (schuelerRes.rows[0]?.but_status) {
-        const butRes = await pool.query(
-          `SELECT * FROM but_antraege WHERE schueler_id=$1 AND aktiv=true AND gutscheine_verbraucht > 0 ORDER BY gueltig_bis DESC LIMIT 1`,
-          [st.schueler_id]
-        );
-        if (butRes.rows[0]) {
-          const dauer_stunden = Math.round((st.dauer_minuten || 60) / 60);
-          const neu = Math.max(0, butRes.rows[0].gutscheine_verbraucht - Math.max(1, dauer_stunden));
-          await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, butRes.rows[0].id]);
-        }
-      }
-    }
-    await pool.query('DELETE FROM stunden WHERE id=$1 AND (lehrkraft_id=$2 OR $3=true)',
-      [req.params.id, req.user.id, req.user.role === 'admin']);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Unterschrift speichern
-router.patch('/:id/unterschrift', auth, async (req, res) => {
-  const { unterschrift_data, unterschrift_name } = req.body;
-  try {
-    const result = await pool.query(
-      `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW() WHERE id=$3 RETURNING *`,
-      [unterschrift_data, unterschrift_name, req.params.id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Stunden als abgerechnet markieren
-router.patch('/abrechnen', auth, async (req, res) => {
-  const { stunden_ids } = req.body;
-  try {
-    await pool.query(
-      'UPDATE stunden SET abgerechnet=true WHERE id=ANY($1) AND lehrkraft_id=$2',
-      [stunden_ids, req.user.id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// PDF Export einer Stunde
-router.get('/:id/pdf', auth, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT st.*, u.name as lehrkraft_name, u.telefon as lehrkraft_tel, u.email as lehrkraft_email,
-       s.vorname, s.nachname, s.schule, s.klasse, s.but_status, s.eltern_name, s.eltern_tel,
-       s.vorname||' '||s.nachname as schueler_name
-       FROM stunden st JOIN users u ON st.lehrkraft_id=u.id JOIN schueler s ON st.schueler_id=s.id
-       WHERE st.id=$1`, [req.params.id]
-    );
-    const st = result.rows[0];
-    if (!st) return res.status(404).json({ error: 'Nicht gefunden' });
-
-    const doc = new PDFDocument({ margin: 50, size: 'A4' });
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=stundennachweis-${st.id}.pdf`);
-    doc.pipe(res);
-
-    doc.fontSize(20).fillColor('#9b7fd4').font('Helvetica-Bold');
-    doc.text('MJ Lernförderung', 50, 40);
-    doc.fontSize(10).fillColor('#888').font('Helvetica');
-    doc.text('Georgstraße 38 · 30159 Hannover', 50, 65);
-    doc.text('info@mj-lernfoerderung.de · www.mj-lernfoerderung.de', 50, 78);
-    doc.moveTo(50, 115).lineTo(545, 115).strokeColor('#9b7fd4').stroke();
-    doc.fontSize(16).fillColor('#2d2040').font('Helvetica-Bold');
-    doc.text('STUNDENNACHWEIS', 50, 130, { align: 'center' });
-    doc.roundedRect(50, 160, 495, 140, 8).fillColor('#f0ebfa').fill();
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
-    doc.text('SCHÜLER', 70, 175);
-    doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
-    const schuelerAnzeige = st.unterrichtsform && st.unterrichtsform !== 'einzel'
-      ? `${st.vorname} ${st.nachname}${st.gruppe_schueler_namen ? ' & ' + st.gruppe_schueler_namen : ''}`
-      : `${st.vorname} ${st.nachname}`;
-    doc.text(schuelerAnzeige, 70, 190);
-    doc.fontSize(10).fillColor('#666').font('Helvetica');
-    doc.text(`Schule: ${st.schule || '–'}  ·  Klasse: ${st.klasse || '–'}`, 70, 208);
-    doc.text(`Eltern: ${st.eltern_name || '–'}  ·  Tel: ${st.eltern_tel || '–'}`, 70, 222);
-    doc.text(`BuT-Förderung: ${st.but_status ? 'Ja ✓' : 'Nein'}`, 70, 236);
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
-    doc.text('LEHRKRAFT', 320, 175);
-    doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
-    doc.text(st.lehrkraft_name, 320, 190);
-    doc.fontSize(10).fillColor('#666').font('Helvetica');
-    doc.text(`E-Mail: ${st.lehrkraft_email || '–'}`, 320, 208);
-    doc.text(`Tel: ${st.lehrkraft_tel || '–'}`, 320, 222);
-    const formLabel = st.unterrichtsform === '2er' ? '2er-Gruppe' : st.unterrichtsform === '3er' ? '3er-Gruppe' : 'Einzelunterricht';
-    const details = [
-      ['Unterrichtsform', formLabel],
-      ['Datum', new Date(st.datum).toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })],
-      ['Uhrzeit', `${st.startzeit} – ${st.endzeit} Uhr (${st.dauer_minuten || '–'} Min.)`],
-      ['Fach', st.fach || '–'],
-      ['Ort', st.ort === 'online' ? 'Online' : 'Vor Ort'],
-      ...(st.ort !== 'online' && st.fahrt_km ? [
-        ['Fahrtweg', `${st.fahrt_km} km (Hinfahrt)`],
-        ['Fahrtkosten', `${(parseFloat(st.fahrt_km) * 0.38).toFixed(2)} € (0,38 €/km)`],
-      ] : []),
-    ];
-    const detailBoxHeight = details.length * 18 + 20;
-    doc.roundedRect(50, 315, 495, detailBoxHeight, 8).fillColor('#ffffff').stroke('#e8e0f5');
-    let y = 325;
-    details.forEach(([label, value]) => {
-      doc.fontSize(10).fillColor('#9b7fd4').font('Helvetica-Bold').text(label + ':', 70, y);
-      doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(value, 180, y);
-      y += 18;
+  const saveUnterschrift = async () => {
+    if (!sigRef.current || sigRef.current.isEmpty()) return alert('Bitte unterschreiben!');
+    if (!unterschriftName) return alert('Bitte Name eingeben!');
+    const data = sigRef.current.toDataURL('image/png');
+    await axios.patch(`/api/stunden/${unterschriftModal.id}/unterschrift`, {
+      unterschrift_data: data,
+      unterschrift_name: unterschriftName
     });
-    const lernY = y + 15;
-    doc.roundedRect(50, lernY, 495, 80, 8).fillColor('#f0ebfa').fill();
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('LERNFORTSCHRITT', 70, lernY + 12);
-    doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(st.inhalt || '–', 70, lernY + 28, { width: 455 });
-    const unterschriftY = lernY + 100;
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('UNTERSCHRIFT ELTERNTEIL', 50, unterschriftY);
-    if (st.unterschrift_data) {
-      const imgData = st.unterschrift_data.replace(/^data:image\/png;base64,/, '');
-      doc.image(Buffer.from(imgData, 'base64'), 50, unterschriftY + 18, { width: 200, height: 70 });
-      doc.fontSize(10).fillColor('#666').font('Helvetica');
-      doc.text(`Name: ${st.unterschrift_name}`, 50, unterschriftY + 95);
-      doc.text(`Datum: ${new Date(st.unterschrift_datum).toLocaleString('de-DE')}`, 50, unterschriftY + 108);
-    } else {
-      doc.rect(50, unterschriftY + 18, 240, 70).strokeColor('#e8e0f5').stroke();
-      doc.fontSize(10).fillColor('#bbb').text('Unterschrift ausstehend', 70, unterschriftY + 48);
-    }
-    doc.moveTo(50, 700).lineTo(545, 700).strokeColor('#9b7fd4').stroke();
-    doc.fontSize(8).fillColor('#888').font('Helvetica');
-    doc.text('MJ Lernförderung · Souad Meryem Jaber · Georgstraße 38 · 30159 Hannover · info@mj-lernfoerderung.de', 50, 710, { align: 'center' });
-    doc.end();
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+    setUnterschriftModal(null);
+    setUnterschriftName('');
+    load();
+  };
 
-// Signatur-Link per Email senden
-router.post('/:id/signatur-link', auth, async (req, res) => {
-  const { email } = req.body;
-  try {
-    const crypto = require('crypto');
-    const token = crypto.randomBytes(32).toString('hex');
-    const stundeRes = await pool.query(
-      `SELECT st.*, s.vorname, s.nachname, u.name as lehrkraft_name
-       FROM stunden st
-       JOIN schueler s ON st.schueler_id = s.id
-       JOIN users u ON st.lehrkraft_id = u.id
-       WHERE st.id = $1`,
-      [req.params.id]
-    );
-    const st = stundeRes.rows[0];
-    if (!st) return res.status(404).json({ error: 'Stunde nicht gefunden' });
-    await pool.query(
-      `INSERT INTO signatur_tokens (stunde_id, token, email) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
-      [req.params.id, token, email]
-    );
-    const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.ionos.de', port: 587, secure: false,
-      auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: 'BENQFunk68!' }
-    });
-    const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
-    const datum = new Date(st.datum).toLocaleDateString('de-DE');
-    await transporter.sendMail({
-      from: 'MJ Lernförderung <meryem.jaber@mj-lernfoerderung.de>',
-      to: email,
-      subject: `Unterschrift benötigt – Nachhilfe ${datum}`,
-      html: `
-        <div style="font-family:sans-serif;max-width:500px;margin:auto">
-          <h2 style="color:#9b7fd4">MJ Lernförderung</h2>
-          <p>Sehr geehrte Eltern,</p>
-          <p>für die Nachhilfestunde am <strong>${datum}</strong> mit Lehrkraft <strong>${st.lehrkraft_name}</strong> wird Ihre digitale Unterschrift benötigt.</p>
-          <p><strong>Schüler:</strong> ${st.vorname} ${st.nachname}<br/>
-          <strong>Zeit:</strong> ${st.startzeit} – ${st.endzeit} Uhr<br/>
-          <strong>Fach:</strong> ${st.fach || '–'}</p>
-          <a href="${link}" style="display:inline-block;background:#9b7fd4;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">
-            ✍️ Jetzt unterschreiben
-          </a>
-          <p style="color:#888;font-size:12px">Dieser Link ist 7 Tage gültig.</p>
+  const downloadPDF = (id) => window.open(`/api/stunden/${id}/pdf`, '_blank');
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24,flexWrap:'wrap',gap:12}}>
+        <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:32,color:'var(--text-dark)'}}>
+          {adminView ? 'Alle Stunden' : 'Meine Stunden'}
+        </h2>
+        <div style={{display:'flex',gap:12,alignItems:'center'}}>
+          <input type="month" value={monat} onChange={e=>setMonat(e.target.value)}
+            style={{padding:'8px 12px',border:'2px solid var(--lavender)',borderRadius:8,fontSize:14,fontFamily:'Nunito,sans-serif'}}/>
+          <button className="btn btn-primary" onClick={()=>setModal(true)}>+ Stunde eintragen</button>
         </div>
-      `
-    });
-    res.json({ success: true, token });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+      </div>
 
-// Signatur-Seite laden (öffentlich)
-router.get('/signatur/:token', async (req, res) => {
-  try {
-    const tokenRes = await pool.query(
-      `SELECT st.*, s.vorname, s.nachname, u.name as lehrkraft_name, tok.verwendet, tok.email
-       FROM signatur_tokens tok
-       JOIN stunden st ON tok.stunde_id = st.id
-       JOIN schueler s ON st.schueler_id = s.id
-       JOIN users u ON st.lehrkraft_id = u.id
-       WHERE tok.token = $1 AND tok.ablaeuft_am > NOW()`,
-      [req.params.token]
-    );
-    if (!tokenRes.rows[0]) return res.status(404).json({ error: 'Link ungültig oder abgelaufen' });
-    res.json(tokenRes.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+      <div className="card">
+        <div className="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Datum</th><th>Schüler</th>{adminView&&<th>Lehrkraft</th>}<th>Zeit</th><th>Fach</th><th>Ort</th><th>BuT</th><th>Unterschrift</th><th>Aktionen</th>
+            </tr></thead>
+            <tbody>
+              {stunden.map(st => (
+                <tr key={st.id}>
+                  <td>{new Date(st.datum).toLocaleDateString('de-DE')}</td>
+                  <td><strong>{st.schueler_name}</strong></td>
+                  {adminView && <td>{st.lehrkraft_name}</td>}
+                  <td>{st.startzeit} – {st.endzeit}</td>
+                  <td>{st.fach}</td>
+                  <td>{st.ort === 'online' ? '💻 Online' : '🏠 Vor Ort'}</td>
+                  <td>{st.but_status ? <span className="badge badge-but">BuT</span> : '–'}</td>
+                  <td>
+                    {st.unterschrift_name
+                      ? <span className="badge badge-unterschrift">✓ {st.unterschrift_name}</span>
+                      : <button className="btn btn-ghost btn-sm" onClick={()=>setUnterschriftModal(st)}>✍️ Unterschrift</button>
+                    }
+                  </td>
+                  <td>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>downloadPDF(st.id)}>📄 PDF</button>
+                  </td>
+                </tr>
+              ))}
+              {stunden.length===0 && <tr><td colSpan={9} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Stunden gefunden</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-// Unterschrift via Token speichern (öffentlich)
-router.post('/signatur/:token', async (req, res) => {
-  const { unterschrift_data, unterschrift_name } = req.body;
-  try {
-    const tokenRes = await pool.query(
-      `SELECT * FROM signatur_tokens WHERE token=$1 AND verwendet=false AND ablaeuft_am > NOW()`,
-      [req.params.token]
-    );
-    if (!tokenRes.rows[0]) return res.status(400).json({ error: 'Link ungültig oder bereits verwendet' });
-    const stunde_id = tokenRes.rows[0].stunde_id;
-    await pool.query(
-      `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW() WHERE id=$3`,
-      [unterschrift_data, unterschrift_name, stunde_id]
-    );
-    await pool.query(`UPDATE signatur_tokens SET verwendet=true WHERE token=$1`, [req.params.token]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+      {/* Stunde anlegen Modal */}
+      {modal && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setModal(false)}>
+          <div className="modal">
+            <div className="modal-title">Stunde eintragen</div>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Schüler *</label>
+                <select required value={form.schueler_id} onChange={e=>setForm({...form,schueler_id:e.target.value})}>
+                  <option value="">Bitte wählen...</option>
+                  {schueler.map(s => <option key={s.id} value={s.id}>{s.vorname} {s.nachname}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <div className="form-group"><label>Datum *</label><input type="date" required value={form.datum} onChange={e=>setForm({...form,datum:e.target.value})}/></div>
+                <div className="form-group"><label>Fach</label><input value={form.fach} onChange={e=>setForm({...form,fach:e.target.value})} placeholder="z.B. Mathe"/></div>
+              </div>
+              <div className="form-row">
+                <div className="form-group"><label>Startzeit *</label><input type="time" required value={form.startzeit} onChange={e=>setForm({...form,startzeit:e.target.value})}/></div>
+                <div className="form-group"><label>Endzeit *</label><input type="time" required value={form.endzeit} onChange={e=>setForm({...form,endzeit:e.target.value})}/></div>
+              </div>
+              <div className="form-group">
+                <label>Ort</label>
+                <select value={form.ort} onChange={e=>setForm({...form,ort:e.target.value})}>
+                  <option value="vor_ort">Vor Ort</option>
+                  <option value="online">Online</option>
+                </select>
+              </div>
+              <div className="form-group"><label>Inhalt / Notiz</label><textarea rows={3} value={form.inhalt} onChange={e=>setForm({...form,inhalt:e.target.value})} placeholder="Was wurde heute gemacht?"/></div>
+              <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
+                <button type="button" className="btn btn-ghost" onClick={()=>setModal(false)}>Abbrechen</button>
+                <button type="submit" className="btn btn-primary">Speichern</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-// ZIP Download für ausgewählte Stunden-IDs (nur Admin)
-router.post('/zip-by-ids', auth, adminOnly, async (req, res) => {
-  try {
-    const { ids } = req.body;
-    if (!ids || ids.length === 0) return res.status(400).json({ error: 'Keine IDs' });
-    const result = await pool.query(
-      `SELECT st.*, st.unterschrift_data, st.unterschrift_name, st.unterschrift_datum,
-              st.datum, st.fach, st.startzeit, st.endzeit, st.dauer_minuten,
-              st.ort, st.fahrt_km, st.inhalt, st.unterrichtsform, st.gruppe_schueler_namen,
-              s.vorname as s_vorname, s.nachname as s_nachname,
-              s.schule, s.klasse, s.but_status, s.eltern_name, s.eltern_tel,
-              u.name as lehrkraft_name, u.email as lehrkraft_email, u.telefon as lehrkraft_tel
-       FROM stunden st
-       JOIN schueler s ON st.schueler_id = s.id
-       JOIN users u ON st.lehrkraft_id = u.id
-       WHERE st.id = ANY($1::int[]) AND st.unterschrift_data IS NOT NULL`, [ids]
-    );
-    const archiver = require('archiver');
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="Stundennachweise.zip"');
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    archive.pipe(res);
-    for (const st of result.rows) {
-      const pdfBuffer = await genPDF(st);
-      const safe_lk = (st.lehrkraft_name || 'Unbekannt').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const safe_s = `${st.s_vorname}_${st.s_nachname}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const datum = new Date(st.datum).toISOString().slice(0,10);
-      archive.append(pdfBuffer, { name: `${datum}_${safe_s}_${safe_lk}_${st.id}.pdf` });
-    }
-    await archive.finalize();
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-function genPDF(st) {
-  return new Promise((resolve, reject) => {
-    const PDFDocument = require('pdfkit');
-    const doc = new PDFDocument({ margin: 50, size: 'A4' });
-    const chunks = [];
-    doc.on('data', chunk => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
-    doc.fontSize(20).fillColor('#9b7fd4').font('Helvetica-Bold');
-    doc.text('MJ Lernförderung', 50, 40);
-    doc.fontSize(10).fillColor('#888').font('Helvetica');
-    doc.text('Georgstraße 38 · 30159 Hannover', 50, 65);
-    doc.text('info@mj-lernfoerderung.de · www.mj-lernfoerderung.de', 50, 78);
-    doc.moveTo(50, 115).lineTo(545, 115).strokeColor('#9b7fd4').stroke();
-    doc.fontSize(16).fillColor('#2d2040').font('Helvetica-Bold');
-    doc.text('STUNDENNACHWEIS', 50, 130, { align: 'center' });
-    doc.roundedRect(50, 160, 495, 140, 8).fillColor('#f0ebfa').fill();
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
-    doc.text('SCHÜLER', 70, 175);
-    doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
-    const schuelerAnzeige = st.unterrichtsform && st.unterrichtsform !== 'einzel'
-      ? `${st.s_vorname} ${st.s_nachname}${st.gruppe_schueler_namen ? ' & ' + st.gruppe_schueler_namen : ''}`
-      : `${st.s_vorname} ${st.s_nachname}`;
-    doc.text(schuelerAnzeige, 70, 190);
-    doc.fontSize(10).fillColor('#666').font('Helvetica');
-    doc.text(`Schule: ${st.schule || '–'}  ·  Klasse: ${st.klasse || '–'}`, 70, 208);
-    doc.text(`Eltern: ${st.eltern_name || '–'}  ·  Tel: ${st.eltern_tel || '–'}`, 70, 222);
-    doc.text(`BuT-Förderung: ${st.but_status ? 'Ja' : 'Nein'}`, 70, 236);
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
-    doc.text('LEHRKRAFT', 320, 175);
-    doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
-    doc.text(st.lehrkraft_name || '–', 320, 190);
-    doc.fontSize(10).fillColor('#666').font('Helvetica');
-    doc.text(`E-Mail: ${st.lehrkraft_email || '–'}`, 320, 208);
-    doc.text(`Tel: ${st.lehrkraft_tel || '–'}`, 320, 222);
-    const formLabel = st.unterrichtsform === '2er' ? '2er-Gruppe' : st.unterrichtsform === '3er' ? '3er-Gruppe' : 'Einzelunterricht';
-    const details = [
-      ['Unterrichtsform', formLabel],
-      ['Datum', new Date(st.datum).toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })],
-      ['Uhrzeit', `${st.startzeit || '–'} – ${st.endzeit || '–'} Uhr (${st.dauer_minuten || '–'} Min.)`],
-      ['Fach', st.fach || '–'],
-      ['Ort', st.ort === 'online' ? 'Online' : 'Vor Ort'],
-      ...(st.ort !== 'online' && st.fahrt_km ? [
-        ['Fahrtweg', `${st.fahrt_km} km (Hinfahrt)`],
-        ['Fahrtkosten', `${(parseFloat(st.fahrt_km) * 0.38).toFixed(2)} € (0,38 €/km)`],
-      ] : []),
-    ];
-    const detailBoxHeight = details.length * 18 + 20;
-    doc.roundedRect(50, 315, 495, detailBoxHeight, 8).fillColor('#ffffff').stroke('#e8e0f5');
-    let y = 325;
-    details.forEach(([label, value]) => {
-      doc.fontSize(10).fillColor('#9b7fd4').font('Helvetica-Bold').text(label + ':', 70, y);
-      doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(value, 180, y);
-      y += 18;
-    });
-    const lernY = y + 15;
-    doc.roundedRect(50, lernY, 495, 80, 8).fillColor('#f0ebfa').fill();
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('LERNFORTSCHRITT', 70, lernY + 12);
-    doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(st.inhalt || '–', 70, lernY + 28, { width: 455 });
-    const unterschriftY = lernY + 100;
-    doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('UNTERSCHRIFT ELTERNTEIL', 50, unterschriftY);
-    if (st.unterschrift_data) {
-      const imgData = st.unterschrift_data.replace(/^data:image\/png;base64,/, '');
-      doc.image(Buffer.from(imgData, 'base64'), 50, unterschriftY + 18, { width: 200, height: 70 });
-      doc.fontSize(10).fillColor('#666').font('Helvetica');
-      doc.text(`Name: ${st.unterschrift_name || ''}`, 50, unterschriftY + 95);
-      doc.text(`Datum: ${st.unterschrift_datum ? new Date(st.unterschrift_datum).toLocaleString('de-DE') : ''}`, 50, unterschriftY + 108);
-    }
-    doc.moveTo(50, 700).lineTo(545, 700).strokeColor('#9b7fd4').stroke();
-    doc.fontSize(8).fillColor('#888').font('Helvetica');
-    doc.text('MJ Lernförderung · Souad Meryem Jaber · Georgstraße 38 · 30159 Hannover · info@mj-lernfoerderung.de', 50, 710, { align: 'center' });
-    doc.end();
-  });
+      {/* Unterschrift Modal */}
+      {unterschriftModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-title">Digitale Unterschrift</div>
+            <p style={{marginBottom:16,fontSize:14,color:'var(--text-mid)'}}>
+              Stunde: {new Date(unterschriftModal.datum).toLocaleDateString('de-DE')} · {unterschriftModal.schueler_name}
+            </p>
+            <div style={{border:'2px solid var(--lavender)',borderRadius:10,overflow:'hidden',marginBottom:16,background:'#fafafa'}}>
+              <SignatureCanvas
+                ref={sigRef}
+                penColor="#2d2040"
+                canvasProps={{width:480,height:200,style:{display:'block',width:'100%'}}}
+              />
+            </div>
+            <div style={{display:'flex',gap:8,marginBottom:16}}>
+              <button className="btn btn-ghost btn-sm" onClick={()=>sigRef.current.clear()}>Löschen</button>
+            </div>
+            <div className="form-group">
+              <label>Name in Druckschrift (Pflicht)</label>
+              <input value={unterschriftName} onChange={e=>setUnterschriftName(e.target.value)} placeholder="Vor- und Nachname"/>
+            </div>
+            <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
+              <button className="btn btn-ghost" onClick={()=>setUnterschriftModal(null)}>Abbrechen</button>
+              <button className="btn btn-primary" onClick={saveUnterschrift}>Unterschrift speichern</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
-
-module.exports = router;
