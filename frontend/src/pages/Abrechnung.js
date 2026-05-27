@@ -82,7 +82,7 @@ export default function Abrechnung() {
       setMeineAuszahlungen(aRes.data);
       if (user?.role === 'lehrkraft') {
         const offenRes = await axios.get(`${API}/api/abrechnung/meine-offenen-stunden`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-        setGuthaben({ stunden: offenRes.data.stunden, stundensatz: offenRes.data.stundensatz, absage_stundensatz: offenRes.data.absage_stundensatz, bereits_abgerechnet: offenRes.data.bereits_abgerechnet || 0, gesamt_betrag: offenRes.data.gesamt_betrag, gesamt_stunden: offenRes.data.gesamt_stunden, noch_moeglich: offenRes.data.noch_moeglich, prozent_verbraucht: offenRes.data.prozent_verbraucht });
+        setGuthaben({ stunden: offenRes.data.stunden, stundensatz: offenRes.data.stundensatz, stundensatz_2er: offenRes.data.stundensatz_2er || 0, stundensatz_3er: offenRes.data.stundensatz_3er || 0, absage_stundensatz: offenRes.data.absage_stundensatz, bereits_abgerechnet: offenRes.data.bereits_abgerechnet || 0, gesamt_betrag: offenRes.data.gesamt_betrag, gesamt_stunden: offenRes.data.gesamt_stunden, noch_moeglich: offenRes.data.noch_moeglich, prozent_verbraucht: offenRes.data.prozent_verbraucht });
       } else {
         const res = await axios.get(`${API}/api/abrechnung/guthaben/${user.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
         setGuthaben(res.data);
@@ -105,7 +105,7 @@ export default function Abrechnung() {
   const selectedBetrag = selected.reduce((sum, id) => {
     const st = (guthaben?.stunden || []).find(s => s.id === id);
     const stunden = calcStunden(st);
-    const satz = st?.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz || guthaben?.stundensatz || 0) : parseFloat(guthaben?.stundensatz || 0);
+    const satz = st?.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz || guthaben?.stundensatz || 0) : st?.unterrichtsform === '2er' ? parseFloat(guthaben?.stundensatz_2er || guthaben?.stundensatz || 0) : st?.unterrichtsform === '3er' ? parseFloat(guthaben?.stundensatz_3er || guthaben?.stundensatz || 0) : parseFloat(guthaben?.stundensatz || 0);
     const stundenBetrag = satz * stunden;
     const fahrtBetrag = st?.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
     return sum + stundenBetrag + fahrtBetrag;
@@ -127,7 +127,7 @@ export default function Abrechnung() {
     const cleanBetrag = parseFloat(String(auszahlungBetrag).replace(',', '.'));
     if (!cleanBetrag || isNaN(cleanBetrag) || cleanBetrag <= 0) return alert('Bitte Betrag eingeben');
     const maxBetrag = offeneStunden.reduce((sum, st) => {
-      const satz = st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz || guthaben?.stundensatz || 0) : parseFloat(guthaben?.stundensatz || 0);
+      const satz = st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz || guthaben?.stundensatz || 0) : st.unterrichtsform === '2er' ? parseFloat(guthaben?.stundensatz_2er || guthaben?.stundensatz || 0) : st.unterrichtsform === '3er' ? parseFloat(guthaben?.stundensatz_3er || guthaben?.stundensatz || 0) : parseFloat(guthaben?.stundensatz || 0);
       const stunden = calcStunden(st);
       const fahrt = st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
       return sum + satz * stunden + fahrt;
@@ -355,10 +355,10 @@ export default function Abrechnung() {
               <div className="form-group">
                 <label>Gewünschter Betrag (€) *</label>
                 <input type="number" step="0.01" min="0"
-                  max={offeneStunden.reduce((sum,st)=>{const satz=st.kurzfristige_absage?parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0):parseFloat(guthaben?.stundensatz||0);const s=calcStunden(st);const f=st.fahrt_km?parseFloat(st.fahrt_km)*0.38:0;return sum+satz*s+f;},0).toFixed(2)}
+                  max={offeneStunden.reduce((sum,st)=>{const satz=st.kurzfristige_absage?parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0):st.unterrichtsform==='2er'?parseFloat(guthaben?.stundensatz_2er||guthaben?.stundensatz||0):st.unterrichtsform==='3er'?parseFloat(guthaben?.stundensatz_3er||guthaben?.stundensatz||0):parseFloat(guthaben?.stundensatz||0);const s=calcStunden(st);const f=st.fahrt_km?parseFloat(st.fahrt_km)*0.38:0;return sum+satz*s+f;},0).toFixed(2)}
                   value={auszahlungBetrag}
                   onChange={e=>{
-                    const max = offeneStunden.reduce((sum,st)=>{const satz=st.kurzfristige_absage?parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0):parseFloat(guthaben?.stundensatz||0);const s=calcStunden(st);const f=st.fahrt_km?parseFloat(st.fahrt_km)*0.38:0;return sum+satz*s+f;},0);
+                    const max = offeneStunden.reduce((sum,st)=>{const satz=st.kurzfristige_absage?parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0):st.unterrichtsform==='2er'?parseFloat(guthaben?.stundensatz_2er||guthaben?.stundensatz||0):st.unterrichtsform==='3er'?parseFloat(guthaben?.stundensatz_3er||guthaben?.stundensatz||0):parseFloat(guthaben?.stundensatz||0);const s=calcStunden(st);const f=st.fahrt_km?parseFloat(st.fahrt_km)*0.38:0;return sum+satz*s+f;},0);
                     const val = parseFloat(e.target.value);
                     setAuszahlungBetrag(val > max ? max.toFixed(2) : e.target.value);
                   }}
@@ -418,9 +418,9 @@ export default function Abrechnung() {
                     <td>{st.schueler_name}</td>
                     <td>{st.startzeit}–{st.endzeit}</td>
                     <td>{st.fach}</td>
-                    <td style={{fontWeight:600}}>{(st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0) : guthaben.stundensatz).toFixed(2)} €</td>
+                    <td style={{fontWeight:600}}>{(st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0) : st.unterrichtsform==='2er' ? parseFloat(guthaben?.stundensatz_2er||guthaben?.stundensatz||0) : st.unterrichtsform==='3er' ? parseFloat(guthaben?.stundensatz_3er||guthaben?.stundensatz||0) : parseFloat(guthaben?.stundensatz||0)).toFixed(2)} €</td>
                     <td style={{fontSize:12,color:'var(--text-light)'}}>{st.fahrt_km ? `${st.fahrt_km} km = ${(parseFloat(st.fahrt_km)*0.38).toFixed(2)} €` : '–'}</td>
-                    <td style={{fontWeight:700,color:'var(--purple)'}}>{(calcStunden(st) * (st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz || guthaben?.stundensatz || 0) : guthaben.stundensatz) + (st.fahrt_km ? parseFloat(st.fahrt_km)*0.38 : 0)).toFixed(2)} €</td>
+                    <td style={{fontWeight:700,color:'var(--purple)'}}>{(calcStunden(st) * (st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0) : st.unterrichtsform==='2er' ? parseFloat(guthaben?.stundensatz_2er||guthaben?.stundensatz||0) : st.unterrichtsform==='3er' ? parseFloat(guthaben?.stundensatz_3er||guthaben?.stundensatz||0) : parseFloat(guthaben?.stundensatz||0)) + (st.fahrt_km ? parseFloat(st.fahrt_km)*0.38 : 0)).toFixed(2)} €</td>
                     <td>{st.unterschrift_name ? <span className="badge badge-unterschrift">✓ {st.unterschrift_name}</span> : <span className="badge badge-ausstehend">⚠ Fehlt</span>}</td>
                   </tr>
                 ))}
