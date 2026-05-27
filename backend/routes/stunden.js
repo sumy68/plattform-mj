@@ -453,10 +453,10 @@ function genPDF(st) {
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
     doc.text('SCHÜLER', 70, 175);
     doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
-    doc.text(`${st.s_vorname} ${st.s_nachname}`, 70, 190);
+    doc.text(`${st.s_vorname || st.vorname || '–'} ${st.s_nachname || st.nachname || ''}`, 70, 190);
     doc.fontSize(10).fillColor('#666').font('Helvetica');
     doc.text(`Schule: ${st.schule || '–'}  ·  Klasse: ${st.klasse || '–'}`, 70, 208);
-    doc.text(`Eltern: ${st.eltern_name || '–'}  ·  Tel: ${st.eltern_tel || '–'}`, 70, 222);
+    doc.text(`Eltern: ${st.eltern_name || st.s_eltern_name || '–'}  ·  Tel: ${st.eltern_tel || st.s_eltern_tel || '–'}`, 70, 222);
     doc.text(`BuT-Förderung: ${st.but_status ? 'Ja' : 'Nein'}`, 70, 236);
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
     doc.text('LEHRKRAFT', 320, 175);
