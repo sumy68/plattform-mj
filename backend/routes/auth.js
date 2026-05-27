@@ -147,15 +147,36 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
-module.exports = router;
 
-
-// Benutzer löschen (nur Admin)
+// Benutzer löschen (nur Admin) - mit Cascade-Cleanup
 router.delete('/users/:id', auth, adminOnly, async (req, res) => {
   try {
-    await pool.query('DELETE FROM users WHERE id=$1 AND role!=\'admin\'', [req.params.id]);
-    res.json({ success: true });
+    const userId = req.params.id;
+    
+    // Prüfen ob User existiert und nicht Admin ist
+    const userCheck = await pool.query('SELECT id, role, name FROM users WHERE id=$1', [userId]);
+    if (!userCheck.rows[0]) return res.status(404).json({ error: 'Nutzer nicht gefunden' });
+    if (userCheck.rows[0].role === 'admin') return res.status(403).json({ error: 'Admin kann nicht gelöscht werden' });
+    
+    // Cascade: alle abhängigen Daten zuerst löschen
+    await pool.query('DELETE FROM lehrkraft_schueler WHERE lehrkraft_id=$1', [userId]);
+    await pool.query('DELETE FROM abwesenheiten WHERE user_id=$1', [userId]);
+    await pool.query('DELETE FROM stunden WHERE lehrkraft_id=$1', [userId]);
+    await pool.query('DELETE FROM rechnungen WHERE user_id=$1', [userId]).catch(()=>{});
+    await pool.query('DELETE FROM notifications WHERE user_id=$1', [userId]).catch(()=>{});
+    
+    // Jetzt User selbst löschen
+    const result = await pool.query("DELETE FROM users WHERE id=$1 AND role!='admin' RETURNING id, name", [userId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Nutzer konnte nicht gelöscht werden' });
+    }
+    
+    res.json({ success: true, deleted: result.rows[0] });
   } catch (err) {
+    console.error('User-Delete Fehler:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
+module.exports = router;
