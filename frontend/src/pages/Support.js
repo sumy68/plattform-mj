@@ -66,7 +66,7 @@ export default function Support() {
           background: '#e8f5e9', border: '2px solid #4caf50', borderRadius: 12,
           padding: 16, marginBottom: 20, color: '#2e7d32', fontWeight: 600
         }}>
-          ✅ Anfrage erfolgreich gesendet! Du bekommst eine Antwort an {user?.email}
+          ✅ Anfrage erfolgreich gesendet! Du bekommst eine persönliche Antwort von info@smyagency.de
         </div>
       )}
 
@@ -132,7 +132,7 @@ export default function Support() {
             background: 'var(--purple-pale)', borderRadius: 10, padding: '12px 16px',
             marginBottom: 16, fontSize: 13, color: 'var(--text-mid)'
           }}>
-            ℹ️ Deine Anfrage geht direkt an die SMY Agency (info@smyagency.de). Du bekommst eine Antwort an <strong>{user?.email}</strong>.
+            ℹ️ Deine Anfrage geht direkt an die SMY Agency. Du bekommst eine persönliche Antwort von <strong>info@smyagency.de</strong>.
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
