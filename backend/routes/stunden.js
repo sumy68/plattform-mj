@@ -25,6 +25,8 @@ router.get('/', auth, async (req, res) => {
       SELECT st.*, 
         u.name as lehrkraft_name,
         u.stundensatz as lehrkraft_stundensatz,
+        u.stundensatz_2er as lehrkraft_stundensatz_2er,
+        u.stundensatz_3er as lehrkraft_stundensatz_3er,
         u.absage_stundensatz as lehrkraft_absage_stundensatz,
         s.vorname||' '||s.nachname as schueler_name,
         s.but_status, s.schule, s.klasse
@@ -54,16 +56,20 @@ router.get('/', auth, async (req, res) => {
 
 // Stunde eintragen
 router.post('/', auth, async (req, res) => {
-  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage } = req.body;
+  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage, unterrichtsform, gruppe_schueler_ids, gruppe_schueler_namen } = req.body;
   try {
     const [sh, sm] = startzeit.split(':').map(Number);
     const [eh, em] = endzeit.split(':').map(Number);
     const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
 
+    const form = unterrichtsform || 'einzel';
+    const gruppeIds = (form !== 'einzel' && gruppe_schueler_ids?.length) ? gruppe_schueler_ids : [];
+    const gruppeNamen = (form !== 'einzel' && gruppe_schueler_namen) ? gruppe_schueler_namen : '';
+
     const result = await pool.query(
-      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false]
+      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage,unterrichtsform,gruppe_schueler_ids,gruppe_schueler_namen)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
+      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen]
     );
 
     const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [schueler_id]);
@@ -95,7 +101,6 @@ router.post('/', auth, async (req, res) => {
 // Stunde löschen
 router.delete('/:id', auth, async (req, res) => {
   try {
-    // BuT-Gutschein zurückbuchen
     const stundeRes = await pool.query('SELECT * FROM stunden WHERE id=$1', [req.params.id]);
     if (stundeRes.rows[0]) {
       const st = stundeRes.rows[0];
@@ -178,7 +183,10 @@ router.get('/:id/pdf', auth, async (req, res) => {
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
     doc.text('SCHÜLER', 70, 175);
     doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
-    doc.text(`${st.vorname} ${st.nachname}`, 70, 190);
+    const schuelerAnzeige = st.unterrichtsform && st.unterrichtsform !== 'einzel'
+      ? `${st.vorname} ${st.nachname}${st.gruppe_schueler_namen ? ' & ' + st.gruppe_schueler_namen : ''}`
+      : `${st.vorname} ${st.nachname}`;
+    doc.text(schuelerAnzeige, 70, 190);
     doc.fontSize(10).fillColor('#666').font('Helvetica');
     doc.text(`Schule: ${st.schule || '–'}  ·  Klasse: ${st.klasse || '–'}`, 70, 208);
     doc.text(`Eltern: ${st.eltern_name || '–'}  ·  Tel: ${st.eltern_tel || '–'}`, 70, 222);
@@ -190,7 +198,9 @@ router.get('/:id/pdf', auth, async (req, res) => {
     doc.fontSize(10).fillColor('#666').font('Helvetica');
     doc.text(`E-Mail: ${st.lehrkraft_email || '–'}`, 320, 208);
     doc.text(`Tel: ${st.lehrkraft_tel || '–'}`, 320, 222);
+    const formLabel = st.unterrichtsform === '2er' ? '2er-Gruppe' : st.unterrichtsform === '3er' ? '3er-Gruppe' : 'Einzelunterricht';
     const details = [
+      ['Unterrichtsform', formLabel],
       ['Datum', new Date(st.datum).toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })],
       ['Uhrzeit', `${st.startzeit} – ${st.endzeit} Uhr (${st.dauer_minuten || '–'} Min.)`],
       ['Fach', st.fach || '–'],
@@ -325,18 +335,15 @@ router.post('/signatur/:token', async (req, res) => {
   }
 });
 
-
 // ZIP Download für ausgewählte Stunden-IDs (nur Admin)
 router.post('/zip-by-ids', auth, adminOnly, async (req, res) => {
   try {
     const { ids } = req.body;
-    console.log('ZIP IDs:', ids, 'Anzahl:', ids.length);
     if (!ids || ids.length === 0) return res.status(400).json({ error: 'Keine IDs' });
-
     const result = await pool.query(
       `SELECT st.*, st.unterschrift_data, st.unterschrift_name, st.unterschrift_datum,
               st.datum, st.fach, st.startzeit, st.endzeit, st.dauer_minuten,
-              st.ort, st.fahrt_km, st.inhalt,
+              st.ort, st.fahrt_km, st.inhalt, st.unterrichtsform, st.gruppe_schueler_namen,
               s.vorname as s_vorname, s.nachname as s_nachname,
               s.schule, s.klasse, s.but_status, s.eltern_name, s.eltern_tel,
               u.name as lehrkraft_name, u.email as lehrkraft_email, u.telefon as lehrkraft_tel
@@ -345,16 +352,11 @@ router.post('/zip-by-ids', auth, adminOnly, async (req, res) => {
        JOIN users u ON st.lehrkraft_id = u.id
        WHERE st.id = ANY($1::int[]) AND st.unterschrift_data IS NOT NULL`, [ids]
     );
-
     const archiver = require('archiver');
-    const PDFDocument = require('pdfkit');
-
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', 'attachment; filename="Stundennachweise.zip"');
-
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.pipe(res);
-
     for (const st of result.rows) {
       const pdfBuffer = await genPDF(st);
       const safe_lk = (st.lehrkraft_name || 'Unbekannt').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -362,10 +364,8 @@ router.post('/zip-by-ids', auth, adminOnly, async (req, res) => {
       const datum = new Date(st.datum).toISOString().slice(0,10);
       archive.append(pdfBuffer, { name: `${datum}_${safe_s}_${safe_lk}_${st.id}.pdf` });
     }
-
     await archive.finalize();
   } catch (err) {
-    console.error('ZIP Fehler:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -390,7 +390,10 @@ function genPDF(st) {
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold');
     doc.text('SCHÜLER', 70, 175);
     doc.fontSize(13).fillColor('#2d2040').font('Helvetica-Bold');
-    doc.text(`${st.s_vorname} ${st.s_nachname}`, 70, 190);
+    const schuelerAnzeige = st.unterrichtsform && st.unterrichtsform !== 'einzel'
+      ? `${st.s_vorname} ${st.s_nachname}${st.gruppe_schueler_namen ? ' & ' + st.gruppe_schueler_namen : ''}`
+      : `${st.s_vorname} ${st.s_nachname}`;
+    doc.text(schuelerAnzeige, 70, 190);
     doc.fontSize(10).fillColor('#666').font('Helvetica');
     doc.text(`Schule: ${st.schule || '–'}  ·  Klasse: ${st.klasse || '–'}`, 70, 208);
     doc.text(`Eltern: ${st.eltern_name || '–'}  ·  Tel: ${st.eltern_tel || '–'}`, 70, 222);
@@ -402,7 +405,9 @@ function genPDF(st) {
     doc.fontSize(10).fillColor('#666').font('Helvetica');
     doc.text(`E-Mail: ${st.lehrkraft_email || '–'}`, 320, 208);
     doc.text(`Tel: ${st.lehrkraft_tel || '–'}`, 320, 222);
+    const formLabel = st.unterrichtsform === '2er' ? '2er-Gruppe' : st.unterrichtsform === '3er' ? '3er-Gruppe' : 'Einzelunterricht';
     const details = [
+      ['Unterrichtsform', formLabel],
       ['Datum', new Date(st.datum).toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })],
       ['Uhrzeit', `${st.startzeit || '–'} – ${st.endzeit || '–'} Uhr (${st.dauer_minuten || '–'} Min.)`],
       ['Fach', st.fach || '–'],

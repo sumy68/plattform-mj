@@ -108,7 +108,7 @@ router.get('/users/:id/profil', auth, adminOnly, async (req, res) => {
 
 router.get('/users', auth, adminOnly, async (req, res) => {
   try {
-    const result = await pool.query("SELECT id,name,email,role,stundensatz,aktiv,absage_stundensatz,sprachen,fuehrerschein,created_at FROM users WHERE role != 'admin' ORDER BY aktiv DESC, name");
+    const result = await pool.query("SELECT id,name,email,role,stundensatz,stundensatz_2er,stundensatz_3er,aktiv,absage_stundensatz,sprachen,fuehrerschein,created_at FROM users WHERE role != 'admin' ORDER BY aktiv DESC, name");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -119,6 +119,10 @@ router.patch('/users/:id', auth, adminOnly, async (req, res) => {
   try {
     if (req.body.stundensatz !== undefined) {
       await pool.query('UPDATE users SET stundensatz=$1 WHERE id=$2', [req.body.stundensatz, req.params.id]);
+    } else if (req.body.stundensatz_2er !== undefined) {
+      await pool.query('UPDATE users SET stundensatz_2er=$1 WHERE id=$2', [req.body.stundensatz_2er, req.params.id]);
+    } else if (req.body.stundensatz_3er !== undefined) {
+      await pool.query('UPDATE users SET stundensatz_3er=$1 WHERE id=$2', [req.body.stundensatz_3er, req.params.id]);
     } else if (req.body.absage_stundensatz !== undefined) {
       await pool.query('UPDATE users SET absage_stundensatz=$1 WHERE id=$2', [req.body.absage_stundensatz, req.params.id]);
     } else {

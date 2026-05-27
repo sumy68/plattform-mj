@@ -12,6 +12,10 @@ export default function Lehrkraefte() {
   const [newStundensatz, setNewStundensatz] = useState('');
   const [editAbsage, setEditAbsage] = useState(null);
   const [newAbsage, setNewAbsage] = useState('');
+  const [edit2er, setEdit2er] = useState(null);
+  const [new2er, setNew2er] = useState('');
+  const [edit3er, setEdit3er] = useState(null);
+  const [new3er, setNew3er] = useState('');
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
@@ -49,6 +53,18 @@ export default function Lehrkraefte() {
     load();
   };
 
+  const save2er = async (id) => {
+    await axios.patch(`${API}/api/auth/users/${id}`, { stundensatz_2er: parseFloat(new2er) }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+    setEdit2er(null);
+    load();
+  };
+
+  const save3er = async (id) => {
+    await axios.patch(`${API}/api/auth/users/${id}`, { stundensatz_3er: parseFloat(new3er) }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+    setEdit3er(null);
+    load();
+  };
+
   const deleteUser = async (u) => {
     if (!window.confirm(`${u.name} wirklich löschen?`)) return;
     await axios.delete(`${API}/api/auth/users/${u.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -83,7 +99,9 @@ export default function Lehrkraefte() {
                 <th>E-Mail</th>
                 <th>Rolle</th>
                 <th>Sprachen</th>
-                <th style={{whiteSpace:'nowrap'}}>Stundensatz</th>
+                <th style={{whiteSpace:'nowrap'}}>Einzel</th>
+                <th style={{whiteSpace:'nowrap'}}>2er-Gruppe</th>
+                <th style={{whiteSpace:'nowrap'}}>3er-Gruppe</th>
                 <th style={{whiteSpace:'nowrap'}}>Absage-Satz</th>
                 <th>Status</th>
                 <th style={{whiteSpace:'nowrap'}}>Aktionen</th>
