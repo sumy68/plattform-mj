@@ -198,6 +198,12 @@ router.post('/rechnung', auth, async (req, res) => {
         const zeileStunden = (parseFloat(st.dauer_minuten) || 0) / 60;
         doc.text(`${(zeileSatz * zeileStunden).toFixed(2)} €`, 490, y);
         y += 18;
+        if (st.kurzfristige_absage) {
+          doc.fontSize(8).fillColor('#c62828');
+          doc.text('❌ Kurzfristige Absage', 130, y, { width: 300 });
+          doc.fillColor('#333').fontSize(9);
+          y += 12;
+        }
         if (st.fahrt_km && parseFloat(st.fahrt_km) > 0) {
           doc.fontSize(8).fillColor('#888');
           const fahrtRoute = (st.fahrt_von && st.fahrt_nach) ? ` (${st.fahrt_von} → ${st.fahrt_nach})` : '';
