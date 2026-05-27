@@ -224,7 +224,7 @@ export default function Stunden({ adminView }) {
               {gefilterteStunden.map(st => (
                 <tr key={st.id}>
                   <td>{new Date(st.datum).toLocaleDateString('de-DE')}</td>
-                  <td><strong>{st.schueler_name}</strong></td>
+                  <td><strong>{st.unterrichtsform && st.unterrichtsform !== 'einzel' && st.gruppe_schueler_namen ? st.schueler_name + ', ' + st.gruppe_schueler_namen : st.schueler_name}</strong></td>
                   {adminView && <td>{st.lehrkraft_name}</td>}
                   <td>{st.startzeit} – {st.endzeit}</td>
                   <td style={{fontSize:12,color:'var(--text-light)'}}>{st.dauer_minuten ? `${st.dauer_minuten} Min.` : '–'}</td>

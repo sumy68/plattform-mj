@@ -28,6 +28,7 @@ router.get('/', auth, async (req, res) => {
         u.absage_stundensatz as lehrkraft_absage_stundensatz,
         s.vorname||' '||s.nachname as schueler_name,
         s.but_status, s.schule, s.klasse,
+        st.unterrichtsform, st.gruppe_schueler_namen, st.gruppe_schueler_ids,
         st.unterschrift_data_2, st.unterschrift_name_2, st.unterschrift_datum_2,
         st.unterschrift_data_3, st.unterschrift_name_3, st.unterschrift_datum_3
       FROM stunden st
