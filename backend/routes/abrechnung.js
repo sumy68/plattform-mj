@@ -191,7 +191,7 @@ router.post('/rechnung', auth, async (req, res) => {
         doc.text(st.schueler_name, 130, y, { width: 140 });
         doc.text(`${st.startzeit}–${st.endzeit}`, 280, y);
         doc.text(st.fach || '–', 380, y);
-        const zeileSatz = st.kurzfristige_absage ? (parseFloat(user.absage_stundensatz) || parseFloat(user.stundensatz)) : parseFloat(user.stundensatz);
+        const zeileSatz = st.kurzfristige_absage ? (parseFloat(user.absage_stundensatz) || parseFloat(user.stundensatz)) : st.unterrichtsform === '2er' ? (parseFloat(user.stundensatz_2er) || parseFloat(user.stundensatz)) : st.unterrichtsform === '3er' ? (parseFloat(user.stundensatz_3er) || parseFloat(user.stundensatz)) : parseFloat(user.stundensatz);
         const zeileStunden = (parseFloat(st.dauer_minuten) || 0) / 60;
         doc.text(`${(zeileSatz * zeileStunden).toFixed(2)} €`, 490, y);
         y += 18;
@@ -208,14 +208,14 @@ router.post('/rechnung', auth, async (req, res) => {
       // Summe
       const absageSatzPDF = parseFloat(user.absage_stundensatz) || parseFloat(user.stundensatz);
       const stundenSumme = stunden.reduce((sum, s) => {
-        const satz = s.kurzfristige_absage ? absageSatzPDF : parseFloat(user.stundensatz);
+        const satz = s.kurzfristige_absage ? absageSatzPDF : s.unterrichtsform === '2er' ? (parseFloat(user.stundensatz_2er) || parseFloat(user.stundensatz)) : s.unterrichtsform === '3er' ? (parseFloat(user.stundensatz_3er) || parseFloat(user.stundensatz)) : parseFloat(user.stundensatz);
         return sum + (parseFloat(s.dauer_minuten) || 0) / 60 * satz;
       }, 0);
       const fahrtSumme = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
       doc.moveTo(50, y + 5).lineTo(545, y + 5).strokeColor('#9b7fd4').stroke();
       doc.fontSize(10).font('Helvetica').fillColor('#555');
       const gesamtStunden = stunden.reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60, 0);
-      doc.text(`Honorar (${gesamtStunden.toFixed(1)} Stunden × ${parseFloat(user.stundensatz).toFixed(2)} €):`, 50, y + 15);
+      doc.text(`Honorar (${gesamtStunden.toFixed(1)} Stunden):`, 50, y + 15);
       doc.text(`${stundenSumme.toFixed(2)} €`, 490, y + 15);
       if (fahrtSumme > 0) {
         doc.text(`Fahrtkosten gesamt:`, 50, y + 30);
