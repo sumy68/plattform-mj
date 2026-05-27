@@ -203,7 +203,9 @@ export default function Lehrkraefte() {
               {[
                 ['E-Mail', detailUser.email],
                 ['Rolle', detailUser.role],
-                ['Stundensatz', `${detailUser.stundensatz} €/Std.`],
+                ['Stundensatz Einzel', `${detailUser.stundensatz} €/Std.`],
+                ['Stundensatz 2er-Gruppe', `${detailUser.stundensatz_2er || 0} €/Std.`],
+                ['Stundensatz 3er-Gruppe', `${detailUser.stundensatz_3er || 0} €/Std.`],
                 ['Telefon', detailUser.telefon || '–'],
                 ['Geburtsdatum', detailUser.geburtsdatum ? new Date(detailUser.geburtsdatum).toLocaleDateString('de-DE') : '–'],
                 ['Geschlecht', detailUser.geschlecht || '–'],
