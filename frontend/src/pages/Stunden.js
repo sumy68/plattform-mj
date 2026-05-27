@@ -107,7 +107,7 @@ export default function Stunden({ adminView }) {
       setModal(false);
       setForm(emptyForm);
       if (res.data.but_warnung) {
-        setButWarnung(`⚠️ Achtung: Nur noch ${res.data.but_verbleibend} BuT-Gutschein übrig für diesen Schüler!`);
+        setButWarnung(`⚠️ Nur noch ${Number(res.data.but_verbleibend).toLocaleString('de-DE', {maximumFractionDigits:2})} BuT-Stunden übrig! Bitte beim Schüler/Eltern den neuen BuT-Antrag einholen.`);
         setTimeout(() => setButWarnung(null), 8000);
       }
       load();

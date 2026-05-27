@@ -92,7 +92,7 @@ export default function ButAntraege() {
 
   const getStatusText = (a) => {
     if (a.gutscheine_offen <= 0) return 'Aufgebraucht';
-    if (a.warnung) return `⚠️ Nur noch ${Number(a.gutscheine_offen).toLocaleString('de-DE', { maximumFractionDigits: 2 })} übrig!`;
+    if (a.warnung) return `⚠️ Nur noch ${Number(a.gutscheine_offen).toLocaleString('de-DE', { maximumFractionDigits: 2 })}h - Antrag einholen!`;
     return 'Aktiv';
   };
 
@@ -105,7 +105,7 @@ export default function ButAntraege() {
 
       {warnungen.length > 0 && (
         <div style={{ background: '#fff3e0', border: '2px solid #ff9800', borderRadius: 12, padding: 16, marginBottom: 20 }}>
-          <div style={{ fontWeight: 700, color: '#e65100', marginBottom: 8 }}>⚠️ Achtung — fast aufgebraucht:</div>
+          <div style={{ fontWeight: 700, color: '#e65100', marginBottom: 8 }}>⚠️ Folgende BuT-Anträge sind fast aufgebraucht — bitte beim Schüler/Eltern neuen Antrag einholen:</div>
           {warnungen.map(a => (
             <div key={a.id} style={{ fontSize: 14, color: '#e65100' }}>
               • {a.schueler_name} — noch {Number(a.gutscheine_offen).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Stunden übrig (bis {new Date(a.gueltig_bis).toLocaleDateString('de-DE')})
@@ -207,7 +207,7 @@ export default function ButAntraege() {
                 <input ref={fileRef} type="file" accept=".pdf" onChange={e => setPdfFile(e.target.files[0])} style={{ padding: '8px 0', fontSize: 13 }} />
               </div>
               <div style={{ background: 'var(--purple-pale)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: 'var(--text-mid)' }}>
-                ⚠️ Eine Warnung erscheint automatisch wenn nur noch 12 Stunden übrig sind.
+                ⚠️ Bei nur noch 12 verbleibenden Stunden wird die Lehrkraft automatisch aufgefordert, einen neuen BuT-Antrag beim Schüler/Eltern einzuholen.
               </div>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(false)}>Abbrechen</button>
