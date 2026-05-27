@@ -129,18 +129,29 @@ export default function Stunden({ adminView }) {
     window.open(`${API}/api/stunden/${id}/pdf?token=${token}`, '_blank');
   };
 
-  const sendSignaturLink = async (st) => {
+  const sendSignaturLink = async (st, nr = 1) => {
     const email = st.eltern_email || prompt('Eltern E-Mail Adresse:');
     if (!email) return;
     try {
-      const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email, nr }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       const token = res.data.token;
       const link = `https://plattform.mj-lernfoerderung.de/unterschreiben/${token}`;
       const copied = await navigator.clipboard.writeText(link).then(()=>true).catch(()=>false);
-      alert(`✅ Link per E-Mail gesendet!${copied ? '\n\n🔗 Link wurde in die Zwischenablage kopiert.' : ''}\n\n${link}`);
+      const sl = nr === 2 ? ' (S2)' : nr === 3 ? ' (S3)' : '';
+      alert(`✅ Link per E-Mail gesendet!${sl}${copied ? '\n\n🔗 Link wurde in die Zwischenablage kopiert.' : ''}\n\n${link}`);
     } catch (err) {
       alert('Fehler: ' + (err.response?.data?.error || err.message));
     }
+  };
+
+  const sendWALink = async (st, nr = 1) => {
+    try {
+      const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email: st.eltern_email || 'noemail@noemail.de', nr }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      const token = res.data.token;
+      const link = `https://plattform.mj-lernfoerderung.de/unterschreiben/${token}`;
+      const sl = nr === 2 ? ' (Schüler 2)' : nr === 3 ? ' (Schüler 3)' : '';
+      window.open(`https://wa.me/?text=${encodeURIComponent('Bitte unterschreiben Sie die Nachhilfestunde' + sl + ' hier: ' + link)}`, '_blank');
+    } catch(e) { alert('Fehler: ' + e.message); }
   };
 
   const deleteStunde = async (id) => {
@@ -242,16 +253,16 @@ export default function Stunden({ adminView }) {
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                       <button className="btn btn-ghost btn-sm" onClick={()=>downloadPDF(st.id)}>📄 PDF</button>
                       {!st.unterschrift_name && <>
-                        <button className="btn btn-ghost btn-sm" onClick={()=>sendSignaturLink(st)}>📧 Link</button>
-                        <button className="btn btn-ghost btn-sm" onClick={async()=>{
-                          try {
-                            const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email: st.eltern_email || 'noemail@noemail.de' }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-                            const token = res.data.token;
-                            const link = `https://plattform.mj-lernfoerderung.de/unterschreiben/${token}`;
-                            const waText = encodeURIComponent(`Bitte unterschreiben Sie die Nachhilfestunde hier: ${link}`);
-                            window.open(`https://wa.me/?text=${waText}`, '_blank');
-                          } catch(e) { alert('Fehler: ' + e.message); }
-                        }}>💬 WA</button>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>sendSignaturLink(st,1)}>📧{st.unterrichtsform!=='einzel'?' S1':''}</button>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>sendWALink(st,1)}>💬{st.unterrichtsform!=='einzel'?' S1':''}</button>
+                      </>}
+                      {(st.unterrichtsform==='2er'||st.unterrichtsform==='3er')&&!st.unterschrift_name_2&&<>
+                        <button className="btn btn-ghost btn-sm" style={{background:'#e3f2fd',color:'#1565c0'}} onClick={()=>sendSignaturLink(st,2)}>📧 S2</button>
+                        <button className="btn btn-ghost btn-sm" style={{background:'#e3f2fd',color:'#1565c0'}} onClick={()=>sendWALink(st,2)}>💬 S2</button>
+                      </>}
+                      {st.unterrichtsform==='3er'&&!st.unterschrift_name_3&&<>
+                        <button className="btn btn-ghost btn-sm" style={{background:'#f3e5f5',color:'#6a1b9a'}} onClick={()=>sendSignaturLink(st,3)}>📧 S3</button>
+                        <button className="btn btn-ghost btn-sm" style={{background:'#f3e5f5',color:'#6a1b9a'}} onClick={()=>sendWALink(st,3)}>💬 S3</button>
                       </>}
                       <button className="btn btn-danger btn-sm" onClick={()=>deleteStunde(st.id)}>🗑️</button>
                     </div>

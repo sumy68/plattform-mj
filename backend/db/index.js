@@ -96,6 +96,7 @@ const initDB = async () => {
       erstellt_am TIMESTAMP DEFAULT NOW(),
       ablaeuft_am TIMESTAMP DEFAULT NOW() + INTERVAL '7 days'
     )`);
+    await client.query(`ALTER TABLE signatur_tokens ADD COLUMN IF NOT EXISTS schueler_slot INTEGER DEFAULT 1`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_von TEXT`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_nach TEXT`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS fahrt_km DECIMAL(10,2)`);

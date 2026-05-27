@@ -294,7 +294,8 @@ router.get('/:id/pdf', auth, async (req, res) => {
 
 // Signatur-Link per Email senden
 router.post('/:id/signatur-link', auth, async (req, res) => {
-  const { email } = req.body;
+  const { email, nr } = req.body;
+  const schuelerSlot = parseInt(nr) || 1;
   try {
     const crypto = require('crypto');
     const token = crypto.randomBytes(32).toString('hex');
@@ -309,8 +310,8 @@ router.post('/:id/signatur-link', auth, async (req, res) => {
     const st = stundeRes.rows[0];
     if (!st) return res.status(404).json({ error: 'Stunde nicht gefunden' });
     await pool.query(
-      `INSERT INTO signatur_tokens (stunde_id, token, email) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
-      [req.params.id, token, email]
+      `INSERT INTO signatur_tokens (stunde_id, token, email, schueler_slot) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
+      [req.params.id, token, email, schuelerSlot]
     );
     const nodemailer = require('nodemailer');
     const transporter = nodemailer.createTransport({
@@ -348,7 +349,7 @@ router.post('/:id/signatur-link', auth, async (req, res) => {
 router.get('/signatur/:token', async (req, res) => {
   try {
     const tokenRes = await pool.query(
-      `SELECT st.*, s.vorname, s.nachname, u.name as lehrkraft_name, tok.verwendet, tok.email
+      `SELECT st.*, s.vorname, s.nachname, u.name as lehrkraft_name, tok.verwendet, tok.email, tok.schueler_slot
        FROM signatur_tokens tok
        JOIN stunden st ON tok.stunde_id = st.id
        JOIN schueler s ON st.schueler_id = s.id
@@ -373,10 +374,12 @@ router.post('/signatur/:token', async (req, res) => {
     );
     if (!tokenRes.rows[0]) return res.status(400).json({ error: 'Link ungültig oder bereits verwendet' });
     const stunde_id = tokenRes.rows[0].stunde_id;
-    await pool.query(
-      `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW() WHERE id=$3`,
-      [unterschrift_data, unterschrift_name, stunde_id]
-    );
+    const slot = tokenRes.rows[0].schueler_slot || 1;
+    let updateQ;
+    if (slot === 2) updateQ = `UPDATE stunden SET unterschrift_data_2=$1, unterschrift_name_2=$2, unterschrift_datum_2=NOW() WHERE id=$3`;
+    else if (slot === 3) updateQ = `UPDATE stunden SET unterschrift_data_3=$1, unterschrift_name_3=$2, unterschrift_datum_3=NOW() WHERE id=$3`;
+    else updateQ = `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW() WHERE id=$3`;
+    await pool.query(updateQ, [unterschrift_data, unterschrift_name, stunde_id]);
     await pool.query(`UPDATE signatur_tokens SET verwendet=true WHERE token=$1`, [req.params.token]);
     res.json({ success: true });
   } catch (err) {
