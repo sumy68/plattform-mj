@@ -3,3 +3,4 @@ node_modules/
 *.sql
 node_modules/
 .backup_but_fix*/
+.backup_but_fix*/
