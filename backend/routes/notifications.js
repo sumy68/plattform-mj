@@ -67,6 +67,19 @@ router.get('/', auth, async (req, res) => {
         notifications.push({ id:`but_${r.id}`, typ:'warning', icon:'⏰', titel:'BuT läuft bald ab', text:`${r.name} — Antrag läuft am ${new Date(r.gueltig_bis).toLocaleDateString('de-DE')} ab`, link:'/but' });
       });
 
+      // 6b. BuT-Stunden fast verbraucht (<=12)
+      const butFastLeer = await pool.query(
+        `SELECT b.id, s.vorname||' '||s.nachname as name, 
+                (b.gutscheine_gesamt - b.gutscheine_verbraucht)::numeric as offen
+         FROM but_antraege b JOIN schueler s ON b.schueler_id=s.id
+         WHERE b.aktiv=true AND (b.gutscheine_gesamt - b.gutscheine_verbraucht) <= 12 
+         AND (b.gutscheine_gesamt - b.gutscheine_verbraucht) > 0`
+      );
+      butFastLeer.rows.forEach(r => {
+        const offenStr = Number(r.offen).toLocaleString('de-DE', { maximumFractionDigits: 2 });
+        notifications.push({ id:`but_leer_${r.id}`, typ:'danger', icon:'⚠️', titel:'BuT-Antrag fast aufgebraucht', text:`${r.name} — nur noch ${offenStr}h. Bitte Schüler/Eltern um neuen Antrag bitten.`, link:'/but' });
+      });
+
       // 7. Schüler ohne Lehrkraft
       const ohneLehrer = await pool.query(
         `SELECT s.id, s.vorname||' '||s.nachname as name FROM schueler s
@@ -152,6 +165,23 @@ router.get('/', auth, async (req, res) => {
           }
         } catch(e) {}
       }
+
+      // 5c. BuT-Antrag fast verbraucht bei eigenen Schülern (<=12h)
+      const butLeerLK = await pool.query(
+        `SELECT b.id, s.vorname||' '||s.nachname as name,
+                (b.gutscheine_gesamt - b.gutscheine_verbraucht)::numeric as offen
+         FROM but_antraege b 
+         JOIN schueler s ON b.schueler_id=s.id
+         JOIN lehrkraft_schueler ls ON ls.schueler_id=s.id
+         WHERE ls.lehrkraft_id=$1 AND b.aktiv=true 
+         AND (b.gutscheine_gesamt - b.gutscheine_verbraucht) <= 12
+         AND (b.gutscheine_gesamt - b.gutscheine_verbraucht) > 0`,
+        [userId]
+      );
+      butLeerLK.rows.forEach(r => {
+        const offenStr = Number(r.offen).toLocaleString('de-DE', { maximumFractionDigits: 2 });
+        notifications.push({ id:`but_leer_lk_${r.id}`, typ:'danger', icon:'⚠️', titel:'BuT-Antrag einholen!', text:`${r.name} hat nur noch ${offenStr}h. Bitte beim Schüler/Eltern den neuen BuT-Antrag einholen.`, link:'/but' });
+      });
 
       // 6. Unterschriften fehlen
       const unterschriften = await pool.query(`SELECT COUNT(*) FROM stunden WHERE lehrkraft_id=$1 AND unterschrift_data IS NULL AND to_char(datum,'YYYY-MM')=$2`, [userId, monat]);
