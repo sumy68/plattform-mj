@@ -186,7 +186,7 @@ export default function Abwesenheiten() {
                 <div className="form-group" style={{background:'#fdecea',borderRadius:10,padding:16}}>
                   <label style={{color:'#c62828',fontWeight:700}}>⚕️ AU-Bescheinigung hochladen</label>
                   <p style={{fontSize:12,color:'#c62828',margin:'4px 0 12px'}}>
-                    Minijobber müssen die AU-Bescheinigung am 1. Krankheitstag einreichen. Das PDF wird automatisch per E-Mail an die Verwaltung gesendet.
+                    Minijobber müssen die AU-Bescheinigung am 1. Krankheitstag vorweisen. Falls die AU hier hochgeladen wird, wird sie automatisch per E-Mail an die Verwaltung weitergeleitet.
                   </p>
                   <input ref={fileRef} type="file" accept=".pdf" onChange={e=>setAuFile(e.target.files[0])}
                     style={{fontSize:13}}/>
