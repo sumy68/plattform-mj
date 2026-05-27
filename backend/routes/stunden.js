@@ -95,7 +95,7 @@ router.post('/', auth, async (req, res) => {
       const neu = parseFloat(antrag.gutscheine_verbraucht) + dauer_stunden;
       await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
       const verbleibend = parseFloat(antrag.gutscheine_gesamt) - neu;
-      if (verbleibend <= 1) { but_warnung = true; but_verbleibend = verbleibend; }
+      if (verbleibend <= 12) { but_warnung = true; but_verbleibend = verbleibend; }
     }
 
     if (but_warnung) return res.json({ ...result.rows[0], but_warnung: true, but_verbleibend });
