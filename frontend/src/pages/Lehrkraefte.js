@@ -129,6 +129,34 @@ export default function Lehrkraefte() {
                     )}
                   </td>
                   <td>
+                    {edit2er === u.id ? (
+                      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                        <input type="number" step="0.01" value={new2er} onChange={e=>setNew2er(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
+                        <button className="btn btn-success btn-sm" onClick={()=>save2er(u.id)}>✓</button>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>setEdit2er(null)}>✕</button>
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span>{u.stundensatz_2er || 0} €/Std.</span>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>{setEdit2er(u.id);setNew2er(u.stundensatz_2er||0);}}>✏️</button>
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    {edit3er === u.id ? (
+                      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                        <input type="number" step="0.01" value={new3er} onChange={e=>setNew3er(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
+                        <button className="btn btn-success btn-sm" onClick={()=>save3er(u.id)}>✓</button>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>setEdit3er(null)}>✕</button>
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span>{u.stundensatz_3er || 0} €/Std.</span>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>{setEdit3er(u.id);setNew3er(u.stundensatz_3er||0);}}>✏️</button>
+                      </div>
+                    )}
+                  </td>
+                  <td>
                     {editAbsage === u.id ? (
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
                         <input type="number" step="0.01" value={newAbsage} onChange={e=>setNewAbsage(e.target.value)} style={{width:70,padding:'4px 8px',border:'2px solid var(--purple)',borderRadius:6,fontSize:13}} autoFocus/>
