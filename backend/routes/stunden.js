@@ -73,7 +73,8 @@ router.post('/', auth, async (req, res) => {
     );
 
     // BuT: alle Schüler der Gruppe prüfen
-    const alleSchuelerIds = [parseInt(schueler_id), ...gruppeIds.map(Number)].filter(Boolean);
+    const alleSchuelerIds = [parseInt(schueler_id), ...gruppeIds.map(id => parseInt(id))].filter(id => !isNaN(id) && id > 0);
+    console.log('BuT Check für Schüler IDs:', alleSchuelerIds);
     const dauer_stunden = Math.max(1, Math.round(dauer_minuten / 60));
     let but_warnung = false;
     let but_verbleibend = null;
