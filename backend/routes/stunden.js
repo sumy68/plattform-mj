@@ -161,7 +161,10 @@ router.get('/:id/pdf', auth, async (req, res) => {
     const result = await pool.query(
       `SELECT st.*, u.name as lehrkraft_name, u.telefon as lehrkraft_tel, u.email as lehrkraft_email,
        s.vorname, s.nachname, s.schule, s.klasse, s.but_status, s.eltern_name, s.eltern_tel,
-       s.vorname||' '||s.nachname as schueler_name
+       s.vorname||' '||s.nachname as schueler_name,
+       st.unterrichtsform, st.gruppe_schueler_ids, st.gruppe_schueler_namen,
+       st.unterschrift_data_2, st.unterschrift_name_2, st.unterschrift_datum_2,
+       st.unterschrift_data_3, st.unterschrift_name_3, st.unterschrift_datum_3
        FROM stunden st JOIN users u ON st.lehrkraft_id=u.id JOIN schueler s ON st.schueler_id=s.id
        WHERE st.id=$1`, [req.params.id]
     );
