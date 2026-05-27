@@ -37,7 +37,7 @@ const AppLayout = ({ children }) => {
       {/* Hamburger - nur Mobile */}
       <button
         onClick={()=>setSidebarOpen(true)}
-        style={{position:'fixed',top:12,left:12,zIndex:1001,background:'#2d2040',color:'white',border:'none',borderRadius:8,padding:'8px 12px',fontSize:20,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.3)'}}
+        style={{position:'fixed',top:12,left:12,zIndex:1001,background:'#2d2040',color:'white',border:'none',borderRadius:8,padding:'8px 12px',fontSize:20,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.3)',display:'none'}}
         className="hamburger-btn">☰</button>
 
       {/* Overlay */}
