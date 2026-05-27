@@ -18,16 +18,17 @@ router.get('/', auth, async (req, res) => {
 
 // Profil speichern
 router.put('/', auth, async (req, res) => {
-  const { vorname, nachname, geschlecht, adresse, plz, ort, iban, steuernummer, geburtsdatum, telefon, sprachen, fuehrerschein } = req.body;
+  const { vorname, nachname, email, geschlecht, adresse, plz, ort, iban, steuernummer, geburtsdatum, telefon, sprachen, fuehrerschein, qualifikation, faecher } = req.body;
   try {
     const fullName = `${vorname || ''} ${nachname || ''}`.trim();
     const result = await pool.query(
       `UPDATE users SET 
         vorname=$1, nachname=$2, geschlecht=$3, adresse=$4, plz=$5, ort=$6,
         iban=$7, steuernummer=$8, geburtsdatum=$9, telefon=$10, sprachen=$11,
-        profil_komplett=true, name=$12, fuehrerschein=$13
-       WHERE id=$14 RETURNING *`,
-      [vorname, nachname, geschlecht, adresse, plz, ort, iban, steuernummer, geburtsdatum || null, telefon, sprachen, fullName, fuehrerschein || false, req.user.id]
+        profil_komplett=true, name=$12, fuehrerschein=$13, email=$14,
+        qualifikation=$15, faecher=$16
+       WHERE id=$17 RETURNING *`,
+      [vorname, nachname, geschlecht, adresse, plz, ort, iban, steuernummer, geburtsdatum || null, telefon, sprachen, fullName, fuehrerschein || false, email, qualifikation || null, faecher || null, req.user.id]
     );
     res.json(result.rows[0]);
   } catch (err) {

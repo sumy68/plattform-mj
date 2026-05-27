@@ -292,6 +292,47 @@ export default function Stunden({ adminView }) {
                   ))}
                 </select>
               </div>
+              <div className="form-group">
+                <label>Unterrichtsform</label>
+                <select value={form.unterrichtsform||'einzel'} onChange={e=>setForm({...form,unterrichtsform:e.target.value,gruppe_schueler_ids:[],gruppe_schueler_namen:''})}>
+                  <option value="einzel">👤 Einzelunterricht</option>
+                  <option value="2er">👥 2er-Gruppe</option>
+                  <option value="3er">👥👥 3er-Gruppe</option>
+                </select>
+              </div>
+              {(form.unterrichtsform==='2er'||form.unterrichtsform==='3er') && (
+                <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:12}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'var(--purple)',marginBottom:10}}>👥 Weitere Schüler der Gruppe</div>
+                  <div className="form-group" style={{marginBottom:8}}>
+                    <label style={{fontSize:12}}>Schüler 2 *</label>
+                    <select value={(form.gruppe_schueler_ids||[])[0]||''} onChange={e=>{
+                      const ids=[e.target.value,(form.gruppe_schueler_ids||[])[1]].filter(Boolean);
+                      const namen=schueler.filter(s=>ids.includes(String(s.id))).map(s=>s.vorname+' '+s.nachname).join(',');
+                      setForm({...form,gruppe_schueler_ids:ids,gruppe_schueler_namen:namen});
+                    }}>
+                      <option value="">Bitte wählen...</option>
+                      {schueler.filter(s=>String(s.id)!==String(form.schueler_id)).map(s=>(
+                        <option key={s.id} value={s.id}>{s.vorname} {s.nachname} {s.but_status?'(BuT)':''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {form.unterrichtsform==='3er' && (
+                    <div className="form-group" style={{marginBottom:0}}>
+                      <label style={{fontSize:12}}>Schüler 3 *</label>
+                      <select value={(form.gruppe_schueler_ids||[])[1]||''} onChange={e=>{
+                        const ids=[(form.gruppe_schueler_ids||[])[0],e.target.value].filter(Boolean);
+                        const namen=schueler.filter(s=>ids.includes(String(s.id))).map(s=>s.vorname+' '+s.nachname).join(',');
+                        setForm({...form,gruppe_schueler_ids:ids,gruppe_schueler_namen:namen});
+                      }}>
+                        <option value="">Bitte wählen...</option>
+                        {schueler.filter(s=>String(s.id)!==String(form.schueler_id)&&String(s.id)!==String((form.gruppe_schueler_ids||[])[0])).map(s=>(
+                          <option key={s.id} value={s.id}>{s.vorname} {s.nachname} {s.but_status?'(BuT)':''}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{marginBottom:12}}>
                 <button type="button" className="btn btn-danger" style={{width:'100%'}} onClick={()=>setAbsagePopup(true)}>
                   ❌ Kurzfristige Absage melden
