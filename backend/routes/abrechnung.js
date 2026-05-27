@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 router.get('/guthaben/:user_id', auth, async (req, res) => {
   try {
     const userId = req.params.user_id;
-    const userRes = await pool.query('SELECT name, stundensatz, absage_stundensatz, email, vorname, nachname, adresse, plz, ort, iban, steuernummer FROM users WHERE id=$1', [userId]);
+    const userRes = await pool.query('SELECT name, stundensatz, stundensatz_2er, stundensatz_3er, absage_stundensatz, email, vorname, nachname, adresse, plz, ort, iban, steuernummer FROM users WHERE id=$1', [userId]);
     const user = userRes.rows[0];
     
     // Alle offenen (nicht abgerechneten) Stunden
@@ -31,11 +31,18 @@ router.get('/guthaben/:user_id', auth, async (req, res) => {
     
     const stunden = stundenRes.rows;
     const stundensatz = parseFloat(user.stundensatz) || 0;
+    const stundensatz_2er = parseFloat(user.stundensatz_2er) || stundensatz;
+    const stundensatz_3er = parseFloat(user.stundensatz_3er) || stundensatz;
     const fahrtkosten = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
     const absageSatz = parseFloat(user.absage_stundensatz) || stundensatz;
+    const getSatz = (st) => {
+      if (st.kurzfristige_absage) return absageSatz;
+      if (st.unterrichtsform === '2er') return stundensatz_2er;
+      if (st.unterrichtsform === '3er') return stundensatz_3er;
+      return stundensatz;
+    };
     const gesamtBetrag = stunden.reduce((sum, s) => {
-      const satz = s.kurzfristige_absage ? absageSatz : stundensatz;
-      return sum + (parseFloat(s.dauer_minuten) || 0) / 60 * satz;
+      return sum + (parseFloat(s.dauer_minuten) || 0) / 60 * getSatz(s);
     }, 0) + fahrtkosten;
     
     // Diesen Monat bereits abgerechnet
@@ -51,6 +58,8 @@ router.get('/guthaben/:user_id', auth, async (req, res) => {
       user,
       stunden,
       stundensatz,
+      stundensatz_2er: parseFloat(user.stundensatz_2er) || 0,
+      stundensatz_3er: parseFloat(user.stundensatz_3er) || 0,
       absage_stundensatz: parseFloat(user.absage_stundensatz) || 0,
       gesamt_stunden: stunden.length,
       gesamt_betrag: gesamtBetrag,
@@ -84,7 +93,7 @@ router.post('/rechnung', auth, async (req, res) => {
     `);
     
     const userRes = await pool.query(
-      'SELECT *, name as vollname FROM users WHERE id=$1', [userId]
+      'SELECT *, name as vollname, stundensatz_2er, stundensatz_3er FROM users WHERE id=$1', [userId]
     );
     const user = userRes.rows[0];
     
@@ -102,8 +111,14 @@ router.post('/rechnung', auth, async (req, res) => {
     
     // Betrag selbst berechnen inkl. Fahrtkosten und Absage-Stundensatz
     const absageSatzRechnung = parseFloat(user.absage_stundensatz) || parseFloat(user.stundensatz) || 0;
+    const getSatzRechnung = (st) => {
+      if (st.kurzfristige_absage) return absageSatzRechnung;
+      if (st.unterrichtsform === '2er') return parseFloat(user.stundensatz_2er) || parseFloat(user.stundensatz) || 0;
+      if (st.unterrichtsform === '3er') return parseFloat(user.stundensatz_3er) || parseFloat(user.stundensatz) || 0;
+      return parseFloat(user.stundensatz) || 0;
+    };
     const berechneterBetrag = stunden.reduce((sum, st) => {
-      const satz = st.kurzfristige_absage ? absageSatzRechnung : (parseFloat(user.stundensatz) || 0);
+      const satz = getSatzRechnung(st);
       const stundenBetrag = (parseFloat(st.dauer_minuten) || 0) / 60 * satz;
       const fahrtBetrag = st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0;
       return sum + stundenBetrag + fahrtBetrag;
@@ -412,8 +427,11 @@ router.post('/auszahlung', auth, async (req, res) => {
 // Offene Stunden für Lehrkraft (nicht Honorarkraft)
 router.get('/meine-offenen-stunden', auth, async (req, res) => {
   try {
-    const userRes = await pool.query('SELECT stundensatz FROM users WHERE id=$1', [req.user.id]);
+    const userRes = await pool.query('SELECT stundensatz, stundensatz_2er, stundensatz_3er, absage_stundensatz FROM users WHERE id=$1', [req.user.id]);
     const stundensatz = parseFloat(userRes.rows[0]?.stundensatz) || 0;
+    const stundensatz_2er_lk = parseFloat(userRes.rows[0]?.stundensatz_2er) || stundensatz;
+    const stundensatz_3er_lk = parseFloat(userRes.rows[0]?.stundensatz_3er) || stundensatz;
+    const absageSatz_lk = parseFloat(userRes.rows[0]?.absage_stundensatz) || stundensatz;
     const result = await pool.query(
       `SELECT st.*, s.vorname||' '||s.nachname as schueler_name
        FROM stunden st JOIN schueler s ON st.schueler_id=s.id
@@ -423,8 +441,14 @@ router.get('/meine-offenen-stunden', auth, async (req, res) => {
     );
     const stunden = result.rows;
     const fahrtkosten = stunden.reduce((sum, st) => sum + (st.fahrt_km ? parseFloat(st.fahrt_km) * 0.38 : 0), 0);
-    const gesamt_betrag = stunden.length * stundensatz + fahrtkosten;
-    res.json({ stunden, stundensatz, gesamt_betrag, gesamt_stunden: stunden.length });
+    const gesamt_betrag = stunden.reduce((sum, st) => {
+      let satz = stundensatz;
+      if (st.kurzfristige_absage) satz = absageSatz_lk;
+      else if (st.unterrichtsform === '2er') satz = stundensatz_2er_lk;
+      else if (st.unterrichtsform === '3er') satz = stundensatz_3er_lk;
+      return sum + (parseFloat(st.dauer_minuten) || 0) / 60 * satz;
+    }, 0) + fahrtkosten;
+    res.json({ stunden, stundensatz, stundensatz_2er: stundensatz_2er_lk, stundensatz_3er: stundensatz_3er_lk, absage_stundensatz: absageSatz_lk, gesamt_betrag, gesamt_stunden: stunden.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
