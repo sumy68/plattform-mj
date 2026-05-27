@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import MonatsPicker from '../components/MonatsPicker';
 
 const API = 'https://plattform-mj.onrender.com';
-const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'', fahrt_von:'', fahrt_nach:'', fahrt_km:null, stundentyp:'lehrstunde', zusatz_typ:'', zusatz_beschreibung:'' };
+const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'', fahrt_von:'', fahrt_nach:'', fahrt_km:null, stundentyp:'lehrstunde', zusatz_typ:'', zusatz_beschreibung:'', kurzfristige_absage:false, unterrichtsform:'einzel', gruppe_schueler_ids:[], gruppe_schueler_namen:'' };
 const ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjMxNTJiYzU1YmQwMDQwNDE4ZWZlYzljNzZiMzQyYTIzIiwiaCI6Im11cm11cjY0In0=';
 
 export default function Stunden({ adminView }) {
