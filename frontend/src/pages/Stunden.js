@@ -73,7 +73,13 @@ export default function Stunden({ adminView }) {
     setZipLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const ids = gefilterteStunden.filter(st => st.unterschrift_name).map(st => st.id);
+      const alleUnterschrieben = (st) => {
+        if (!st.unterschrift_name) return false;
+        if ((st.unterrichtsform==='2er'||st.unterrichtsform==='3er') && !st.unterschrift_name_2) return false;
+        if (st.unterrichtsform==='3er' && !st.unterschrift_name_3) return false;
+        return true;
+      };
+      const ids = gefilterteStunden.filter(alleUnterschrieben).map(st => st.id);
       if (ids.length === 0) return alert('Keine unterschriebenen Stunden in der Auswahl.');
       const response = await fetch(`${API}/api/stunden/zip-by-ids`, {
         method: 'POST',

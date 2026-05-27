@@ -415,13 +415,20 @@ export default function Abrechnung() {
                   <tr key={st.id} onClick={isHonorar ? ()=>toggleStunde(st.id) : undefined} style={{cursor: isHonorar ? 'pointer' : 'default'}}>
                     {isHonorar && <td><input type="checkbox" checked={selected.includes(st.id)} onChange={()=>toggleStunde(st.id)} onClick={e=>e.stopPropagation()}/></td>}
                     <td>{new Date(st.datum).toLocaleDateString('de-DE')}</td>
-                    <td>{st.schueler_name}</td>
+                    <td>{st.unterrichtsform && st.unterrichtsform !== 'einzel' && st.gruppe_schueler_namen ? st.schueler_name + ', ' + st.gruppe_schueler_namen : st.schueler_name}</td>
                     <td>{st.startzeit}–{st.endzeit}</td>
                     <td>{st.fach}</td>
                     <td style={{fontWeight:600}}>{(st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0) : st.unterrichtsform==='2er' ? parseFloat(guthaben?.stundensatz_2er||guthaben?.stundensatz||0) : st.unterrichtsform==='3er' ? parseFloat(guthaben?.stundensatz_3er||guthaben?.stundensatz||0) : parseFloat(guthaben?.stundensatz||0)).toFixed(2)} €</td>
                     <td style={{fontSize:12,color:'var(--text-light)'}}>{st.fahrt_km ? `${st.fahrt_km} km = ${(parseFloat(st.fahrt_km)*0.38).toFixed(2)} €` : '–'}</td>
                     <td style={{fontWeight:700,color:'var(--purple)'}}>{(calcStunden(st) * (st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0) : st.unterrichtsform==='2er' ? parseFloat(guthaben?.stundensatz_2er||guthaben?.stundensatz||0) : st.unterrichtsform==='3er' ? parseFloat(guthaben?.stundensatz_3er||guthaben?.stundensatz||0) : parseFloat(guthaben?.stundensatz||0)) + (st.fahrt_km ? parseFloat(st.fahrt_km)*0.38 : 0)).toFixed(2)} €</td>
-                    <td>{st.unterschrift_name ? <span className="badge badge-unterschrift">✓ {st.unterschrift_name}</span> : <span className="badge badge-ausstehend">⚠ Fehlt</span>}</td>
+                    <td>{(() => {
+                      const s1 = !!st.unterschrift_name;
+                      const s2 = st.unterrichtsform==='2er'||st.unterrichtsform==='3er' ? !!st.unterschrift_name_2 : true;
+                      const s3 = st.unterrichtsform==='3er' ? !!st.unterschrift_name_3 : true;
+                      if (s1&&s2&&s3) return <span className="badge badge-unterschrift">✓ Alle</span>;
+                      if (!s1&&!s2&&!s3) return <span className="badge badge-ausstehend">⚠ Fehlen alle</span>;
+                      return <span className="badge" style={{background:'#fff3e0',color:'#e65100'}}>⚠ Teilweise</span>;
+                    })()}</td>
                   </tr>
                 ))}
                 {offeneStunden.length === 0 && <tr><td colSpan={isHonorar ? 9 : 8} style={{textAlign:'center',color:'var(--text-light)'}}>Keine offenen Stunden</td></tr>}
