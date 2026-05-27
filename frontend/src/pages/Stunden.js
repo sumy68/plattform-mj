@@ -257,9 +257,9 @@ export default function Stunden({ adminView }) {
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth:600,maxHeight:'90vh',overflowY:'auto'}}>
-            <div className="modal-header">
-              <h3>Stunde eintragen</h3>
-              <button className="modal-close" onClick={() => setModal(false)}>✕</button>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <h3 style={{margin:0}}>Stunde eintragen</h3>
+              <button onClick={() => setModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--text-light)'}}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
 
@@ -427,9 +427,9 @@ export default function Stunden({ adminView }) {
       {unterschriftModal && (
         <div className="modal-overlay" onClick={() => setUnterschriftModal(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Unterschrift einholen</h3>
-              <button className="modal-close" onClick={() => setUnterschriftModal(null)}>✕</button>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <h3 style={{margin:0}}>Unterschrift einholen</h3>
+              <button onClick={() => setUnterschriftModal(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--text-light)'}}>✕</button>
             </div>
             <div className="form-group">
               <label>Name des Unterzeichners</label>
