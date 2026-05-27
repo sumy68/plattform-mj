@@ -20,6 +20,7 @@ import AdminProfil from './pages/AdminProfil';
 import BUTAntraege from './pages/BUTAntraege';
 import Abwesenheiten from './pages/Abwesenheiten';
 import Kalender from './pages/Kalender';
+import Support from './pages/Support';
 import './index.css';
 
 const PrivateRoute = ({ children, adminOnly }) => {
@@ -71,7 +72,8 @@ export default function App() {
           <Route path="/login" element={<Login/>}/>
           <Route path="/unterschreiben/:token" element={<Unterschreiben/>}/>
           <Route path="/impressum" element={<Impressum/>}/>
-          <Route path="/hilfe" element={<PrivateRoute><AppLayout><Hilfe/></AppLayout></PrivateRoute>}/>
+          <Route path="/hilfe" element={<PrivateRoute><AppLayout><Hilfe/>
+          <Route path="/support" element={<Support><AppLayout><Support/></AppLayout></PrivateRoute>}/>
           <Route path="/datenschutz" element={<Datenschutz/>}/>
           <Route path="/register" element={<Register/>}/>
           <Route path="/profil-einrichten" element={<ProfilEinrichten/>}/>

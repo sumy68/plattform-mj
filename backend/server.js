@@ -46,3 +46,4 @@ initDB().then(() => {
 });
 app.use('/api/abwesenheiten', require('./routes/abwesenheiten'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/support', require('./routes/support'));

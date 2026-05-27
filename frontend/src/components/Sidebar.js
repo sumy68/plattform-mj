@@ -62,6 +62,7 @@ export default function Sidebar({ onClose }) {
     { path: '/mein-guthaben', icon: '💰', label: user?.role === 'honorarkraft' ? 'Guthaben & Rechnung' : 'Abrechnung' },
     { path: '/mein-profil', icon: '👤', label: 'Mein Profil' },
     { path: '/hilfe', icon: '❓', label: 'Hilfe & Tutorial' },
+    { path: '/support', icon: '🛠️', label: 'Support' },
   ];
 
   const links = user?.role === 'admin' ? adminLinks : lehrkraftLinks;
