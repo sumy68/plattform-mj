@@ -29,8 +29,8 @@ export default function ButAntraege() {
     ]);
     setAntraege(aRes.data.map(a => ({
       ...a,
-      gutscheine_offen: a.gutscheine_gesamt - a.gutscheine_verbraucht,
-      warnung: (a.gutscheine_gesamt - a.gutscheine_verbraucht) <= 12 && (a.gutscheine_gesamt - a.gutscheine_verbraucht) > 0
+      gutscheine_offen: parseFloat(a.gutscheine_gesamt) - parseFloat(a.gutscheine_verbraucht),
+      warnung: (parseFloat(a.gutscheine_gesamt) - parseFloat(a.gutscheine_verbraucht)) <= 12 && (parseFloat(a.gutscheine_gesamt) - parseFloat(a.gutscheine_verbraucht)) > 0
     })));
     setSchueler(sRes.data);
   };
@@ -92,7 +92,7 @@ export default function ButAntraege() {
 
   const getStatusText = (a) => {
     if (a.gutscheine_offen <= 0) return 'Aufgebraucht';
-    if (a.warnung) return `⚠️ Nur noch ${a.gutscheine_offen} übrig!`;
+    if (a.warnung) return `⚠️ Nur noch ${Number(a.gutscheine_offen).toLocaleString('de-DE', { maximumFractionDigits: 2 })} übrig!`;
     return 'Aktiv';
   };
 
@@ -108,7 +108,7 @@ export default function ButAntraege() {
           <div style={{ fontWeight: 700, color: '#e65100', marginBottom: 8 }}>⚠️ Achtung — fast aufgebraucht:</div>
           {warnungen.map(a => (
             <div key={a.id} style={{ fontSize: 14, color: '#e65100' }}>
-              • {a.schueler_name} — noch {a.gutscheine_offen} Stunden übrig (bis {new Date(a.gueltig_bis).toLocaleDateString('de-DE')})
+              • {a.schueler_name} — noch {Number(a.gutscheine_offen).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Stunden übrig (bis {new Date(a.gueltig_bis).toLocaleDateString('de-DE')})
             </div>
           ))}
         </div>
@@ -141,8 +141,8 @@ export default function ButAntraege() {
                   <tr key={a.id}>
                     <td><strong>{a.schueler_name}</strong><br/><small style={{ color: 'var(--text-light)' }}>{a.schule} · Kl. {a.klasse}</small></td>
                     <td>{new Date(a.gueltig_von).toLocaleDateString('de-DE')}<br/><small style={{ color: 'var(--text-light)' }}>bis {new Date(a.gueltig_bis).toLocaleDateString('de-DE')}</small></td>
-                    <td style={{ textAlign: 'center', fontWeight: 700 }}>{a.gutscheine_gesamt}</td>
-                    <td style={{ textAlign: 'center' }}>{a.gutscheine_verbraucht}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 700 }}>{Number(a.gutscheine_gesamt).toLocaleString('de-DE', { maximumFractionDigits: 2 })}</td>
+                    <td style={{ textAlign: 'center' }}>{Number(a.gutscheine_verbraucht).toLocaleString('de-DE', { maximumFractionDigits: 2 })}</td>
                     <td><span className="badge" style={{ background: style.bg, color: style.color }}>{getStatusText(a)}</span></td>
                     <td>
                       {a.antrag_pdf_name && user?.role === 'admin'
@@ -188,7 +188,7 @@ export default function ButAntraege() {
               </div>
               <div className="form-group">
                 <label>Anzahl Stunden *</label>
-                <input type="number" required min="1" value={form.gutscheine_gesamt} onChange={e => setForm({ ...form, gutscheine_gesamt: e.target.value })} placeholder="z.B. 45" />
+                <input type="number" required min="0.25" step="0.25" value={form.gutscheine_gesamt} onChange={e => setForm({ ...form, gutscheine_gesamt: e.target.value })} placeholder="z.B. 45" />
               </div>
               <div className="form-group">
                 <label>Behörde</label>

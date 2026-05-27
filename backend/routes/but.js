@@ -8,8 +8,8 @@ const initBUT = async () => {
     CREATE TABLE IF NOT EXISTS but_antraege (
       id SERIAL PRIMARY KEY,
       schueler_id INTEGER REFERENCES schueler(id) ON DELETE CASCADE,
-      gutscheine_gesamt INTEGER NOT NULL,
-      gutscheine_verbraucht INTEGER DEFAULT 0,
+      gutscheine_gesamt NUMERIC(10,2) NOT NULL,
+      gutscheine_verbraucht NUMERIC(10,2) DEFAULT 0,
       gueltig_von DATE NOT NULL,
       gueltig_bis DATE NOT NULL,
       antrag_pdf_name VARCHAR(255),
@@ -20,6 +20,9 @@ const initBUT = async () => {
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
+  // Migration: bestehende INTEGER-Spalten auf NUMERIC umstellen
+  await pool.query(`ALTER TABLE but_antraege ALTER COLUMN gutscheine_gesamt TYPE NUMERIC(10,2)`).catch(()=>{});
+  await pool.query(`ALTER TABLE but_antraege ALTER COLUMN gutscheine_verbraucht TYPE NUMERIC(10,2)`).catch(()=>{});
 };
 initBUT().catch(console.error);
 
@@ -70,12 +73,12 @@ router.get('/schueler/:schueler_id', auth, async (req, res) => {
 router.post('/', auth, adminOnly, async (req, res) => {
   const { schueler_id, gutscheine_gesamt, gueltig_von, gueltig_bis, notizen, behoerde, antrag_pdf_name, antrag_pdf_data } = req.body;
   try {
-    // Bereits eingetragene Stunden im Zeitraum rückwirkend zählen
+    // Bereits eingetragene Stunden im Zeitraum exakt aus dauer_minuten berechnen (Dezimal)
     const bereitsRes = await pool.query(
-      `SELECT COUNT(*) FROM stunden WHERE schueler_id=$1 AND datum BETWEEN $2 AND $3`,
+      `SELECT COALESCE(SUM(dauer_minuten),0)::numeric / 60 AS verbraucht FROM stunden WHERE schueler_id=$1 AND datum BETWEEN $2 AND $3`,
       [schueler_id, gueltig_von, gueltig_bis]
     );
-    const bereits_verbraucht = parseInt(bereitsRes.rows[0].count) || 0;
+    const bereits_verbraucht = parseFloat(bereitsRes.rows[0].verbraucht) || 0;
     const result = await pool.query(
       `INSERT INTO but_antraege (schueler_id, gutscheine_gesamt, gutscheine_verbraucht, gueltig_von, gueltig_bis, notizen, behoerde, antrag_pdf_name, antrag_pdf_data)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
@@ -91,14 +94,14 @@ router.post('/', auth, adminOnly, async (req, res) => {
 router.put('/:id', auth, adminOnly, async (req, res) => {
   const { gutscheine_gesamt, gutscheine_verbraucht, gueltig_von, gueltig_bis, notizen, behoerde, aktiv, antrag_pdf_name, antrag_pdf_data } = req.body;
   try {
-    // Wenn gutscheine_verbraucht nicht angegeben, rückwirkend aus Stunden berechnen
+    // Wenn gutscheine_verbraucht nicht angegeben, rückwirkend aus Stunden berechnen (Dezimal)
     let verbraucht = gutscheine_verbraucht;
     if (verbraucht === undefined || verbraucht === null) {
       const res2 = await pool.query(
-        `SELECT COUNT(*) FROM stunden WHERE schueler_id=(SELECT schueler_id FROM but_antraege WHERE id=$1) AND datum BETWEEN $2 AND $3`,
+        `SELECT COALESCE(SUM(dauer_minuten),0)::numeric / 60 AS verbraucht FROM stunden WHERE schueler_id=(SELECT schueler_id FROM but_antraege WHERE id=$1) AND datum BETWEEN $2 AND $3`,
         [req.params.id, gueltig_von, gueltig_bis]
       );
-      verbraucht = parseInt(res2.rows[0].count) || 0;
+      verbraucht = parseFloat(res2.rows[0].verbraucht) || 0;
     }
     const result = await pool.query(
       `UPDATE but_antraege SET gutscheine_gesamt=$1, gutscheine_verbraucht=$2, gueltig_von=$3, gueltig_bis=$4, notizen=$5, behoerde=$6, aktiv=$7, antrag_pdf_name=COALESCE($9, antrag_pdf_name), antrag_pdf_data=COALESCE($10, antrag_pdf_data)
@@ -140,10 +143,10 @@ router.get('/:id/pdf', auth, async (req, res) => {
   }
 });
 
-// Gutschein verbrauchen (wird von stunden.js aufgerufen)
+// Gutschein verbrauchen (wird von stunden.js aufgerufen) - jetzt mit Dezimalstunden
 router.post('/verbrauchen/:schueler_id', auth, async (req, res) => {
   try {
-    // Aktiven Antrag finden
+    const stunden = parseFloat(req.body?.stunden) || 1;
     const result = await pool.query(
       `SELECT * FROM but_antraege 
        WHERE schueler_id=$1 AND aktiv=true AND CURRENT_DATE BETWEEN gueltig_von AND gueltig_bis
@@ -154,10 +157,10 @@ router.post('/verbrauchen/:schueler_id', auth, async (req, res) => {
     if (!result.rows[0]) return res.json({ success: false, message: 'Kein aktiver BuT-Antrag' });
     
     const antrag = result.rows[0];
-    const neu = antrag.gutscheine_verbraucht + 1;
+    const neu = parseFloat(antrag.gutscheine_verbraucht) + stunden;
     await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
     
-    const verbleibend = antrag.gutscheine_gesamt - neu;
+    const verbleibend = parseFloat(antrag.gutscheine_gesamt) - neu;
     res.json({ 
       success: true, 
       verbleibend,
@@ -168,9 +171,10 @@ router.post('/verbrauchen/:schueler_id', auth, async (req, res) => {
   }
 });
 
-// Gutschein zurückbuchen (wenn Stunde gelöscht)
+// Gutschein zurückbuchen (wenn Stunde gelöscht) - jetzt mit Dezimalstunden
 router.post('/zurueckbuchen/:schueler_id', auth, async (req, res) => {
   try {
+    const stunden = parseFloat(req.body?.stunden) || 1;
     const result = await pool.query(
       `SELECT * FROM but_antraege 
        WHERE schueler_id=$1 AND aktiv=true
@@ -180,14 +184,35 @@ router.post('/zurueckbuchen/:schueler_id', auth, async (req, res) => {
     );
     if (!result.rows[0]) return res.json({ success: false });
     const antrag = result.rows[0];
-    await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', 
-      [antrag.gutscheine_verbraucht - 1, antrag.id]);
+    const neu = Math.max(0, parseFloat(antrag.gutscheine_verbraucht) - stunden);
+    await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// REPAIR: alle Anträge aus echten Stunden neu berechnen (Dezimal)
+router.post('/repair', auth, adminOnly, async (req, res) => {
+  try {
+    const antraege = await pool.query('SELECT id, schueler_id, gueltig_von, gueltig_bis FROM but_antraege');
+    const updated = [];
+    for (const a of antraege.rows) {
+      const r = await pool.query(
+        `SELECT COALESCE(SUM(dauer_minuten),0)::numeric / 60 AS verbraucht
+         FROM stunden
+         WHERE datum BETWEEN $1 AND $2 AND schueler_id=$3`,
+        [a.gueltig_von, a.gueltig_bis, a.schueler_id]
+      );
+      const neu = parseFloat(r.rows[0].verbraucht) || 0;
+      await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, a.id]);
+      updated.push({ id: a.id, schueler_id: a.schueler_id, verbraucht: neu });
+    }
+    res.json({ success: true, updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.delete('/:id', auth, adminOnly, async (req, res) => {
   try {

@@ -75,7 +75,7 @@ router.post('/', auth, async (req, res) => {
     // BuT: alle Schüler der Gruppe prüfen
     const alleSchuelerIds = [parseInt(schueler_id), ...gruppeIds.map(id => parseInt(id))].filter(id => !isNaN(id) && id > 0);
     console.log('BuT Check für Schüler IDs:', alleSchuelerIds);
-    const dauer_stunden = Math.max(1, Math.round(dauer_minuten / 60));
+    const dauer_stunden = (dauer_minuten || 60) / 60;
     let but_warnung = false;
     let but_verbleibend = null;
 
@@ -85,16 +85,16 @@ router.post('/', auth, async (req, res) => {
       const butRes = await pool.query(
         `SELECT * FROM but_antraege 
          WHERE schueler_id=$1 AND aktiv=true 
-         AND NOW() BETWEEN gueltig_von AND gueltig_bis + INTERVAL '1 day'
+         AND $2::date BETWEEN gueltig_von AND gueltig_bis
          AND gutscheine_verbraucht < gutscheine_gesamt
          ORDER BY gueltig_bis ASC LIMIT 1`,
-        [sid]
+        [sid, datum]
       );
       if (!butRes.rows[0]) continue;
       const antrag = butRes.rows[0];
-      const neu = antrag.gutscheine_verbraucht + dauer_stunden;
+      const neu = parseFloat(antrag.gutscheine_verbraucht) + dauer_stunden;
       await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, antrag.id]);
-      const verbleibend = antrag.gutscheine_gesamt - neu;
+      const verbleibend = parseFloat(antrag.gutscheine_gesamt) - neu;
       if (verbleibend <= 1) { but_warnung = true; but_verbleibend = verbleibend; }
     }
 
@@ -108,19 +108,24 @@ router.post('/', auth, async (req, res) => {
 // Stunde löschen
 router.delete('/:id', auth, async (req, res) => {
   try {
-    // BuT-Gutschein zurückbuchen
+    // BuT-Gutschein zurueckbuchen (exakte Dezimalstunden, alle Gruppenschueler, Datum-basiert)
     const stundeRes = await pool.query('SELECT * FROM stunden WHERE id=$1', [req.params.id]);
     if (stundeRes.rows[0]) {
       const st = stundeRes.rows[0];
-      const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [st.schueler_id]);
-      if (schuelerRes.rows[0]?.but_status) {
+      const gruppeIds = (st.gruppe_schueler_ids || []).map(id => parseInt(id)).filter(id => !isNaN(id));
+      const alleSchuelerIds = [parseInt(st.schueler_id), ...gruppeIds].filter(id => !isNaN(id) && id > 0);
+      const dauer_stunden = (st.dauer_minuten || 60) / 60;
+      for (const sid of alleSchuelerIds) {
+        const schuelerRes = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [sid]);
+        if (!schuelerRes.rows[0]?.but_status) continue;
         const butRes = await pool.query(
-          `SELECT * FROM but_antraege WHERE schueler_id=$1 AND aktiv=true AND gutscheine_verbraucht > 0 ORDER BY gueltig_bis DESC LIMIT 1`,
-          [st.schueler_id]
+          `SELECT * FROM but_antraege 
+           WHERE schueler_id=$1 AND $2::date BETWEEN gueltig_von AND gueltig_bis AND gutscheine_verbraucht > 0
+           ORDER BY aktiv DESC, gueltig_bis DESC LIMIT 1`,
+          [sid, st.datum]
         );
         if (butRes.rows[0]) {
-          const dauer_stunden = Math.round((st.dauer_minuten || 60) / 60);
-          const neu = Math.max(0, butRes.rows[0].gutscheine_verbraucht - Math.max(1, dauer_stunden));
+          const neu = Math.max(0, parseFloat(butRes.rows[0].gutscheine_verbraucht) - dauer_stunden);
           await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, butRes.rows[0].id]);
         }
       }
