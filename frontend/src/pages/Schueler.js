@@ -11,7 +11,7 @@ const emptyForm = {
   vorname:'', nachname:'', geburtsdatum:'', schule:'', klasse:'', faecher:[],
   sprachen:[], eltern_name:'', eltern_tel:'', eltern_email:'', adresse:'',
   but_status:false, but_zeitraum_von:'', but_zeitraum_bis:'', diagnose:[], notizen:'',
-  deutschniveau:'', lieblingsfach:'', schwachstes_fach:'', konzentration:'', eigenmotivation:'', selbststaendigkeit:'', tipps_tricks:''
+  deutschniveau:'', lieblingsfach:'', schwachstes_fach:'', konzentration:'', eigenmotivation:'', selbststaendigkeit:'', tipps_tricks:'', stundenbedarf_woche:''
 };
 
 const KLASSEN = ['Unbekannt','1','2','3','4','5','6','7','8','9','10','11','12','13'];
@@ -131,13 +131,14 @@ export default function Schueler() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>Name</th><th>Klasse</th><th>Schule</th><th>Sprachen</th><th>BuT</th><th>Förderbedarf</th><th>Eltern</th><th>Aktionen</th>
+              <th>Name</th><th>Klasse</th><th>Bedarf/Wo.</th><th>Schule</th><th>Sprachen</th><th>BuT</th><th>Förderbedarf</th><th>Eltern</th><th>Aktionen</th>
             </tr></thead>
             <tbody>
               {filtered.map(s => (
                 <tr key={s.id}>
                   <td><strong>{s.vorname} {s.nachname}</strong></td>
                   <td>{s.klasse}</td>
+                  <td style={{textAlign:'center'}}>{s.stundenbedarf_woche ? Number(s.stundenbedarf_woche).toLocaleString('de-DE',{maximumFractionDigits:2})+' h' : '–'}</td>
                   <td>{s.schule}</td>
                   <td style={{fontSize:12}}>{(Array.isArray(s.sprachen) ? s.sprachen : []).slice(0,2).join(', ') || '–'}</td>
                   <td>{s.but_status ? <span className="badge badge-but">BuT</span> : <span className="badge badge-no-but">Nein</span>}</td>
@@ -153,7 +154,7 @@ export default function Schueler() {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Schüler gefunden</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={9} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Schüler gefunden</td></tr>}
             </tbody>
           </table>
         </div>
@@ -305,6 +306,7 @@ export default function Schueler() {
                 <div className="form-group"><label>Klasse</label><input value={form.klasse} onChange={e=>setForm({...form,klasse:e.target.value})}/></div>
               </div>
               <div className="form-group"><label>Schule</label><input value={form.schule} onChange={e=>setForm({...form,schule:e.target.value})}/></div>
+              <div className="form-group"><label>Stundenbedarf pro Woche (Std.)</label><input type="number" min="0" step="0.25" value={form.stundenbedarf_woche||''} onChange={e=>setForm({...form,stundenbedarf_woche:e.target.value})} placeholder="z.B. 1.5"/></div>
               <div className="form-group"><label>Adresse</label><input value={form.adresse} onChange={e=>setForm({...form,adresse:e.target.value})}/></div>
               <div className="form-group">
                 <label>Sprachen des Kindes</label>
