@@ -130,6 +130,31 @@ router.delete('/:id', auth, adminOnly, async (req, res) => {
   }
 });
 
+// Admin-Übersicht: alle Lehrkräfte mit zugewiesenen Schülern
+router.get('/uebersicht/lehrkraefte', auth, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT u.id AS lehrkraft_id, u.name AS lehrkraft_name, u.role,
+        COALESCE(
+          json_agg(
+            json_build_object('id', s.id, 'name', s.vorname || ' ' || s.nachname, 'klasse', s.klasse)
+            ORDER BY s.nachname, s.vorname
+          ) FILTER (WHERE s.id IS NOT NULL),
+          '[]'
+        ) AS schueler
+      FROM users u
+      LEFT JOIN lehrkraft_schueler ls ON ls.lehrkraft_id = u.id
+      LEFT JOIN schueler s ON s.id = ls.schueler_id AND s.aktiv = true
+      WHERE u.role IN ('lehrkraft','honorarkraft') AND u.aktiv = true
+      GROUP BY u.id, u.name, u.role
+      ORDER BY u.name
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 
 // Lehrkraft kann SchülerInnen-Infos bearbeiten

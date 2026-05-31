@@ -44,6 +44,7 @@ export default function Sidebar({ onClose }) {
     { path: '/kalender', icon: '🗓️', label: 'Kalender' },
     { path: '/schueler', icon: '👧', label: 'Schüler' },
     { path: '/lehrkraefte', icon: '👩‍🏫', label: 'Lehrkräfte' },
+    { path: '/lehrer-uebersicht', icon: '🔗', label: 'Wer unterrichtet wen?' },
     { path: '/stunden', icon: '📅', label: 'Alle Stunden' },
     { path: '/but', icon: '📋', label: 'BuT Anträge', badge: butWarnungen, badgeColor: 'var(--warning)' },
     { path: '/abwesenheiten', icon: '🤒', label: 'Abwesenheiten', badge: krankCount, badgeColor: 'var(--danger)' },

@@ -21,6 +21,7 @@ import BUTAntraege from './pages/BUTAntraege';
 import Abwesenheiten from './pages/Abwesenheiten';
 import Kalender from './pages/Kalender';
 import Support from './pages/Support';
+import LehrerUebersicht from './pages/LehrerUebersicht';
 import './index.css';
 
 const PrivateRoute = ({ children, adminOnly }) => {
@@ -80,6 +81,7 @@ export default function App() {
           <Route path="/dashboard" element={<PrivateRoute><AppLayout><Dashboard/></AppLayout></PrivateRoute>}/>
           <Route path="/schueler" element={<PrivateRoute adminOnly><AppLayout><Schueler/></AppLayout></PrivateRoute>}/>
           <Route path="/lehrkraefte" element={<PrivateRoute adminOnly><AppLayout><Lehrkraefte/></AppLayout></PrivateRoute>}/>
+          <Route path="/lehrer-uebersicht" element={<PrivateRoute adminOnly><AppLayout><LehrerUebersicht/></AppLayout></PrivateRoute>}/>
           <Route path="/stunden" element={<PrivateRoute adminOnly><AppLayout><Stunden adminView/></AppLayout></PrivateRoute>}/>
           <Route path="/abrechnung" element={<PrivateRoute adminOnly><AppLayout><Abrechnung/></AppLayout></PrivateRoute>}/>
           <Route path="/freischaltung" element={<PrivateRoute adminOnly><AppLayout><Freischaltung/></AppLayout></PrivateRoute>}/>
