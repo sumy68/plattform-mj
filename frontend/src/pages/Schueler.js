@@ -48,7 +48,7 @@ export default function Schueler() {
 
   const openNew = () => { setForm(emptyForm); setEditId(null); setModal(true); };
   const openEdit = (s) => {
-    setForm({...s, faecher: s.faecher||[], diagnose: s.diagnose||[], sprachen: s.sprachen||[], but_zeitraum_von: s.but_zeitraum_von?.split('T')[0]||'', but_zeitraum_bis: s.but_zeitraum_bis?.split('T')[0]||''});
+    setForm({...s, klasse: s.klasse_original||s.klasse, faecher: s.faecher||[], diagnose: s.diagnose||[], sprachen: s.sprachen||[], but_zeitraum_von: s.but_zeitraum_von?.split('T')[0]||'', but_zeitraum_bis: s.but_zeitraum_bis?.split('T')[0]||''});
     setEditId(s.id); setModal(true);
   };
 

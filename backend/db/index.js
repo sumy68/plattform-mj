@@ -85,6 +85,8 @@ const initDB = async () => {
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS eigenmotivation VARCHAR(100)`);
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS selbststaendigkeit VARCHAR(100)`);
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS tipps_tricks TEXT`);
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS klassenstufe_jahr INT`);
+    await client.query(`UPDATE schueler SET klassenstufe_jahr = 2025 WHERE klassenstufe_jahr IS NULL`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS fuehrerschein BOOLEAN DEFAULT false`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS qualifikation TEXT`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS faecher TEXT`);

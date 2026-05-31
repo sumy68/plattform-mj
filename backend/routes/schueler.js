@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { pool } = require('../db');
 const { auth, adminOnly } = require('../middleware/auth');
+const { berechneKlasse, schuljahrVon } = require('../utils/klasse');
 
 // Alle Schüler (Admin: alle, Lehrkraft: nur zugewiesene)
 router.get('/', auth, async (req, res) => {
@@ -17,7 +18,8 @@ router.get('/', auth, async (req, res) => {
         [req.user.id]
       );
     }
-    res.json(result.rows);
+    const rows = result.rows.map(r => ({ ...r, klasse_original: r.klasse, klasse: berechneKlasse(r.klasse, r.klassenstufe_jahr) }));
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -28,9 +30,9 @@ router.post('/', auth, adminOnly, async (req, res) => {
   const { vorname, nachname, geburtsdatum, schule, klasse, faecher, sprachen, eltern_name, eltern_tel, eltern_email, adresse, but_status, but_zeitraum_von, but_zeitraum_bis, diagnose, notizen, deutschniveau, lieblingsfach, schwachstes_fach, konzentration, eigenmotivation, selbststaendigkeit, tipps_tricks } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO schueler (vorname,nachname,geburtsdatum,schule,klasse,faecher,sprachen,eltern_name,eltern_tel,eltern_email,adresse,but_status,but_zeitraum_von,but_zeitraum_bis,diagnose,notizen,deutschniveau,lieblingsfach,schwachstes_fach,konzentration,eigenmotivation,selbststaendigkeit,tipps_tricks)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING *`,
-      [vorname,nachname,geburtsdatum||null,schule,klasse,faecher,sprachen,eltern_name,eltern_tel,eltern_email,adresse,but_status,but_zeitraum_von||null,but_zeitraum_bis||null,diagnose,notizen,deutschniveau,lieblingsfach,schwachstes_fach,konzentration,eigenmotivation,selbststaendigkeit,tipps_tricks]
+      `INSERT INTO schueler (vorname,nachname,geburtsdatum,schule,klasse,faecher,sprachen,eltern_name,eltern_tel,eltern_email,adresse,but_status,but_zeitraum_von,but_zeitraum_bis,diagnose,notizen,deutschniveau,lieblingsfach,schwachstes_fach,konzentration,eigenmotivation,selbststaendigkeit,tipps_tricks,klassenstufe_jahr)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) RETURNING *`,
+      [vorname,nachname,geburtsdatum||null,schule,klasse,faecher,sprachen,eltern_name,eltern_tel,eltern_email,adresse,but_status,but_zeitraum_von||null,but_zeitraum_bis||null,diagnose,notizen,deutschniveau,lieblingsfach,schwachstes_fach,konzentration,eigenmotivation,selbststaendigkeit,tipps_tricks,schuljahrVon(new Date())]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -47,8 +49,8 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
        eltern_name=$8,eltern_tel=$9,eltern_email=$10,adresse=$11,but_status=$12,
        but_zeitraum_von=$13,but_zeitraum_bis=$14,diagnose=$15,notizen=$16,
        deutschniveau=$17,lieblingsfach=$18,schwachstes_fach=$19,konzentration=$20,
-       eigenmotivation=$21,selbststaendigkeit=$22,tipps_tricks=$23 WHERE id=$24 RETURNING *`,
-      [vorname,nachname,geburtsdatum||null,schule,klasse,faecher,sprachen,eltern_name,eltern_tel,eltern_email,adresse,but_status,but_zeitraum_von||null,but_zeitraum_bis||null,diagnose,notizen,deutschniveau,lieblingsfach,schwachstes_fach,konzentration,eigenmotivation,selbststaendigkeit,tipps_tricks,req.params.id]
+       eigenmotivation=$21,selbststaendigkeit=$22,tipps_tricks=$23,klassenstufe_jahr=$24 WHERE id=$25 RETURNING *`,
+      [vorname,nachname,geburtsdatum||null,schule,klasse,faecher,sprachen,eltern_name,eltern_tel,eltern_email,adresse,but_status,but_zeitraum_von||null,but_zeitraum_bis||null,diagnose,notizen,deutschniveau,lieblingsfach,schwachstes_fach,konzentration,eigenmotivation,selbststaendigkeit,tipps_tricks,schuljahrVon(new Date()),req.params.id]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -76,7 +78,8 @@ router.get('/:id/zuweisungen', auth, async (req, res) => {
        WHERE ls.schueler_id=$1`,
       [req.params.id]
     );
-    res.json(result.rows);
+    const rows = result.rows.map(r => ({ ...r, klasse_original: r.klasse, klasse: berechneKlasse(r.klasse, r.klassenstufe_jahr) }));
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
