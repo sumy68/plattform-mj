@@ -33,14 +33,14 @@ router.get('/', auth, async (req, res) => {
     let params = [];
     if (req.user.role === 'admin') {
       query = `
-        SELECT b.*, s.vorname||' '||s.nachname as schueler_name, s.schule, s.klasse
+        SELECT b.id, b.schueler_id, b.gutscheine_gesamt, b.gutscheine_verbraucht, b.gueltig_von, b.gueltig_bis, b.notizen, b.behoerde, b.aktiv, b.created_at, b.antrag_pdf_name, s.vorname||' '||s.nachname as schueler_name, s.schule, s.klasse
         FROM but_antraege b
         JOIN schueler s ON b.schueler_id=s.id
         ORDER BY b.aktiv DESC, b.gueltig_bis DESC
       `;
     } else {
       query = `
-        SELECT b.*, s.vorname||' '||s.nachname as schueler_name, s.schule, s.klasse
+        SELECT b.id, b.schueler_id, b.gutscheine_gesamt, b.gutscheine_verbraucht, b.gueltig_von, b.gueltig_bis, b.notizen, b.behoerde, b.aktiv, b.created_at, b.antrag_pdf_name, s.vorname||' '||s.nachname as schueler_name, s.schule, s.klasse
         FROM but_antraege b
         JOIN schueler s ON b.schueler_id=s.id
         JOIN lehrkraft_schueler ls ON s.id=ls.schueler_id
@@ -60,7 +60,7 @@ router.get('/', auth, async (req, res) => {
 router.get('/schueler/:schueler_id', auth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM but_antraege WHERE schueler_id=$1 ORDER BY aktiv DESC, gueltig_bis DESC`,
+      `SELECT id, schueler_id, gutscheine_gesamt, gutscheine_verbraucht, gueltig_von, gueltig_bis, notizen, behoerde, aktiv, created_at, antrag_pdf_name FROM but_antraege WHERE schueler_id=$1 ORDER BY aktiv DESC, gueltig_bis DESC`,
       [req.params.schueler_id]
     );
     res.json(result.rows);
