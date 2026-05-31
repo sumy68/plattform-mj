@@ -19,6 +19,11 @@ const router = require('express').Router();
       FROM unnest(diagnose) AS x
       WHERE x NOT IN ('{', '}', '{}', '')
     ) WHERE diagnose IS NOT NULL;`);
+    // diagnose_cleanup_v2: nur gültige Diagnosen behalten, Müll-Strings entfernen
+    await pool.query(`UPDATE schueler SET diagnose = COALESCE((
+      SELECT array_agg(x) FROM unnest(diagnose) AS x
+      WHERE x IN ('LRS','Dyskalkulie','ADHS','Autismus-Spektrum','Lernblockaden')
+    ), '{}') WHERE diagnose IS NOT NULL;`);
   } catch (e) { console.error('Migration stundenbedarf_woche:', e.message); }
 })();
 const { pool } = require('../db');
