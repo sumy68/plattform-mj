@@ -33,14 +33,14 @@ router.get('/', auth, async (req, res) => {
     let params = [];
     if (req.user.role === 'admin') {
       query = `
-        SELECT b.id, b.schueler_id, b.gutscheine_gesamt, b.gutscheine_verbraucht, b.gueltig_von, b.gueltig_bis, b.notizen, b.behoerde, b.aktiv, b.created_at, b.antrag_pdf_name, s.vorname||' '||s.nachname as schueler_name, s.schule, s.klasse
+        SELECT b.id, b.schueler_id, b.gutscheine_gesamt, b.gutscheine_verbraucht, b.gueltig_von, b.gueltig_bis, b.notizen, b.behoerde, b.aktiv, b.created_at, b.antrag_pdf_name, (SELECT COUNT(*) FROM but_dokumente bd WHERE bd.antrag_id = b.id) AS dok_anzahl, s.vorname||' '||s.nachname as schueler_name, s.schule, s.klasse
         FROM but_antraege b
         JOIN schueler s ON b.schueler_id=s.id
         ORDER BY b.aktiv DESC, b.gueltig_bis DESC
       `;
     } else {
       query = `
-        SELECT b.id, b.schueler_id, b.gutscheine_gesamt, b.gutscheine_verbraucht, b.gueltig_von, b.gueltig_bis, b.notizen, b.behoerde, b.aktiv, b.created_at, b.antrag_pdf_name, s.vorname||' '||s.nachname as schueler_name, s.schule, s.klasse
+        SELECT b.id, b.schueler_id, b.gutscheine_gesamt, b.gutscheine_verbraucht, b.gueltig_von, b.gueltig_bis, b.notizen, b.behoerde, b.aktiv, b.created_at, b.antrag_pdf_name, (SELECT COUNT(*) FROM but_dokumente bd WHERE bd.antrag_id = b.id) AS dok_anzahl, s.vorname||' '||s.nachname as schueler_name, s.schule, s.klasse
         FROM but_antraege b
         JOIN schueler s ON b.schueler_id=s.id
         JOIN lehrkraft_schueler ls ON s.id=ls.schueler_id
