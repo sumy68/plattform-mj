@@ -223,4 +223,84 @@ router.delete('/:id', auth, adminOnly, async (req, res) => {
   }
 });
 
+
+// ============================================
+// MEHRERE DOKUMENTE PRO ANTRAG (neu)
+// ============================================
+
+// Tabelle für mehrere Dokumente pro Antrag
+const initButDokumente = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS but_dokumente (
+      id SERIAL PRIMARY KEY,
+      antrag_id INTEGER NOT NULL REFERENCES but_antraege(id) ON DELETE CASCADE,
+      datei_name VARCHAR(255) NOT NULL,
+      datei_data TEXT NOT NULL,
+      hochgeladen_am TIMESTAMP DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_but_dok_antrag ON but_dokumente(antrag_id);
+  `);
+};
+initButDokumente().catch(console.error);
+
+// Alle Dokumente eines Antrags auflisten (ohne data = schnell)
+router.get('/:id/dokumente', auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, antrag_id, datei_name, hochgeladen_am
+       FROM but_dokumente WHERE antrag_id=$1 ORDER BY hochgeladen_am DESC`,
+      [req.params.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Neues Dokument hinzufügen (INSERT, ueberschreibt nichts)
+router.post('/:id/dokumente', auth, adminOnly, async (req, res) => {
+  const { datei_name, datei_data } = req.body;
+  if (!datei_name || !datei_data) {
+    return res.status(400).json({ error: 'datei_name und datei_data erforderlich' });
+  }
+  try {
+    const result = await pool.query(
+      `INSERT INTO but_dokumente (antrag_id, datei_name, datei_data)
+       VALUES ($1,$2,$3) RETURNING id, antrag_id, datei_name, hochgeladen_am`,
+      [req.params.id, datei_name, datei_data]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Einzelnes Dokument herunterladen
+router.get('/dokumente/:dokId', auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT datei_name, datei_data FROM but_dokumente WHERE id=$1',
+      [req.params.dokId]
+    );
+    const dok = result.rows[0];
+    if (!dok?.datei_data) return res.status(404).json({ error: 'Kein Dokument vorhanden' });
+    const base64 = dok.datei_data.split(',')[1] || dok.datei_data;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${dok.datei_name}"`);
+    res.send(Buffer.from(base64, 'base64'));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Einzelnes Dokument loeschen (nicht den ganzen Antrag!)
+router.delete('/dokumente/:dokId', auth, adminOnly, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM but_dokumente WHERE id=$1', [req.params.dokId]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
