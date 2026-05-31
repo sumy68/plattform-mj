@@ -15,6 +15,7 @@ export default function Stunden({ adminView }) {
   const [modal, setModal] = useState(false);
   const [unterschriftModal, setUnterschriftModal] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState(null);
   const [monat, setMonat] = useState(new Date().toISOString().slice(0,7));
   const [unterschriftName, setUnterschriftName] = useState('');
   const [butWarnung, setButWarnung] = useState(null);
@@ -103,9 +104,12 @@ export default function Stunden({ adminView }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API}/api/stunden`, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      const url = editId ? `${API}/api/stunden/${editId}` : `${API}/api/stunden`;
+      const method = editId ? 'put' : 'post';
+      const res = await axios[method](url, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setModal(false);
       setForm(emptyForm);
+      setEditId(null);
       if (res.data.but_warnung) {
         setButWarnung(`⚠️ Nur noch ${Number(res.data.but_verbleibend).toLocaleString('de-DE', {maximumFractionDigits:2})} BuT-Stunden übrig! Bitte beim Schüler/Eltern den neuen BuT-Antrag einholen.`);
         setTimeout(() => setButWarnung(null), 8000);
@@ -160,6 +164,29 @@ export default function Stunden({ adminView }) {
     } catch(e) { alert('Fehler: ' + e.message); }
   };
 
+  const handleEdit = (st) => {
+    setForm({
+      schueler_id: st.schueler_id || '',
+      datum: st.datum ? st.datum.slice(0,10) : '',
+      startzeit: st.startzeit ? st.startzeit.slice(0,5) : '',
+      endzeit: st.endzeit ? st.endzeit.slice(0,5) : '',
+      fach: st.fach || '',
+      ort: st.ort || 'vor_ort',
+      lernfortschritt: st.inhalt || '',
+      fahrt_von: '', fahrt_nach: '', fahrt_km: st.fahrt_km || null,
+      fahrt_pkw: !!st.fahrt_km,
+      stundentyp: st.stundentyp || 'lehrstunde',
+      zusatz_typ: st.zusatz_typ || '',
+      zusatz_beschreibung: st.zusatz_beschreibung || '',
+      kurzfristige_absage: st.kurzfristige_absage || false,
+      unterrichtsform: st.unterrichtsform || 'einzel',
+      gruppe_schueler_ids: (st.gruppe_schueler_ids || []).map(String),
+      gruppe_schueler_namen: st.gruppe_schueler_namen || ''
+    });
+    setEditId(st.id);
+    setModal(true);
+  };
+
   const deleteStunde = async (id) => {
     if (!window.confirm('Stunde wirklich löschen?')) return;
     try {
@@ -184,7 +211,7 @@ export default function Stunden({ adminView }) {
         </h2>
         <div style={{display:'flex',gap:12,alignItems:'center'}}>
             <MonatsPicker value={monat} onChange={setMonat}/>
-          <button className="btn btn-primary" onClick={()=>setModal(true)}>+ Stunde eintragen</button>
+          <button className="btn btn-primary" onClick={()=>{setEditId(null);setForm(emptyForm);setModal(true);}}>+ Stunde eintragen</button>
         </div>
       </div>
 
@@ -270,6 +297,7 @@ export default function Stunden({ adminView }) {
                         <button className="btn btn-ghost btn-sm" style={{background:'#f3e5f5',color:'#6a1b9a'}} onClick={()=>sendSignaturLink(st,3)}>📧 S3</button>
                         <button className="btn btn-ghost btn-sm" style={{background:'#f3e5f5',color:'#6a1b9a'}} onClick={()=>sendWALink(st,3)}>💬 S3</button>
                       </>}
+                      {!st.abgerechnet && <button className="btn btn-ghost btn-sm" onClick={()=>handleEdit(st)}>✏️</button>}
                       <button className="btn btn-danger btn-sm" onClick={()=>deleteStunde(st.id)}>🗑️</button>
                     </div>
                   </td>
@@ -285,7 +313,7 @@ export default function Stunden({ adminView }) {
       {modal && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setModal(false)}>
           <div className="modal">
-            <div className="modal-title">Stunde eintragen</div>
+            <div className="modal-title">{editId ? 'Stunde bearbeiten' : 'Stunde eintragen'}</div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Schüler *</label>
@@ -474,7 +502,7 @@ export default function Stunden({ adminView }) {
                 {form.kurzfristige_absage ? '✅' : '⬜'} Als kurzfristige Absage markieren
               </div>
               <div style={{display:'flex',gap:12,justifyContent:'flex-end',flexWrap:'wrap'}}>
-                <button type="button" className="btn btn-ghost" onClick={()=>setModal(false)}>Abbrechen</button>
+                <button type="button" className="btn btn-ghost" onClick={()=>{setModal(false);setEditId(null);setForm(emptyForm);}}>Abbrechen</button>
                 <button type="submit" className="btn btn-primary">Speichern</button>
               </div>
             </form>
