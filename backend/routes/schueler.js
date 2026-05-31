@@ -5,6 +5,14 @@ const router = require('express').Router();
   try {
     const { pool } = require('../db');
     await pool.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS stundenbedarf_woche NUMERIC(5,2)`);
+    await pool.query(`DO $$
+      BEGIN
+        IF (SELECT data_type FROM information_schema.columns WHERE table_name='schueler' AND column_name='diagnose') = 'text' THEN
+          ALTER TABLE schueler ALTER COLUMN diagnose TYPE text[] USING
+            CASE WHEN diagnose IS NULL OR diagnose='' THEN '{}'::text[]
+                 ELSE string_to_array(diagnose, ',') END;
+        END IF;
+      END $$;`);
   } catch (e) { console.error('Migration stundenbedarf_woche:', e.message); }
 })();
 const { pool } = require('../db');
