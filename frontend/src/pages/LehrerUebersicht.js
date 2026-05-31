@@ -37,7 +37,7 @@ export default function LehrerUebersicht() {
       )}
 
       {loading ? <div style={{color:'var(--text-light)'}}>Lädt...</div> : (
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:16}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(min(100%,300px),1fr))',gap:16}}>
           {gefiltert.map(l => (
             <div key={l.lehrkraft_id} className="card" style={{display:'flex',flexDirection:'column',gap:12}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
