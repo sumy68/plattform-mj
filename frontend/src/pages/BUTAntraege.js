@@ -209,7 +209,7 @@ export default function ButAntraege() {
           <table>
             <thead>
               <tr>
-                <th>Schüler</th><th>Gültig</th><th>Stunden gesamt</th><th>Verbraucht</th><th>Status</th>
+                <th>Schüler</th><th>Gültig</th><th>Stunden gesamt</th><th>Verbraucht</th><th>Status</th><th>PDF</th>
                 {isAdmin && <th>Aktionen</th>}
               </tr>
             </thead>
@@ -223,6 +223,7 @@ export default function ButAntraege() {
                     <td style={{ textAlign: 'center', fontWeight: 700 }}>{Number(a.gutscheine_gesamt).toLocaleString('de-DE', { maximumFractionDigits: 2 })}</td>
                     <td style={{ textAlign: 'center' }}>{Number(a.gutscheine_verbraucht).toLocaleString('de-DE', { maximumFractionDigits: 2 })}</td>
                     <td><span className="badge" style={{ background: style.bg, color: style.color }}>{getStatusText(a)}</span></td>
+                    <td style={{ textAlign: 'center' }}>{Number(a.dok_anzahl) > 0 ? <span style={{ color: '#2e7d32', fontWeight: 700 }}>{Number(a.dok_anzahl) > 1 ? `✓ ${a.dok_anzahl}` : '✓'}</span> : <span style={{ color: 'var(--text-light)' }}>–</span>}</td>
                     {isAdmin && (
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
@@ -235,7 +236,7 @@ export default function ButAntraege() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={isAdmin ? 6 : 5} style={{ textAlign: 'center', color: 'var(--text-light)' }}>Keine BuT-Anträge gefunden</td></tr>
+                <tr><td colSpan={isAdmin ? 7 : 6} style={{ textAlign: 'center', color: 'var(--text-light)' }}>Keine BuT-Anträge gefunden</td></tr>
               )}
             </tbody>
           </table>
