@@ -24,7 +24,7 @@ export default function LehrerUebersicht() {
   return (
     <div>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,marginBottom:24}}>
-        <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:32,color:'var(--text-dark)',margin:0}}>Wer unterrichtet wen?</h2>
+        <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:32,color:'var(--text-dark)',margin:0}}>Betreuungsübersicht</h2>
         <input placeholder="🔍 Lehrkraft oder Schüler suchen..." value={suche} onChange={e=>setSuche(e.target.value)}
           style={{padding:'10px 16px',border:'2px solid var(--purple-pale)',borderRadius:10,fontSize:14,minWidth:240}}/>
       </div>
