@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const API = 'https://plattform-mj.onrender.com';
 
@@ -7,6 +8,7 @@ const SPRACHEN = ['Deutsch', 'Englisch', 'Arabisch', 'Türkisch', 'Albanisch', '
 const GESCHLECHT = ['Männlich', 'Weiblich', 'Divers'];
 
 export default function MeinProfil() {
+  const { user, setUser } = useAuth();
   const [profil, setProfil] = useState(null);
   const [form, setForm] = useState({});
   const [pwForm, setPwForm] = useState({ altes_passwort: '', neues_passwort: '', neues_passwort2: '' });
@@ -79,6 +81,10 @@ export default function MeinProfil() {
     setLoading(true); setSuccess(''); setError('');
     try {
       await axios.put(`${API}/api/profil`, form);
+      const neuerName = `${form.vorname||''} ${form.nachname||''}`.trim();
+      const neuerUser = { ...user, name: neuerName, vorname: form.vorname, nachname: form.nachname };
+      setUser(neuerUser);
+      localStorage.setItem('user', JSON.stringify(neuerUser));
       setSuccess('Profil gespeichert ✓');
       load();
     } catch (e) {
