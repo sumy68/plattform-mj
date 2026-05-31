@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { pool } = require('../db');
 const { auth, adminOnly } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
+const { berechneKlasse } = require('../utils/klasse');
 
 // Google Maps Proxy
 router.get('/maps/directions', auth, async (req, res) => {
@@ -66,10 +67,15 @@ router.post('/', auth, async (req, res) => {
     const gruppeIds = (form !== 'einzel' && gruppe_schueler_ids?.length) ? gruppe_schueler_ids : [];
     const gruppeNamen = (form !== 'einzel' && gruppe_schueler_namen) ? gruppe_schueler_namen : '';
 
+    let klasseFrozen = null;
+    try {
+      const scRes = await pool.query('SELECT klasse, klassenstufe_jahr FROM schueler WHERE id=$1', [schueler_id]);
+      if (scRes.rows[0]) klasseFrozen = berechneKlasse(scRes.rows[0].klasse, scRes.rows[0].klassenstufe_jahr, datum ? new Date(datum) : new Date());
+    } catch(e) { /* ignore */ }
     const result = await pool.query(
-      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage,unterrichtsform,gruppe_schueler_ids,gruppe_schueler_namen)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
-      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen]
+      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage,unterrichtsform,gruppe_schueler_ids,gruppe_schueler_namen,klasse)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
+      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen, klasseFrozen]
     );
 
     // BuT: alle Schüler der Gruppe prüfen
@@ -275,7 +281,7 @@ router.get('/:id/pdf', auth, async (req, res) => {
         );
         const sc = schuelerRes.rows[0];
         if (!sc) continue;
-        const stFuerSchueler = { ...st, vorname: sc.vorname, nachname: sc.nachname, schule: sc.schule, klasse: sc.klasse, but_status: sc.but_status, eltern_name: sc.eltern_name, eltern_tel: sc.eltern_tel, schueler_name: `${sc.vorname} ${sc.nachname}`, unterschrift_data: unterschriftenData[i]?.data, unterschrift_name: unterschriftenData[i]?.name, unterschrift_datum: unterschriftenData[i]?.datum, unterrichtsform: 'einzel' };
+        const stFuerSchueler = { ...st, vorname: sc.vorname, nachname: sc.nachname, schule: sc.schule, klasse: st.klasse || sc.klasse, but_status: sc.but_status, eltern_name: sc.eltern_name, eltern_tel: sc.eltern_tel, schueler_name: `${sc.vorname} ${sc.nachname}`, unterschrift_data: unterschriftenData[i]?.data, unterschrift_name: unterschriftenData[i]?.name, unterschrift_datum: unterschriftenData[i]?.datum, unterrichtsform: 'einzel' };
         const pdfBuf = await genPDF(stFuerSchueler);
         archive.append(pdfBuf, { name: `${sc.vorname}_${sc.nachname}_${new Date(st.datum).toISOString().slice(0,10)}.pdf` });
       }

@@ -204,6 +204,7 @@ const initDB = async () => {
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS stundentyp VARCHAR(50) DEFAULT 'lehrstunde'`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS zusatz_typ VARCHAR(100)`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS zusatz_beschreibung TEXT`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS klasse VARCHAR(20)`);
     await client.query(`ALTER TABLE but_antraege ADD COLUMN IF NOT EXISTS behoerde TEXT`);
     // but_antraege neu aufbauen mit korrekten Spalten
     await client.query(`
