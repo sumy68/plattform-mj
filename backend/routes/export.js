@@ -174,6 +174,25 @@ router.get('/zip', auth, adminOnly, async (req, res) => {
       archive.append(buffer, { name: `Rechnungen/${row.monat}/${safe_lk}/${row.rechnungsnummer}.pdf` });
     }
 
+
+    // BuT-Dokumente (neue Tabelle: mehrere PDFs pro Antrag)
+    const filterBD = monat ? "AND TO_CHAR(bd.hochgeladen_am, 'YYYY-MM') = $1" : '';
+    const butDokResult = await pool.query(
+      `SELECT bd.datei_name, bd.datei_data, s.vorname, s.nachname,
+              TO_CHAR(bd.hochgeladen_am, 'YYYY-MM') as monat
+       FROM but_dokumente bd
+       JOIN but_antraege b ON bd.antrag_id = b.id
+       JOIN schueler s ON b.schueler_id = s.id
+       WHERE bd.datei_data IS NOT NULL ${filterBD}`, params);
+
+    for (const row of butDokResult.rows) {
+      if (!row.datei_data) continue;
+      const base64 = row.datei_data.replace(/^data:application\/pdf;base64,/, '');
+      const buffer = Buffer.from(base64, 'base64');
+      const safe_s = `${row.vorname}_${row.nachname}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      archive.append(buffer, { name: `BuT-Dokumente/${row.monat}/${safe_s}/${row.datei_name || 'BuT-Dokument.pdf'}` });
+    }
+
     await archive.finalize();
   } catch (err) {
     console.error('Export Fehler:', err);
