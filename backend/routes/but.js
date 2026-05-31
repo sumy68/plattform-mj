@@ -303,4 +303,31 @@ router.delete('/dokumente/:dokId', auth, adminOnly, async (req, res) => {
   }
 });
 
+
+// EINMALIGE MIGRATION: alte Einzel-PDFs in but_dokumente kopieren
+router.post('/migrate-pdfs', auth, adminOnly, async (req, res) => {
+  try {
+    const alte = await pool.query(
+      `SELECT id, antrag_pdf_name, antrag_pdf_data FROM but_antraege
+       WHERE antrag_pdf_data IS NOT NULL AND antrag_pdf_data <> ''`
+    );
+    let kopiert = 0, uebersprungen = 0;
+    for (const a of alte.rows) {
+      const exists = await pool.query(
+        `SELECT 1 FROM but_dokumente WHERE antrag_id=$1 AND datei_name=$2 LIMIT 1`,
+        [a.id, a.antrag_pdf_name || 'BuT-Bescheid.pdf']
+      );
+      if (exists.rows.length) { uebersprungen++; continue; }
+      await pool.query(
+        `INSERT INTO but_dokumente (antrag_id, datei_name, datei_data) VALUES ($1,$2,$3)`,
+        [a.id, a.antrag_pdf_name || 'BuT-Bescheid.pdf', a.antrag_pdf_data]
+      );
+      kopiert++;
+    }
+    res.json({ success: true, kopiert, uebersprungen });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
