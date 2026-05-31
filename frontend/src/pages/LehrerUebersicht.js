@@ -54,7 +54,7 @@ export default function LehrerUebersicht() {
                   ? <span style={{fontSize:13,color:'var(--text-light)',fontStyle:'italic'}}>Keine Schüler zugewiesen</span>
                   : l.schueler.map(s => (
                       <span key={s.id} className="badge" style={{background:'var(--purple-pale)',color:'var(--purple-dark)',fontSize:13,padding:'5px 12px'}}>
-                        {s.name}{s.klasse ? ` · ${s.klasse}` : ''}
+                        {s.name}{s.klasse ? ` · Kl. ${s.klasse}` : ''}
                       </span>
                     ))
                 }
