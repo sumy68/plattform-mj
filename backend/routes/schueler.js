@@ -13,6 +13,12 @@ const router = require('express').Router();
                  ELSE string_to_array(diagnose, ',') END;
         END IF;
       END $$;`);
+    // diagnose_cleanup_v1: Müll-Einträge { } aus diagnose-Arrays entfernen
+    await pool.query(`UPDATE schueler SET diagnose = (
+      SELECT COALESCE(array_agg(x), '{}')
+      FROM unnest(diagnose) AS x
+      WHERE x NOT IN ('{', '}', '{}', '')
+    ) WHERE diagnose IS NOT NULL;`);
   } catch (e) { console.error('Migration stundenbedarf_woche:', e.message); }
 })();
 const { pool } = require('../db');
