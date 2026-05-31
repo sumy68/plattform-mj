@@ -105,6 +105,74 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Stunde bearbeiten
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const altRes = await pool.query('SELECT * FROM stunden WHERE id=$1', [req.params.id]);
+    const alt = altRes.rows[0];
+    if (!alt) return res.status(404).json({ error: 'Stunde nicht gefunden' });
+    if (req.user.role !== 'admin' && alt.lehrkraft_id !== req.user.id)
+      return res.status(403).json({ error: 'Keine Berechtigung' });
+    if (alt.abgerechnet)
+      return res.status(403).json({ error: 'Stunde ist bereits abgerechnet und kann nicht mehr bearbeitet werden.' });
+
+    const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage, unterrichtsform, gruppe_schueler_ids, gruppe_schueler_namen } = req.body;
+    const [sh, sm] = startzeit.split(':').map(Number);
+    const [eh, em] = endzeit.split(':').map(Number);
+    const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
+    const form = unterrichtsform || 'einzel';
+    const gruppeIds = (form !== 'einzel' && gruppe_schueler_ids && gruppe_schueler_ids.length) ? gruppe_schueler_ids : [];
+    const gruppeNamen = (form !== 'einzel' && gruppe_schueler_namen) ? gruppe_schueler_namen : '';
+
+    // ALTES BuT zurueckbuchen
+    const altGruppeIds = (alt.gruppe_schueler_ids || []).map(id => parseInt(id)).filter(id => !isNaN(id));
+    const altAlleIds = [parseInt(alt.schueler_id), ...altGruppeIds].filter(id => !isNaN(id) && id > 0);
+    const altDauerStd = (alt.dauer_minuten || 60) / 60;
+    for (const sid of altAlleIds) {
+      const sc = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [sid]);
+      if (!sc.rows[0] || !sc.rows[0].but_status) continue;
+      const but = await pool.query(
+        `SELECT * FROM but_antraege WHERE schueler_id=$1 AND $2::date BETWEEN gueltig_von AND gueltig_bis AND gutscheine_verbraucht > 0 ORDER BY aktiv DESC, gueltig_bis DESC LIMIT 1`,
+        [sid, alt.datum]
+      );
+      if (but.rows[0]) {
+        const neu = Math.max(0, parseFloat(but.rows[0].gutscheine_verbraucht) - altDauerStd);
+        await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, but.rows[0].id]);
+      }
+    }
+
+    // Stunde updaten
+    const result = await pool.query(
+      `UPDATE stunden SET schueler_id=$1, datum=$2, startzeit=$3, endzeit=$4, dauer_minuten=$5, fach=$6, ort=$7, inhalt=$8, fahrt_von=$9, fahrt_nach=$10, fahrt_km=$11, stundentyp=$12, zusatz_typ=$13, zusatz_beschreibung=$14, kurzfristige_absage=$15, unterrichtsform=$16, gruppe_schueler_ids=$17, gruppe_schueler_namen=$18 WHERE id=$19 RETURNING *`,
+      [schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen, req.params.id]
+    );
+
+    // NEUES BuT abziehen
+    const neuAlleIds = [parseInt(schueler_id), ...gruppeIds.map(id => parseInt(id))].filter(id => !isNaN(id) && id > 0);
+    const neuDauerStd = (dauer_minuten || 60) / 60;
+    let but_warnung = false, but_verbleibend = null;
+    for (const sid of neuAlleIds) {
+      const sc = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [sid]);
+      if (!sc.rows[0] || !sc.rows[0].but_status) continue;
+      const but = await pool.query(
+        `SELECT * FROM but_antraege WHERE schueler_id=$1 AND aktiv=true AND $2::date BETWEEN gueltig_von AND gueltig_bis AND gutscheine_verbraucht < gutscheine_gesamt ORDER BY gueltig_bis ASC LIMIT 1`,
+        [sid, datum]
+      );
+      if (!but.rows[0]) continue;
+      const a = but.rows[0];
+      const neu = parseFloat(a.gutscheine_verbraucht) + neuDauerStd;
+      await pool.query('UPDATE but_antraege SET gutscheine_verbraucht=$1 WHERE id=$2', [neu, a.id]);
+      const verbleibend = parseFloat(a.gutscheine_gesamt) - neu;
+      if (verbleibend <= 12) { but_warnung = true; but_verbleibend = verbleibend; }
+    }
+
+    if (but_warnung) return res.json({ ...result.rows[0], but_warnung: true, but_verbleibend });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Stunde löschen
 router.delete('/:id', auth, async (req, res) => {
   try {
