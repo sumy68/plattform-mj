@@ -27,7 +27,7 @@ init().catch(console.error);
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.ionos.de', port: 587, secure: false,
-  auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: 'BENQFunk68!' }
+  auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: process.env.SMTP_PASS }
 });
 
 // Alle Abwesenheiten

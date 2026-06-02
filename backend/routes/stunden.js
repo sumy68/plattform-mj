@@ -402,7 +402,7 @@ router.post('/:id/signatur-link', auth, async (req, res) => {
     const nodemailer = require('nodemailer');
     const transporter = nodemailer.createTransport({
       host: 'smtp.ionos.de', port: 587, secure: false,
-      auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: 'BENQFunk68!' }
+      auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: process.env.SMTP_PASS }
     });
     const link = `https://plattform-mj-1.onrender.com/unterschreiben/${token}`;
     const datum = new Date(st.datum).toLocaleDateString('de-DE');

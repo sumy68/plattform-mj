@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: 'meryem.jaber@mj-lernfoerderung.de',
-    pass: 'BENQFunk68!'
+    pass: process.env.SMTP_PASS
   }
 });
 

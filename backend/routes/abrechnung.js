@@ -10,7 +10,7 @@ const MINIJOB_GRENZE = 603;
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.ionos.de', port: 587, secure: false,
-  auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: 'BENQFunk68!' }
+  auth: { user: 'meryem.jaber@mj-lernfoerderung.de', pass: process.env.SMTP_PASS }
 });
 
 // Guthaben einer Honorarkraft (alle offenen Stunden)
