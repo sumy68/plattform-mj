@@ -155,13 +155,18 @@ export default function Stunden({ adminView }) {
   };
 
   const sendWALink = async (st, nr = 1) => {
+    const wa = window.open('about:blank', '_blank');
     try {
       const res = await axios.post(`${API}/api/stunden/${st.id}/signatur-link`, { email: st.eltern_email || 'noemail@noemail.de', nr }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       const token = res.data.token;
       const link = `https://plattform.mj-lernfoerderung.de/unterschreiben/${token}`;
       const sl = nr === 2 ? ' (Schüler 2)' : nr === 3 ? ' (Schüler 3)' : '';
-      window.open(`https://wa.me/?text=${encodeURIComponent('Bitte unterschreiben Sie die Nachhilfestunde' + sl + ' hier: ' + link)}`, '_blank');
-    } catch(e) { alert('Fehler: ' + e.message); }
+      const url = `https://wa.me/?text=${encodeURIComponent('Bitte unterschreiben Sie die Nachhilfestunde' + sl + ' hier: ' + link)}`;
+      if (wa) { wa.location.href = url; } else { window.location.href = url; }
+    } catch(e) {
+      if (wa) wa.close();
+      alert('Fehler: ' + e.message);
+    }
   };
 
   const handleEdit = (st) => {
