@@ -54,10 +54,15 @@ function generateStundenPDF(st) {
       y += 18;
     });
     const lernY = y + 15;
-    doc.roundedRect(50, lernY, 495, 80, 8).fillColor('#f0ebfa').fill();
+    const lernText = st.inhalt || '–';
+    doc.fontSize(10).font('Helvetica');
+    const lernTextHeight = doc.heightOfString(lernText, { width: 455 });
+    const lernBoxHeight = Math.max(80, lernTextHeight + 40);
+    doc.roundedRect(50, lernY, 495, lernBoxHeight, 8).fillColor('#f0ebfa').fill();
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('LERNFORTSCHRITT', 70, lernY + 12);
-    doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(st.inhalt || '–', 70, lernY + 28, { width: 455 });
-    const unterschriftY = lernY + 100;
+    doc.fontSize(10).fillColor('#2d2040').font('Helvetica').text(lernText, 70, lernY + 28, { width: 455 });
+    let unterschriftY = lernY + lernBoxHeight + 20;
+    if (unterschriftY + 120 > 690) { doc.addPage(); unterschriftY = 60; }
     doc.fontSize(11).fillColor('#5a4a7a').font('Helvetica-Bold').text('UNTERSCHRIFT ELTERNTEIL', 50, unterschriftY);
     if (st.unterschrift_data) {
       const imgData = st.unterschrift_data.replace(/^data:image\/png;base64,/, '');
