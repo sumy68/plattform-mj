@@ -90,10 +90,23 @@ export default function Abrechnung() {
     } catch(e) { console.log("FEHLER:", e.message, e.response?.data); }
   };
 
-  const toggleStunde = (id) => setSelected(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
+  const istUnterschrieben = (st) => {
+    if (!st) return false;
+    const s1 = !!st.unterschrift_name;
+    const s2 = st.unterrichtsform==='2er'||st.unterrichtsform==='3er' ? !!st.unterschrift_name_2 : true;
+    const s3 = st.unterrichtsform==='3er' ? !!st.unterschrift_name_3 : true;
+    return s1 && s2 && s3;
+  };
+
+  const toggleStunde = (id) => {
+    const st = offeneStunden.find(s => s.id === id);
+    if (!istUnterschrieben(st)) return;
+    setSelected(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
+  };
   const toggleAll = () => {
     if (!guthaben) return;
-    setSelected(selected.length === offeneStunden.length ? [] : offeneStunden.map(s=>s.id));
+    const abrechenbar = offeneStunden.filter(istUnterschrieben).map(s=>s.id);
+    setSelected(selected.length === abrechenbar.length && abrechenbar.length > 0 ? [] : abrechenbar);
   };
 
   const calcStunden = (st) => {
@@ -406,14 +419,14 @@ export default function Abrechnung() {
             <table>
               <thead>
                 <tr>
-                  {isHonorar && <th><input type="checkbox" checked={selected.length === guthaben.stunden.length && guthaben.stunden.length > 0} onChange={toggleAll}/></th>}
+                  {isHonorar && <th><input type="checkbox" checked={offeneStunden.filter(istUnterschrieben).length > 0 && selected.length === offeneStunden.filter(istUnterschrieben).length} onChange={toggleAll}/></th>}
                   <th>Datum</th><th>Schüler</th><th>Zeit</th><th>Fach</th><th>Honorar</th><th>Fahrtkosten</th><th>Gesamt</th><th>Unterschrift</th>
                 </tr>
               </thead>
               <tbody>
                 {offeneStunden.map(st => (
-                  <tr key={st.id} onClick={isHonorar ? ()=>toggleStunde(st.id) : undefined} style={{cursor: isHonorar ? 'pointer' : 'default'}}>
-                    {isHonorar && <td><input type="checkbox" checked={selected.includes(st.id)} onChange={()=>toggleStunde(st.id)} onClick={e=>e.stopPropagation()}/></td>}
+                  <tr key={st.id} onClick={isHonorar && istUnterschrieben(st) ? ()=>toggleStunde(st.id) : undefined} style={{cursor: isHonorar && istUnterschrieben(st) ? 'pointer' : 'default', opacity: isHonorar && !istUnterschrieben(st) ? 0.55 : 1}}>
+                    {isHonorar && <td><input type="checkbox" disabled={!istUnterschrieben(st)} checked={selected.includes(st.id)} onChange={()=>toggleStunde(st.id)} onClick={e=>e.stopPropagation()} title={!istUnterschrieben(st) ? 'Erst abrechenbar wenn vollständig unterschrieben' : ''} style={{cursor: istUnterschrieben(st) ? 'pointer' : 'not-allowed'}}/></td>}
                     <td>{new Date(st.datum).toLocaleDateString('de-DE')}</td>
                     <td>{st.unterrichtsform && st.unterrichtsform !== 'einzel' && st.gruppe_schueler_namen ? st.schueler_name + ', ' + st.gruppe_schueler_namen : st.schueler_name}</td>
                     <td>{st.startzeit}–{st.endzeit}</td>
