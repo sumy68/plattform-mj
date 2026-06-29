@@ -211,10 +211,11 @@ const initDB = async () => {
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS genehmigung_grund TEXT`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS genehmigt_am TIMESTAMP`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS genehmigt_von INTEGER`);
-    // Pseudo-Schüler "Verwaltung" (idempotent anlegen)
+    // Anker-Datensatz "Verwaltung" (idempotent anlegen + immer aktiv halten)
     await client.query(`INSERT INTO schueler (vorname, nachname, ist_verwaltung, aktiv, but_status)
       SELECT 'Verwaltung', '', true, true, false
       WHERE NOT EXISTS (SELECT 1 FROM schueler WHERE ist_verwaltung=true)`);
+    await client.query(`UPDATE schueler SET aktiv=true WHERE ist_verwaltung=true AND aktiv=false`);
     await client.query(`ALTER TABLE but_antraege ADD COLUMN IF NOT EXISTS behoerde TEXT`);
     // but_antraege neu aufbauen mit korrekten Spalten
     await client.query(`

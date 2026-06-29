@@ -91,6 +91,10 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
 // Schüler deaktivieren
 router.patch('/:id', auth, adminOnly, async (req, res) => {
   try {
+    const v = await pool.query('SELECT ist_verwaltung FROM schueler WHERE id=$1', [req.params.id]);
+    if (v.rows[0]?.ist_verwaltung) {
+      return res.status(400).json({ error: 'Der Verwaltungs-Eintrag kann nicht deaktiviert werden.' });
+    }
     await pool.query('UPDATE schueler SET aktiv=$1 WHERE id=$2', [req.body.aktiv, req.params.id]);
     res.json({ success: true });
   } catch (err) {
@@ -141,6 +145,10 @@ router.delete('/:id/zuweisung/:lehrkraft_id', auth, adminOnly, async (req, res) 
 
 router.delete('/:id', auth, adminOnly, async (req, res) => {
   try {
+    const v = await pool.query('SELECT ist_verwaltung FROM schueler WHERE id=$1', [req.params.id]);
+    if (v.rows[0]?.ist_verwaltung) {
+      return res.status(400).json({ error: 'Der Verwaltungs-Eintrag kann nicht gelöscht werden.' });
+    }
     await pool.query('DELETE FROM but_antraege WHERE schueler_id=$1', [req.params.id]);
     await pool.query('DELETE FROM lehrkraft_schueler WHERE schueler_id=$1', [req.params.id]);
     await pool.query('DELETE FROM stunden WHERE schueler_id=$1', [req.params.id]);

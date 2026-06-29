@@ -4,6 +4,19 @@ const { auth, adminOnly } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
 const { berechneKlasse } = require('../utils/klasse');
 
+// Anker-Datensatz "Verwaltung" finden oder anlegen (selbstheilend)
+async function getVerwaltungSchuelerId() {
+  const r = await pool.query(`SELECT id FROM schueler WHERE ist_verwaltung=true ORDER BY id LIMIT 1`);
+  if (r.rows[0]) {
+    await pool.query(`UPDATE schueler SET aktiv=true WHERE id=$1 AND aktiv=false`, [r.rows[0].id]);
+    return r.rows[0].id;
+  }
+  const ins = await pool.query(
+    `INSERT INTO schueler (vorname, nachname, ist_verwaltung, aktiv, but_status) VALUES ('Verwaltung','',true,true,false) RETURNING id`
+  );
+  return ins.rows[0].id;
+}
+
 // Google Maps Proxy
 router.get('/maps/directions', auth, async (req, res) => {
   try {
@@ -58,22 +71,30 @@ router.get('/', auth, async (req, res) => {
 
 // Stunde eintragen
 router.post('/', auth, async (req, res) => {
-  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage, unterrichtsform, gruppe_schueler_ids, gruppe_schueler_namen } = req.body;
+  const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage, unterrichtsform, gruppe_schueler_ids, gruppe_schueler_namen, ist_verwaltung_stunde } = req.body;
   try {
     const [sh, sm] = startzeit.split(':').map(Number);
     const [eh, em] = endzeit.split(':').map(Number);
     const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
 
-    // Schüler-Infos laden (inkl. Verwaltungs-Erkennung)
+    // Verwaltungs-Stunde? (per Flag/Stundentyp oder anhand des gewählten Ankers)
     let klasseFrozen = null;
-    let istVerwaltung = false;
-    try {
-      const scRes = await pool.query('SELECT klasse, klassenstufe_jahr, ist_verwaltung FROM schueler WHERE id=$1', [schueler_id]);
-      if (scRes.rows[0]) {
-        istVerwaltung = !!scRes.rows[0].ist_verwaltung;
-        klasseFrozen = berechneKlasse(scRes.rows[0].klasse, scRes.rows[0].klassenstufe_jahr, datum ? new Date(datum) : new Date());
-      }
-    } catch(e) { /* ignore */ }
+    let istVerwaltung = ist_verwaltung_stunde === true || stundentyp === 'verwaltung';
+    let effektiveSchuelerId = schueler_id;
+    if (!istVerwaltung && schueler_id) {
+      try {
+        const scRes = await pool.query('SELECT klasse, klassenstufe_jahr, ist_verwaltung FROM schueler WHERE id=$1', [schueler_id]);
+        if (scRes.rows[0]) {
+          istVerwaltung = !!scRes.rows[0].ist_verwaltung;
+          klasseFrozen = berechneKlasse(scRes.rows[0].klasse, scRes.rows[0].klassenstufe_jahr, datum ? new Date(datum) : new Date());
+        }
+      } catch(e) { /* ignore */ }
+    }
+    // Anker-Datensatz sicherstellen (legt ihn bei Bedarf automatisch an)
+    if (istVerwaltung) {
+      effektiveSchuelerId = await getVerwaltungSchuelerId();
+      klasseFrozen = null;
+    }
 
     // Verwaltungs-Stunden: kein Gruppenunterricht, kein BuT, Status "offen" (Admin-Genehmigung nötig)
     const form = istVerwaltung ? 'einzel' : (unterrichtsform || 'einzel');
@@ -85,7 +106,7 @@ router.post('/', auth, async (req, res) => {
     const result = await pool.query(
       `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage,unterrichtsform,gruppe_schueler_ids,gruppe_schueler_namen,klasse,genehmigung_status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
-      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, finalStundentyp, zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen, klasseFrozen, genehmigungStatus]
+      [req.user.id, effektiveSchuelerId, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, finalStundentyp, zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen, klasseFrozen, genehmigungStatus]
     );
 
     // Verwaltungs-Stunden brauchen keine BuT-Prüfung und keine Unterschrift

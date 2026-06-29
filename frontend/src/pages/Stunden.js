@@ -105,13 +105,11 @@ export default function Stunden({ adminView }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Verwaltungs-Stunde: internen Anker-Datensatz "Verwaltung" verwenden, kein Fach/Gruppe
+    // Verwaltungs-Stunde: Backend setzt/erzeugt den Anker selbst (Flag), kein Schüler/Fach/Gruppe
     let payload = form;
     if (stundenart === 'verwaltung') {
-      const verwId = verwaltungSchueler?.id;
-      if (!verwId) return alert('Verwaltungs-Eintrag nicht gefunden. Bitte Seite neu laden.');
       if (!form.zusatz_beschreibung) return alert('Bitte eine Beschreibung der Tätigkeit angeben.');
-      payload = { ...form, schueler_id: verwId, fach: '', unterrichtsform: 'einzel', gruppe_schueler_ids: [], gruppe_schueler_namen: '', kurzfristige_absage: false };
+      payload = { ...form, ist_verwaltung_stunde: true, stundentyp: 'verwaltung', fach: '', unterrichtsform: 'einzel', gruppe_schueler_ids: [], gruppe_schueler_namen: '', kurzfristige_absage: false };
     }
     try {
       const url = editId ? `${API}/api/stunden/${editId}` : `${API}/api/stunden`;
@@ -215,7 +213,6 @@ export default function Stunden({ adminView }) {
   };
 
   // Verwaltungs-/Sonstige-Stunden als eigene Stundenart (nicht als Schüler)
-  const verwaltungSchueler = schueler.find(s => s.ist_verwaltung);
   const istVerwaltungForm = stundenart === 'verwaltung';
   const istVerwaltungStunde = (st) => st.stundentyp === 'verwaltung';
 

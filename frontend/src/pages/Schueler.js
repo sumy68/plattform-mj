@@ -110,6 +110,7 @@ export default function Schueler() {
   };
 
   const filtered = schueler.filter(s =>
+    !s.ist_verwaltung &&
     `${s.vorname} ${s.nachname} ${s.schule} ${s.klasse}`.toLowerCase().includes(search.toLowerCase())
   );
 
