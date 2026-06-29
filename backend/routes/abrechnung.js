@@ -125,9 +125,11 @@ router.post('/rechnung', auth, async (req, res) => {
     }, 0);
     const finalBetrag = berechneterBetrag;
 
-    // Rechnungsnummer generieren
-    const countRes = await pool.query("SELECT COUNT(*) as count FROM rechnungen");
-    const rechnungsnummer = parseInt(countRes.rows[0].count) + 1;
+    // Rechnungsnummer generieren – global eindeutige, fortlaufende Sequence
+    // (keine Wiederholung zwischen Honorarkräften, auch nicht bei gleichzeitigen Rechnungen)
+    await pool.query(`CREATE SEQUENCE IF NOT EXISTS rechnungsnummer_seq`);
+    const seqRes = await pool.query("SELECT nextval('rechnungsnummer_seq') AS n");
+    const rechnungsnummer = parseInt(seqRes.rows[0].n);
     const rechnungsnr = `MJ-${new Date().getFullYear()}-${String(rechnungsnummer).padStart(4, '0')}`;
     const datum = new Date().toLocaleDateString('de-DE');
     const monat = new Date().toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });

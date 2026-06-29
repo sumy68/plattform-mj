@@ -291,6 +291,29 @@ const initDB = async () => {
       )
     `);
     await client.query(`ALTER TABLE but_antraege ADD COLUMN IF NOT EXISTS behoerde TEXT`);
+
+    // Rechnungsnummern global eindeutig (keine Wiederholung zwischen Honorarkräften)
+    await client.query(`CREATE SEQUENCE IF NOT EXISTS rechnungsnummer_seq`);
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='rechnungen_rechnungsnummer_key') THEN
+          BEGIN
+            ALTER TABLE rechnungen ADD CONSTRAINT rechnungen_rechnungsnummer_key UNIQUE (rechnungsnummer);
+          EXCEPTION WHEN others THEN
+            RAISE WARNING 'UNIQUE auf rechnungen.rechnungsnummer nicht gesetzt (evtl. bestehende Duplikate): %', SQLERRM;
+          END;
+        END IF;
+      END $$;
+    `);
+    // Sequence auf aktuellen Hoechststand heben – nie senken (schuetzt bestehende Nummern)
+    await client.query(`
+      SELECT setval('rechnungsnummer_seq', GREATEST(
+        (SELECT last_value FROM rechnungsnummer_seq),
+        (SELECT COALESCE(MAX(split_part(rechnungsnummer,'-',3)::int),0) FROM rechnungen WHERE rechnungsnummer ~ '^MJ-[0-9]+-[0-9]+$'),
+        (SELECT COUNT(*)::int FROM rechnungen)
+      ), true)
+    `);
+
     console.log('✅ Datenbank initialisiert');
   } finally {
     client.release();
