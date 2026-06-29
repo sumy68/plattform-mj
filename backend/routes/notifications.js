@@ -98,7 +98,7 @@ router.get('/', auth, async (req, res) => {
       // 9. Verwaltungs-Stunden zur Genehmigung
       const verwOffen = await pool.query(`SELECT COUNT(*) FROM stunden WHERE stundentyp='verwaltung' AND genehmigung_status='offen'`);
       if (parseInt(verwOffen.rows[0].count) > 0) {
-        notifications.push({ id:'verwaltung_offen', typ:'warning', icon:'🗂️', titel:'Verwaltungs-Stunden prüfen', text:`${verwOffen.rows[0].count} Stunde(n) warten auf Genehmigung`, link:'/stunden' });
+        notifications.push({ id:'verwaltung_offen', typ:'warning', icon:'🗂️', titel:'Verwaltungs-Stunden prüfen', text:`${verwOffen.rows[0].count} Stunde(n) warten auf Genehmigung`, link:'/freischaltung' });
       }
 
     } else {

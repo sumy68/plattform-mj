@@ -69,6 +69,21 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// Offene Verwaltungs-Stunden (zur Genehmigung, nur Admin)
+router.get('/verwaltung/offen', auth, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT st.*, u.name as lehrkraft_name
+       FROM stunden st JOIN users u ON st.lehrkraft_id=u.id
+       WHERE st.stundentyp='verwaltung' AND st.genehmigung_status='offen'
+       ORDER BY st.datum DESC, st.startzeit DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Stunde eintragen
 router.post('/', auth, async (req, res) => {
   const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage, unterrichtsform, gruppe_schueler_ids, gruppe_schueler_namen, ist_verwaltung_stunde } = req.body;

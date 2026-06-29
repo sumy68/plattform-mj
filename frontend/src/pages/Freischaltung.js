@@ -6,18 +6,30 @@ const API = 'https://plattform-mj.onrender.com';
 export default function Freischaltung() {
   const [pending, setPending] = useState([]);
   const [urlaube, setUrlaube] = useState([]);
+  const [verwStunden, setVerwStunden] = useState([]);
   const [tab, setTab] = useState('accounts');
   const [adminNotiz, setAdminNotiz] = useState({});
 
   const load = async () => {
-    const [pRes, uRes] = await Promise.all([
+    const [pRes, uRes, vRes] = await Promise.all([
       axios.get(`${API}/api/auth/pending`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
-      axios.get(`${API}/api/abwesenheiten/pending-urlaub`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      axios.get(`${API}/api/abwesenheiten/pending-urlaub`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      axios.get(`${API}/api/stunden/verwaltung/offen`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     ]);
     setPending(pRes.data);
     setUrlaube(uRes.data);
+    setVerwStunden(vRes.data);
   };
   useEffect(() => { load(); }, []);
+
+  const VERW_KAT = { verwaltung:'Verwaltung / Organisation', fortbildung:'Fortbildung', ausflug:'Ausflug', sonstiges:'Sonstiges' };
+
+  const verwEntscheiden = async (id, status) => {
+    let grund = null;
+    if (status === 'abgelehnt') grund = window.prompt('Grund der Ablehnung (optional):') || null;
+    await axios.patch(`${API}/api/stunden/${id}/genehmigung`, { status, grund }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+    load();
+  };
 
   const freischalten = async (id) => {
     await axios.patch(`${API}/api/auth/freischalten/${id}`, {}, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -56,6 +68,9 @@ export default function Freischaltung() {
         </button>
         <button onClick={()=>setTab('urlaub')} className={`btn ${tab==='urlaub'?'btn-primary':'btn-ghost'}`}>
           🏖️ Urlaubsanträge {urlaube.length > 0 && <span style={{background:'var(--warning)',color:'white',borderRadius:50,padding:'2px 8px',fontSize:11,marginLeft:4}}>{urlaube.length}</span>}
+        </button>
+        <button onClick={()=>setTab('verwaltung')} className={`btn ${tab==='verwaltung'?'btn-primary':'btn-ghost'}`}>
+          🗂️ Verwaltungs-Stunden {verwStunden.length > 0 && <span style={{background:'var(--warning)',color:'white',borderRadius:50,padding:'2px 8px',fontSize:11,marginLeft:4}}>{verwStunden.length}</span>}
         </button>
       </div>
 
@@ -139,6 +154,55 @@ export default function Freischaltung() {
                   ✅ Genehmigen
                 </button>
                 <button className="btn btn-danger" onClick={()=>urlaubEntscheiden(u.id,'abgelehnt')}>
+                  ❌ Ablehnen
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Verwaltungs-Stunden Tab */}
+      {tab === 'verwaltung' && (
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          {verwStunden.length === 0 ? (
+            <div className="card" style={{textAlign:'center',color:'var(--text-light)',padding:48}}>✅ Keine ausstehenden Verwaltungs-Stunden</div>
+          ) : verwStunden.map(st => (
+            <div key={st.id} className="card" style={{borderLeft:'4px solid var(--warning)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12,marginBottom:16}}>
+                <div>
+                  <div style={{fontFamily:'Cormorant Garamond,serif',fontSize:20,fontWeight:700}}>{st.lehrkraft_name}</div>
+                  <div style={{fontSize:13,color:'var(--text-light)'}}>{VERW_KAT[st.zusatz_typ] || 'Verwaltung'} · eingetragen am {new Date(st.created_at).toLocaleDateString('de-DE')}</div>
+                </div>
+                <span className="badge" style={{background:'#fff3e0',color:'#e65100',fontSize:13}}>🕒 Offen</span>
+              </div>
+
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:16}}>
+                <div style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>Datum</div>
+                  <div style={{fontWeight:700}}>{new Date(st.datum).toLocaleDateString('de-DE')}</div>
+                </div>
+                <div style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>Zeit</div>
+                  <div style={{fontWeight:700}}>{st.startzeit?.slice(0,5)} – {st.endzeit?.slice(0,5)}</div>
+                </div>
+                <div style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px'}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--text-light)',textTransform:'uppercase',marginBottom:4}}>Dauer</div>
+                  <div style={{fontWeight:700}}>{st.dauer_minuten ? `${st.dauer_minuten} Min.` : '–'}</div>
+                </div>
+              </div>
+
+              {st.zusatz_beschreibung && (
+                <div style={{background:'var(--purple-pale)',borderRadius:8,padding:'10px 14px',marginBottom:16,fontSize:13}}>
+                  📝 {st.zusatz_beschreibung}
+                </div>
+              )}
+
+              <div style={{display:'flex',gap:12}}>
+                <button className="btn btn-success" onClick={()=>verwEntscheiden(st.id,'genehmigt')}>
+                  ✅ Genehmigen
+                </button>
+                <button className="btn btn-danger" onClick={()=>verwEntscheiden(st.id,'abgelehnt')}>
                   ❌ Ablehnen
                 </button>
               </div>
