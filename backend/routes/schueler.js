@@ -41,7 +41,10 @@ router.get('/', auth, async (req, res) => {
         `SELECT s.* FROM schueler s
          JOIN lehrkraft_schueler ls ON s.id=ls.schueler_id
          WHERE ls.lehrkraft_id=$1 AND s.aktiv=true
-         ORDER BY s.nachname,s.vorname`,
+         UNION
+         SELECT s.* FROM schueler s
+         WHERE s.ist_verwaltung=true AND s.aktiv=true
+         ORDER BY nachname,vorname`,
         [req.user.id]
       );
     }

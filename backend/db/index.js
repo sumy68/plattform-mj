@@ -205,6 +205,16 @@ const initDB = async () => {
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS zusatz_typ VARCHAR(100)`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS zusatz_beschreibung TEXT`);
     await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS klasse VARCHAR(20)`);
+    // Verwaltungs-/Sonstige-Stunden (Organisation, Fortbildung, Ausflug) mit Admin-Genehmigung
+    await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS ist_verwaltung BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS genehmigung_status VARCHAR(20)`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS genehmigung_grund TEXT`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS genehmigt_am TIMESTAMP`);
+    await client.query(`ALTER TABLE stunden ADD COLUMN IF NOT EXISTS genehmigt_von INTEGER`);
+    // Pseudo-Schüler "Verwaltung" (idempotent anlegen)
+    await client.query(`INSERT INTO schueler (vorname, nachname, ist_verwaltung, aktiv, but_status)
+      SELECT 'Verwaltung', '', true, true, false
+      WHERE NOT EXISTS (SELECT 1 FROM schueler WHERE ist_verwaltung=true)`);
     await client.query(`ALTER TABLE but_antraege ADD COLUMN IF NOT EXISTS behoerde TEXT`);
     // but_antraege neu aufbauen mit korrekten Spalten
     await client.query(`

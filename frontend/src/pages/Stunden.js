@@ -7,6 +7,7 @@ import MonatsPicker from '../components/MonatsPicker';
 const API = 'https://plattform-mj.onrender.com';
 const emptyForm = { schueler_id:'', datum:'', startzeit:'', endzeit:'', fach:'', ort:'vor_ort', lernfortschritt:'', fahrt_von:'', fahrt_nach:'', fahrt_km:null, stundentyp:'lehrstunde', zusatz_typ:'', zusatz_beschreibung:'', kurzfristige_absage:false, unterrichtsform:'einzel', gruppe_schueler_ids:[], gruppe_schueler_namen:'' };
 const ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjMxNTJiYzU1YmQwMDQwNDE4ZWZlYzljNzZiMzQyYTIzIiwiaCI6Im11cm11cjY0In0=';
+const VERW_KAT = { verwaltung:'Verwaltung / Organisation', fortbildung:'Fortbildung', ausflug:'Ausflug', sonstiges:'Sonstiges' };
 
 export default function Stunden({ adminView }) {
   const { user } = useAuth();
@@ -203,6 +204,32 @@ export default function Stunden({ adminView }) {
     }
   };
 
+  // Verwaltungs-/Sonstige-Stunden (Pseudo-Schüler "Verwaltung")
+  const selektierterSchueler = schueler.find(s => String(s.id) === String(form.schueler_id));
+  const istVerwaltungForm = !!selektierterSchueler?.ist_verwaltung;
+  const istVerwaltungStunde = (st) => st.stundentyp === 'verwaltung';
+
+  const setGenehmigung = async (st, status) => {
+    let grund = null;
+    if (status === 'abgelehnt') {
+      grund = window.prompt('Grund der Ablehnung (optional):') || null;
+    } else if (!window.confirm('Diese Verwaltungs-Stunde genehmigen?')) {
+      return;
+    }
+    try {
+      await axios.patch(`${API}/api/stunden/${st.id}/genehmigung`, { status, grund }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      load();
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const genehmigungBadge = (st) => {
+    if (st.genehmigung_status === 'genehmigt') return <span className="badge badge-unterschrift" style={{fontSize:10}}>✓ Genehmigt</span>;
+    if (st.genehmigung_status === 'abgelehnt') return <span className="badge" style={{fontSize:10,background:'#fdecea',color:'#c62828'}} title={st.genehmigung_grund || ''}>✗ Abgelehnt</span>;
+    return <span className="badge" style={{fontSize:10,background:'#fff3e0',color:'#e65100'}}>🕒 Offen</span>;
+  };
+
   return (
     <div>
       {butWarnung && (
@@ -230,7 +257,7 @@ export default function Stunden({ adminView }) {
           >
             <option value="">👤 Alle Schüler</option>
             {schueler.map(s => (
-              <option key={s.id} value={s.id}>{s.vorname} {s.nachname}</option>
+              <option key={s.id} value={s.id}>{s.ist_verwaltung ? '🗂️ Verwaltung' : `${s.vorname} ${s.nachname}`}</option>
             ))}
           </select>
           <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontWeight:600,fontSize:14}}>
@@ -257,7 +284,12 @@ export default function Stunden({ adminView }) {
               {gefilterteStunden.map(st => (
                 <tr key={st.id}>
                   <td>{new Date(st.datum).toLocaleDateString('de-DE')}</td>
-                  <td><strong>{st.unterrichtsform && st.unterrichtsform !== 'einzel' && st.gruppe_schueler_namen ? st.schueler_name + ', ' + st.gruppe_schueler_namen : st.schueler_name}</strong></td>
+                  <td>
+                    <strong>{istVerwaltungStunde(st) ? '🗂️ Verwaltung' : (st.unterrichtsform && st.unterrichtsform !== 'einzel' && st.gruppe_schueler_namen ? st.schueler_name + ', ' + st.gruppe_schueler_namen : st.schueler_name)}</strong>
+                    {istVerwaltungStunde(st) && (st.zusatz_typ || st.zusatz_beschreibung) && (
+                      <div style={{fontSize:11,color:'var(--text-light)'}}>{VERW_KAT[st.zusatz_typ] || st.zusatz_typ}{st.zusatz_beschreibung ? `${st.zusatz_typ ? ' · ' : ''}${st.zusatz_beschreibung}` : ''}</div>
+                    )}
+                  </td>
                   {adminView && <td>{st.lehrkraft_name}</td>}
                   <td>{st.startzeit} – {st.endzeit}</td>
                   <td style={{fontSize:12,color:'var(--text-light)'}}>{st.dauer_minuten ? `${st.dauer_minuten} Min.` : '–'}</td>
@@ -268,6 +300,17 @@ export default function Stunden({ adminView }) {
                   <td>{st.kurzfristige_absage ? <span className="badge" style={{background:'#fdecea',color:'#c62828'}}>❌ Absage</span> : st.ort === 'online' ? '💻 Online' : '🏠 Vor Ort'}</td>
                   <td>{st.but_status ? <span className="badge badge-but">BuT</span> : '–'}</td>
                   <td>
+                    {istVerwaltungStunde(st) ? (
+                      <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'flex-start'}}>
+                        {genehmigungBadge(st)}
+                        {adminView && st.genehmigung_status === 'offen' && (
+                          <div style={{display:'flex',gap:4}}>
+                            <button className="btn btn-sm" style={{fontSize:11,padding:'3px 8px',background:'#e8f5e9',color:'#2e7d32'}} onClick={()=>setGenehmigung(st,'genehmigt')}>✓ Genehmigen</button>
+                            <button className="btn btn-sm" style={{fontSize:11,padding:'3px 8px',background:'#fdecea',color:'#c62828'}} onClick={()=>setGenehmigung(st,'abgelehnt')}>✗ Ablehnen</button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
                     <div style={{display:'flex',flexDirection:'column',gap:3}}>
                       {/* Schüler 1 */}
                       {st.unterschrift_name
@@ -287,11 +330,12 @@ export default function Stunden({ adminView }) {
                           : <button className="btn btn-ghost btn-sm" style={{fontSize:11,padding:'3px 8px',background:'#f3e5f5',color:'#6a1b9a'}} onClick={()=>setUnterschriftModal({...st, nr:3, label:`Schüler 3: ${st.gruppe_schueler_namen?.split(',')[1]?.trim() || ''}`})}>✍️ S3</button>
                       )}
                     </div>
+                    )}
                   </td>
                   <td>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      <button className="btn btn-ghost btn-sm" onClick={()=>downloadPDF(st.id)}>📄 PDF</button>
-                      {!st.unterschrift_name && <>
+                      {!istVerwaltungStunde(st) && <button className="btn btn-ghost btn-sm" onClick={()=>downloadPDF(st.id)}>📄 PDF</button>}
+                      {!istVerwaltungStunde(st) && !st.unterschrift_name && <>
                         <button className="btn btn-ghost btn-sm" onClick={()=>sendSignaturLink(st,1)}>📧{st.unterrichtsform!=='einzel'?' S1':''}</button>
                         <button className="btn btn-ghost btn-sm" onClick={()=>sendWALink(st,1)}>💬{st.unterrichtsform!=='einzel'?' S1':''}</button>
                       </>}
@@ -327,11 +371,17 @@ export default function Stunden({ adminView }) {
                   <option value="">Bitte wählen...</option>
                   {schueler.map(s => (
                     <option key={s.id} value={s.id}>
-                      {s.vorname} {s.nachname} {s.but_status ? '(BuT)' : ''}
+                      {s.ist_verwaltung ? '🗂️ Verwaltung (organisatorisch / Fortbildung / Ausflug)' : `${s.vorname} ${s.nachname} ${s.but_status ? '(BuT)' : ''}`}
                     </option>
                   ))}
                 </select>
               </div>
+              {istVerwaltungForm && (
+                <div style={{background:'#fff3e0',border:'1px solid #ffcc80',borderRadius:10,padding:'12px 14px',marginBottom:12,fontSize:13,color:'#e65100'}}>
+                  🗂️ <strong>Verwaltungs-Stunde:</strong> Diese Stunde wird Meryem zur <strong>Genehmigung</strong> vorgelegt. Erst nach Genehmigung ist sie abrechenbar.
+                </div>
+              )}
+              {!istVerwaltungForm && (
               <div className="form-group">
                 <label>Unterrichtsform</label>
                 <select value={form.unterrichtsform||'einzel'} onChange={e=>setForm({...form,unterrichtsform:e.target.value,gruppe_schueler_ids:[],gruppe_schueler_namen:''})}>
@@ -340,7 +390,8 @@ export default function Stunden({ adminView }) {
                   <option value="3er">👥👥 3er-Gruppe</option>
                 </select>
               </div>
-              {(form.unterrichtsform==='2er'||form.unterrichtsform==='3er') && (
+              )}
+              {!istVerwaltungForm && (form.unterrichtsform==='2er'||form.unterrichtsform==='3er') && (
                 <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:12}}>
                   <div style={{fontSize:13,fontWeight:700,color:'var(--purple)',marginBottom:10}}>👥 Weitere Schüler der Gruppe</div>
                   <div className="form-group" style={{marginBottom:8}}>
@@ -351,7 +402,7 @@ export default function Stunden({ adminView }) {
                       setForm({...form,gruppe_schueler_ids:ids,gruppe_schueler_namen:namen});
                     }}>
                       <option value="">Bitte wählen...</option>
-                      {schueler.filter(s=>String(s.id)!==String(form.schueler_id)).map(s=>(
+                      {schueler.filter(s=>!s.ist_verwaltung&&String(s.id)!==String(form.schueler_id)).map(s=>(
                         <option key={s.id} value={s.id}>{s.vorname} {s.nachname} {s.but_status?'(BuT)':''}</option>
                       ))}
                     </select>
@@ -365,7 +416,7 @@ export default function Stunden({ adminView }) {
                         setForm({...form,gruppe_schueler_ids:ids,gruppe_schueler_namen:namen});
                       }}>
                         <option value="">Bitte wählen...</option>
-                        {schueler.filter(s=>String(s.id)!==String(form.schueler_id)&&String(s.id)!==String((form.gruppe_schueler_ids||[])[0])).map(s=>(
+                        {schueler.filter(s=>!s.ist_verwaltung&&String(s.id)!==String(form.schueler_id)&&String(s.id)!==String((form.gruppe_schueler_ids||[])[0])).map(s=>(
                           <option key={s.id} value={s.id}>{s.vorname} {s.nachname} {s.but_status?'(BuT)':''}</option>
                         ))}
                       </select>
@@ -373,11 +424,13 @@ export default function Stunden({ adminView }) {
                   )}
                 </div>
               )}
+              {!istVerwaltungForm && (
               <div style={{marginBottom:12}}>
                 <button type="button" className="btn btn-danger" style={{width:'100%'}} onClick={()=>setAbsagePopup(true)}>
                   ❌ Kurzfristige Absage melden
                 </button>
               </div>
+              )}
               <div className="form-row">
                 <div className="form-group"><label>Datum *</label><input type="date" required value={form.datum} onChange={e=>setForm({...form,datum:e.target.value})}/></div>
                 <div className="form-group"><label>Fach</label><input value={form.fach} onChange={e=>setForm({...form,fach:e.target.value})} placeholder="z.B. Mathe"/></div>
@@ -398,6 +451,7 @@ export default function Stunden({ adminView }) {
                   <option value="online">Online</option>
                 </select>
               </div>
+              {!istVerwaltungForm && (
               <div className="form-group">
                 <label>Stundentyp</label>
                 <select value={form.stundentyp} onChange={e=>setForm({...form,stundentyp:e.target.value,zusatz_typ:'',zusatz_beschreibung:''})}>
@@ -405,7 +459,26 @@ export default function Stunden({ adminView }) {
                   <option value="zusatzstunde">⭐ Zusatzstunde</option>
                 </select>
               </div>
-              {form.stundentyp === 'zusatzstunde' && (
+              )}
+              {istVerwaltungForm && (
+                <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:8}}>
+                  <div className="form-group" style={{marginBottom:12}}>
+                    <label>Art der Tätigkeit</label>
+                    <select value={form.zusatz_typ} onChange={e=>setForm({...form,zusatz_typ:e.target.value})}>
+                      <option value="">Bitte wählen</option>
+                      <option value="verwaltung">🗂️ Verwaltung / Organisation</option>
+                      <option value="fortbildung">🎓 Fortbildung</option>
+                      <option value="ausflug">🚌 Ausflug</option>
+                      <option value="sonstiges">📋 Sonstiges</option>
+                    </select>
+                  </div>
+                  <div className="form-group" style={{marginBottom:0}}>
+                    <label>Beschreibung *</label>
+                    <input value={form.zusatz_beschreibung} onChange={e=>setForm({...form,zusatz_beschreibung:e.target.value})} placeholder="z.B. Materialvorbereitung, Teamsitzung, Fortbildung Lerntherapie"/>
+                  </div>
+                </div>
+              )}
+              {!istVerwaltungForm && form.stundentyp === 'zusatzstunde' && (
                 <div style={{background:'var(--purple-pale)',borderRadius:10,padding:16,marginBottom:8}}>
                   <div className="form-group" style={{marginBottom:12}}>
                     <label>Art der Zusatzstunde</label>
@@ -491,10 +564,13 @@ export default function Stunden({ adminView }) {
                   </>)}
                 </div>
               )}
+              {!istVerwaltungForm && (
               <div className="form-group">
                 <label>Lernfortschritt</label>
                 <textarea rows={3} value={form.lernfortschritt} onChange={e=>setForm({...form,lernfortschritt:e.target.value})} placeholder="Was wurde heute erarbeitet? Welche Fortschritte hat der Schüler gemacht?"/>
               </div>
+              )}
+              {!istVerwaltungForm && (
               <div
                 onClick={()=>setForm({...form,kurzfristige_absage:!form.kurzfristige_absage})}
                 style={{
@@ -507,6 +583,7 @@ export default function Stunden({ adminView }) {
                 }}>
                 {form.kurzfristige_absage ? '✅' : '⬜'} Als kurzfristige Absage markieren
               </div>
+              )}
               <div style={{display:'flex',gap:12,justifyContent:'flex-end',flexWrap:'wrap'}}>
                 <button type="button" className="btn btn-ghost" onClick={()=>{setModal(false);setEditId(null);setForm(emptyForm);}}>Abbrechen</button>
                 <button type="submit" className="btn btn-primary">Speichern</button>

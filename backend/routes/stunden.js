@@ -63,20 +63,33 @@ router.post('/', auth, async (req, res) => {
     const [sh, sm] = startzeit.split(':').map(Number);
     const [eh, em] = endzeit.split(':').map(Number);
     const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
-    const form = unterrichtsform || 'einzel';
-    const gruppeIds = (form !== 'einzel' && gruppe_schueler_ids?.length) ? gruppe_schueler_ids : [];
-    const gruppeNamen = (form !== 'einzel' && gruppe_schueler_namen) ? gruppe_schueler_namen : '';
 
+    // Schüler-Infos laden (inkl. Verwaltungs-Erkennung)
     let klasseFrozen = null;
+    let istVerwaltung = false;
     try {
-      const scRes = await pool.query('SELECT klasse, klassenstufe_jahr FROM schueler WHERE id=$1', [schueler_id]);
-      if (scRes.rows[0]) klasseFrozen = berechneKlasse(scRes.rows[0].klasse, scRes.rows[0].klassenstufe_jahr, datum ? new Date(datum) : new Date());
+      const scRes = await pool.query('SELECT klasse, klassenstufe_jahr, ist_verwaltung FROM schueler WHERE id=$1', [schueler_id]);
+      if (scRes.rows[0]) {
+        istVerwaltung = !!scRes.rows[0].ist_verwaltung;
+        klasseFrozen = berechneKlasse(scRes.rows[0].klasse, scRes.rows[0].klassenstufe_jahr, datum ? new Date(datum) : new Date());
+      }
     } catch(e) { /* ignore */ }
+
+    // Verwaltungs-Stunden: kein Gruppenunterricht, kein BuT, Status "offen" (Admin-Genehmigung nötig)
+    const form = istVerwaltung ? 'einzel' : (unterrichtsform || 'einzel');
+    const gruppeIds = (!istVerwaltung && form !== 'einzel' && gruppe_schueler_ids?.length) ? gruppe_schueler_ids : [];
+    const gruppeNamen = (!istVerwaltung && form !== 'einzel' && gruppe_schueler_namen) ? gruppe_schueler_namen : '';
+    const finalStundentyp = istVerwaltung ? 'verwaltung' : (stundentyp || 'lehrstunde');
+    const genehmigungStatus = istVerwaltung ? 'offen' : null;
+
     const result = await pool.query(
-      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage,unterrichtsform,gruppe_schueler_ids,gruppe_schueler_namen,klasse)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
-      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen, klasseFrozen]
+      `INSERT INTO stunden (lehrkraft_id,schueler_id,datum,startzeit,endzeit,dauer_minuten,fach,ort,inhalt,fahrt_von,fahrt_nach,fahrt_km,stundentyp,zusatz_typ,zusatz_beschreibung,kurzfristige_absage,unterrichtsform,gruppe_schueler_ids,gruppe_schueler_namen,klasse,genehmigung_status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
+      [req.user.id, schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, finalStundentyp, zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen, klasseFrozen, genehmigungStatus]
     );
+
+    // Verwaltungs-Stunden brauchen keine BuT-Prüfung und keine Unterschrift
+    if (istVerwaltung) return res.json(result.rows[0]);
 
     // BuT: alle Schüler der Gruppe prüfen
     const alleSchuelerIds = [parseInt(schueler_id), ...gruppeIds.map(id => parseInt(id))].filter(id => !isNaN(id) && id > 0);
@@ -123,18 +136,19 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(403).json({ error: 'Stunde ist bereits abgerechnet und kann nicht mehr bearbeitet werden.' });
 
     const { schueler_id, datum, startzeit, endzeit, fach, ort, lernfortschritt, fahrt_von, fahrt_nach, fahrt_km, stundentyp, zusatz_typ, zusatz_beschreibung, kurzfristige_absage, unterrichtsform, gruppe_schueler_ids, gruppe_schueler_namen } = req.body;
+    const istVerwaltung = alt.stundentyp === 'verwaltung';
     const [sh, sm] = startzeit.split(':').map(Number);
     const [eh, em] = endzeit.split(':').map(Number);
     const dauer_minuten = (eh * 60 + em) - (sh * 60 + sm);
-    const form = unterrichtsform || 'einzel';
-    const gruppeIds = (form !== 'einzel' && gruppe_schueler_ids && gruppe_schueler_ids.length) ? gruppe_schueler_ids : [];
-    const gruppeNamen = (form !== 'einzel' && gruppe_schueler_namen) ? gruppe_schueler_namen : '';
+    const form = istVerwaltung ? 'einzel' : (unterrichtsform || 'einzel');
+    const gruppeIds = (!istVerwaltung && form !== 'einzel' && gruppe_schueler_ids && gruppe_schueler_ids.length) ? gruppe_schueler_ids : [];
+    const gruppeNamen = (!istVerwaltung && form !== 'einzel' && gruppe_schueler_namen) ? gruppe_schueler_namen : '';
 
-    // ALTES BuT zurueckbuchen
+    // ALTES BuT zurueckbuchen (nicht bei Verwaltungs-Stunden)
     const altGruppeIds = (alt.gruppe_schueler_ids || []).map(id => parseInt(id)).filter(id => !isNaN(id));
     const altAlleIds = [parseInt(alt.schueler_id), ...altGruppeIds].filter(id => !isNaN(id) && id > 0);
     const altDauerStd = (alt.dauer_minuten || 60) / 60;
-    for (const sid of altAlleIds) {
+    for (const sid of (istVerwaltung ? [] : altAlleIds)) {
       const sc = await pool.query('SELECT but_status FROM schueler WHERE id=$1', [sid]);
       if (!sc.rows[0] || !sc.rows[0].but_status) continue;
       const but = await pool.query(
@@ -150,8 +164,18 @@ router.put('/:id', auth, async (req, res) => {
     // Stunde updaten
     const result = await pool.query(
       `UPDATE stunden SET schueler_id=$1, datum=$2, startzeit=$3, endzeit=$4, dauer_minuten=$5, fach=$6, ort=$7, inhalt=$8, fahrt_von=$9, fahrt_nach=$10, fahrt_km=$11, stundentyp=$12, zusatz_typ=$13, zusatz_beschreibung=$14, kurzfristige_absage=$15, unterrichtsform=$16, gruppe_schueler_ids=$17, gruppe_schueler_namen=$18 WHERE id=$19 RETURNING *`,
-      [schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, stundentyp||'lehrstunde', zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen, req.params.id]
+      [schueler_id, datum, startzeit, endzeit, dauer_minuten, fach, ort, lernfortschritt, fahrt_von||null, fahrt_nach||null, fahrt_km||null, istVerwaltung ? 'verwaltung' : (stundentyp||'lehrstunde'), zusatz_typ||null, zusatz_beschreibung||null, kurzfristige_absage||false, form, gruppeIds, gruppeNamen, req.params.id]
     );
+
+    // Verwaltungs-Stunde durch Lehrkraft geändert -> erneute Genehmigung nötig
+    if (istVerwaltung && req.user.role !== 'admin') {
+      const reset = await pool.query(
+        `UPDATE stunden SET genehmigung_status='offen', genehmigung_grund=NULL, genehmigt_am=NULL, genehmigt_von=NULL WHERE id=$1 RETURNING *`,
+        [req.params.id]
+      );
+      return res.json(reset.rows[0]);
+    }
+    if (istVerwaltung) return res.json(result.rows[0]);
 
     // NEUES BuT abziehen
     const neuAlleIds = [parseInt(schueler_id), ...gruppeIds.map(id => parseInt(id))].filter(id => !isNaN(id) && id > 0);
@@ -225,6 +249,25 @@ router.patch('/:id/unterschrift', auth, async (req, res) => {
       query = `UPDATE stunden SET unterschrift_data=$1, unterschrift_name=$2, unterschrift_datum=NOW() WHERE id=$3 RETURNING *`;
     }
     const result = await pool.query(query, [unterschrift_data, unterschrift_name, req.params.id]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Verwaltungs-Stunde genehmigen/ablehnen (nur Admin)
+router.patch('/:id/genehmigung', auth, adminOnly, async (req, res) => {
+  const { status, grund } = req.body;
+  if (!['genehmigt', 'abgelehnt'].includes(status)) {
+    return res.status(400).json({ error: 'Ungültiger Status' });
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE stunden SET genehmigung_status=$1, genehmigung_grund=$2, genehmigt_am=NOW(), genehmigt_von=$3
+       WHERE id=$4 AND stundentyp='verwaltung' RETURNING *`,
+      [status, grund || null, req.user.id, req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Verwaltungs-Stunde nicht gefunden' });
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });

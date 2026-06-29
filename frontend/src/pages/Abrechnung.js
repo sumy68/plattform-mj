@@ -92,6 +92,8 @@ export default function Abrechnung() {
 
   const istUnterschrieben = (st) => {
     if (!st) return false;
+    // Verwaltungs-Stunden: Freigabe per Admin-Genehmigung statt Unterschrift
+    if (st.stundentyp === 'verwaltung') return st.genehmigung_status === 'genehmigt';
     const s1 = !!st.unterschrift_name;
     const s2 = st.unterrichtsform==='2er'||st.unterrichtsform==='3er' ? !!st.unterschrift_name_2 : true;
     const s3 = st.unterrichtsform==='3er' ? !!st.unterschrift_name_3 : true;
@@ -426,7 +428,7 @@ export default function Abrechnung() {
               <tbody>
                 {offeneStunden.map(st => (
                   <tr key={st.id} onClick={isHonorar && istUnterschrieben(st) ? ()=>toggleStunde(st.id) : undefined} style={{cursor: isHonorar && istUnterschrieben(st) ? 'pointer' : 'default', opacity: isHonorar && !istUnterschrieben(st) ? 0.55 : 1}}>
-                    {isHonorar && <td><input type="checkbox" disabled={!istUnterschrieben(st)} checked={selected.includes(st.id)} onChange={()=>toggleStunde(st.id)} onClick={e=>e.stopPropagation()} title={!istUnterschrieben(st) ? 'Erst abrechenbar wenn vollständig unterschrieben' : ''} style={{cursor: istUnterschrieben(st) ? 'pointer' : 'not-allowed'}}/></td>}
+                    {isHonorar && <td><input type="checkbox" disabled={!istUnterschrieben(st)} checked={selected.includes(st.id)} onChange={()=>toggleStunde(st.id)} onClick={e=>e.stopPropagation()} title={!istUnterschrieben(st) ? (st.stundentyp==='verwaltung' ? 'Erst abrechenbar nach Genehmigung durch Meryem' : 'Erst abrechenbar wenn vollständig unterschrieben') : ''} style={{cursor: istUnterschrieben(st) ? 'pointer' : 'not-allowed'}}/></td>}
                     <td>{new Date(st.datum).toLocaleDateString('de-DE')}</td>
                     <td>{st.unterrichtsform && st.unterrichtsform !== 'einzel' && st.gruppe_schueler_namen ? st.schueler_name + ', ' + st.gruppe_schueler_namen : st.schueler_name}</td>
                     <td>{st.startzeit}–{st.endzeit}</td>
@@ -435,6 +437,11 @@ export default function Abrechnung() {
                     <td style={{fontSize:12,color:'var(--text-light)'}}>{st.fahrt_km ? `${st.fahrt_km} km = ${(parseFloat(st.fahrt_km)*0.38).toFixed(2)} €` : '–'}</td>
                     <td style={{fontWeight:700,color:'var(--purple)'}}>{(calcStunden(st) * (st.kurzfristige_absage ? parseFloat(guthaben?.absage_stundensatz||guthaben?.stundensatz||0) : st.unterrichtsform==='2er' ? parseFloat(guthaben?.stundensatz_2er||guthaben?.stundensatz||0) : st.unterrichtsform==='3er' ? parseFloat(guthaben?.stundensatz_3er||guthaben?.stundensatz||0) : parseFloat(guthaben?.stundensatz||0)) + (st.fahrt_km ? parseFloat(st.fahrt_km)*0.38 : 0)).toFixed(2)} €</td>
                     <td>{(() => {
+                      if (st.stundentyp === 'verwaltung') {
+                        if (st.genehmigung_status === 'genehmigt') return <span className="badge badge-unterschrift">✓ Genehmigt</span>;
+                        if (st.genehmigung_status === 'abgelehnt') return <span className="badge" style={{background:'#fdecea',color:'#c62828'}}>✗ Abgelehnt</span>;
+                        return <span className="badge" style={{background:'#fff3e0',color:'#e65100'}}>🕒 Genehmigung offen</span>;
+                      }
                       const s1 = !!st.unterschrift_name;
                       const s2 = st.unterrichtsform==='2er'||st.unterrichtsform==='3er' ? !!st.unterschrift_name_2 : true;
                       const s3 = st.unterrichtsform==='3er' ? !!st.unterschrift_name_3 : true;

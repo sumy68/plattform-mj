@@ -89,10 +89,16 @@ router.get('/', auth, async (req, res) => {
         notifications.push({ id:`schueler_${r.id}`, typ:'info', icon:'👧', titel:'Schüler ohne Lehrkraft', text:`${r.name} ist noch keiner Lehrkraft zugewiesen`, link:'/schueler' });
       });
 
-      // 8. Unterschriften fehlen (Admin)
-      const unterschriften = await pool.query(`SELECT COUNT(*) FROM stunden WHERE unterschrift_data IS NULL AND to_char(datum,'YYYY-MM')=$1`, [monat]);
+      // 8. Unterschriften fehlen (Admin) — Verwaltungs-Stunden ausgenommen
+      const unterschriften = await pool.query(`SELECT COUNT(*) FROM stunden WHERE unterschrift_data IS NULL AND COALESCE(stundentyp,'') <> 'verwaltung' AND to_char(datum,'YYYY-MM')=$1`, [monat]);
       if (parseInt(unterschriften.rows[0].count) > 0) {
         notifications.push({ id:'unterschrift', typ:'warning', icon:'✍️', titel:'Unterschriften fehlen', text:`${unterschriften.rows[0].count} Stunde(n) ohne Unterschrift diesen Monat`, link:'/stunden' });
+      }
+
+      // 9. Verwaltungs-Stunden zur Genehmigung
+      const verwOffen = await pool.query(`SELECT COUNT(*) FROM stunden WHERE stundentyp='verwaltung' AND genehmigung_status='offen'`);
+      if (parseInt(verwOffen.rows[0].count) > 0) {
+        notifications.push({ id:'verwaltung_offen', typ:'warning', icon:'🗂️', titel:'Verwaltungs-Stunden prüfen', text:`${verwOffen.rows[0].count} Stunde(n) warten auf Genehmigung`, link:'/stunden' });
       }
 
     } else {
@@ -183,11 +189,30 @@ router.get('/', auth, async (req, res) => {
         notifications.push({ id:`but_leer_lk_${r.id}`, typ:'danger', icon:'⚠️', titel:'BuT-Antrag einholen!', text:`${r.name} hat nur noch ${offenStr}h. Bitte beim Schüler/Eltern den neuen BuT-Antrag einholen.`, link:'/but' });
       });
 
-      // 6. Unterschriften fehlen
-      const unterschriften = await pool.query(`SELECT COUNT(*) FROM stunden WHERE lehrkraft_id=$1 AND unterschrift_data IS NULL AND to_char(datum,'YYYY-MM')=$2`, [userId, monat]);
+      // 6. Unterschriften fehlen — Verwaltungs-Stunden ausgenommen
+      const unterschriften = await pool.query(`SELECT COUNT(*) FROM stunden WHERE lehrkraft_id=$1 AND unterschrift_data IS NULL AND COALESCE(stundentyp,'') <> 'verwaltung' AND to_char(datum,'YYYY-MM')=$2`, [userId, monat]);
       if (parseInt(unterschriften.rows[0].count) > 0) {
         notifications.push({ id:'unterschrift', typ:'warning', icon:'✍️', titel:'Unterschriften fehlen', text:`${unterschriften.rows[0].count} Stunde(n) ohne Unterschrift diesen Monat`, link:'/meine-stunden' });
       }
+
+      // 7. Verwaltungs-Stunden genehmigt/abgelehnt (letzte 7 Tage)
+      const verwEntschieden = await pool.query(
+        `SELECT id, genehmigung_status, datum, genehmigung_grund FROM stunden
+         WHERE lehrkraft_id=$1 AND stundentyp='verwaltung' AND genehmigung_status IN ('genehmigt','abgelehnt')
+         AND genehmigt_am > NOW() - INTERVAL '7 days'
+         ORDER BY genehmigt_am DESC LIMIT 3`, [userId]
+      );
+      verwEntschieden.rows.forEach(v => {
+        const ok = v.genehmigung_status === 'genehmigt';
+        notifications.push({
+          id:`verwaltung_${v.id}`,
+          typ: ok ? 'info' : 'danger',
+          icon: ok ? '✅' : '❌',
+          titel: `Verwaltungs-Stunde ${ok ? 'genehmigt' : 'abgelehnt'}`,
+          text: `${new Date(v.datum).toLocaleDateString('de-DE')}${v.genehmigung_grund ? ` · ${v.genehmigung_grund}` : ''}`,
+          link: '/meine-stunden'
+        });
+      });
     }
 
     res.json(notifications);
