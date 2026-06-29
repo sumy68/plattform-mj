@@ -16,6 +16,7 @@ export default function Stunden({ adminView }) {
   const [modal, setModal] = useState(false);
   const [unterschriftModal, setUnterschriftModal] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [stundenart, setStundenart] = useState('nachhilfe'); // 'nachhilfe' | 'verwaltung'
   const [editId, setEditId] = useState(null);
   const [monat, setMonat] = useState(new Date().toISOString().slice(0,7));
   const [unterschriftName, setUnterschriftName] = useState('');
@@ -104,10 +105,18 @@ export default function Stunden({ adminView }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Verwaltungs-Stunde: internen Anker-Datensatz "Verwaltung" verwenden, kein Fach/Gruppe
+    let payload = form;
+    if (stundenart === 'verwaltung') {
+      const verwId = verwaltungSchueler?.id;
+      if (!verwId) return alert('Verwaltungs-Eintrag nicht gefunden. Bitte Seite neu laden.');
+      if (!form.zusatz_beschreibung) return alert('Bitte eine Beschreibung der Tätigkeit angeben.');
+      payload = { ...form, schueler_id: verwId, fach: '', unterrichtsform: 'einzel', gruppe_schueler_ids: [], gruppe_schueler_namen: '', kurzfristige_absage: false };
+    }
     try {
       const url = editId ? `${API}/api/stunden/${editId}` : `${API}/api/stunden`;
       const method = editId ? 'put' : 'post';
-      const res = await axios[method](url, form, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      const res = await axios[method](url, payload, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setModal(false);
       setForm(emptyForm);
       setEditId(null);
@@ -190,6 +199,7 @@ export default function Stunden({ adminView }) {
       gruppe_schueler_ids: (st.gruppe_schueler_ids || []).map(String),
       gruppe_schueler_namen: st.gruppe_schueler_namen || ''
     });
+    setStundenart(st.stundentyp === 'verwaltung' ? 'verwaltung' : 'nachhilfe');
     setEditId(st.id);
     setModal(true);
   };
@@ -204,9 +214,9 @@ export default function Stunden({ adminView }) {
     }
   };
 
-  // Verwaltungs-/Sonstige-Stunden (Pseudo-Schüler "Verwaltung")
-  const selektierterSchueler = schueler.find(s => String(s.id) === String(form.schueler_id));
-  const istVerwaltungForm = !!selektierterSchueler?.ist_verwaltung;
+  // Verwaltungs-/Sonstige-Stunden als eigene Stundenart (nicht als Schüler)
+  const verwaltungSchueler = schueler.find(s => s.ist_verwaltung);
+  const istVerwaltungForm = stundenart === 'verwaltung';
   const istVerwaltungStunde = (st) => st.stundentyp === 'verwaltung';
 
   const setGenehmigung = async (st, status) => {
@@ -244,7 +254,7 @@ export default function Stunden({ adminView }) {
         </h2>
         <div style={{display:'flex',gap:12,alignItems:'center'}}>
             <MonatsPicker value={monat} onChange={setMonat}/>
-          <button className="btn btn-primary" onClick={()=>{setEditId(null);setForm(emptyForm);setModal(true);}}>+ Stunde eintragen</button>
+          <button className="btn btn-primary" onClick={()=>{setEditId(null);setForm(emptyForm);setStundenart('nachhilfe');setModal(true);}}>+ Stunde eintragen</button>
         </div>
       </div>
 
@@ -366,19 +376,28 @@ export default function Stunden({ adminView }) {
             <div className="modal-title">{editId ? 'Stunde bearbeiten' : 'Stunde eintragen'}</div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
+                <label>Stundenart *</label>
+                <select value={stundenart} onChange={e=>setStundenart(e.target.value)}>
+                  <option value="nachhilfe">📚 Nachhilfe / Lehrstunde</option>
+                  <option value="verwaltung">🗂️ Verwaltung / Sonstiges (Orga, Fortbildung, Ausflug)</option>
+                </select>
+              </div>
+              {!istVerwaltungForm && (
+              <div className="form-group">
                 <label>Schüler *</label>
                 <select required value={form.schueler_id} onChange={e=>setForm({...form,schueler_id:e.target.value})}>
                   <option value="">Bitte wählen...</option>
-                  {schueler.map(s => (
+                  {schueler.filter(s=>!s.ist_verwaltung).map(s => (
                     <option key={s.id} value={s.id}>
-                      {s.ist_verwaltung ? '🗂️ Verwaltung (organisatorisch / Fortbildung / Ausflug)' : `${s.vorname} ${s.nachname} ${s.but_status ? '(BuT)' : ''}`}
+                      {s.vorname} {s.nachname} {s.but_status ? '(BuT)' : ''}
                     </option>
                   ))}
                 </select>
               </div>
+              )}
               {istVerwaltungForm && (
                 <div style={{background:'#fff3e0',border:'1px solid #ffcc80',borderRadius:10,padding:'12px 14px',marginBottom:12,fontSize:13,color:'#e65100'}}>
-                  🗂️ <strong>Verwaltungs-Stunde:</strong> Diese Stunde wird Meryem zur <strong>Genehmigung</strong> vorgelegt. Erst nach Genehmigung ist sie abrechenbar.
+                  🗂️ <strong>Verwaltungs-Stunde:</strong> Kein Schüler/Fach nötig. Diese Stunde wird Meryem zur <strong>Genehmigung</strong> vorgelegt. Erst nach Genehmigung ist sie abrechenbar.
                 </div>
               )}
               {!istVerwaltungForm && (
@@ -433,7 +452,7 @@ export default function Stunden({ adminView }) {
               )}
               <div className="form-row">
                 <div className="form-group"><label>Datum *</label><input type="date" required value={form.datum} onChange={e=>setForm({...form,datum:e.target.value})}/></div>
-                <div className="form-group"><label>Fach</label><input value={form.fach} onChange={e=>setForm({...form,fach:e.target.value})} placeholder="z.B. Mathe"/></div>
+                {!istVerwaltungForm && <div className="form-group"><label>Fach</label><input value={form.fach} onChange={e=>setForm({...form,fach:e.target.value})} placeholder="z.B. Mathe"/></div>}
               </div>
               <div className="form-row">
                 <div className="form-group"><label>Startzeit *</label><input type="time" required value={form.startzeit} onChange={e=>setForm({...form,startzeit:e.target.value})}/></div>
@@ -585,7 +604,7 @@ export default function Stunden({ adminView }) {
               </div>
               )}
               <div style={{display:'flex',gap:12,justifyContent:'flex-end',flexWrap:'wrap'}}>
-                <button type="button" className="btn btn-ghost" onClick={()=>{setModal(false);setEditId(null);setForm(emptyForm);}}>Abbrechen</button>
+                <button type="button" className="btn btn-ghost" onClick={()=>{setModal(false);setEditId(null);setForm(emptyForm);setStundenart('nachhilfe');}}>Abbrechen</button>
                 <button type="submit" className="btn btn-primary">Speichern</button>
               </div>
             </form>
