@@ -66,9 +66,13 @@ export default function Lehrkraefte() {
   };
 
   const deleteUser = async (u) => {
-    if (!window.confirm(`${u.name} wirklich löschen?`)) return;
-    await axios.delete(`${API}/api/auth/users/${u.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-    load();
+    if (!window.confirm(`${u.name} wirklich löschen?\n\nHinweis: Bei einer Kündigung bitte „Deaktivieren" nutzen – nur so bleiben Stunden & Rechnungen erhalten. Löschen ist nur für Konten ohne Belege möglich.`)) return;
+    try {
+      await axios.delete(`${API}/api/auth/users/${u.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      load();
+    } catch (err) {
+      alert('Fehler: ' + (err.response?.data?.error || err.message));
+    }
   };
 
   const openDetail = async (u) => {

@@ -157,14 +157,26 @@ router.delete('/users/:id', auth, adminOnly, async (req, res) => {
     const userCheck = await pool.query('SELECT id, role, name FROM users WHERE id=$1', [userId]);
     if (!userCheck.rows[0]) return res.status(404).json({ error: 'Nutzer nicht gefunden' });
     if (userCheck.rows[0].role === 'admin') return res.status(403).json({ error: 'Admin kann nicht gelöscht werden' });
-    
-    // Cascade: alle abhängigen Daten zuerst löschen
+
+    // Belege schützen: Lehrkraft mit Stunden/Rechnungen darf NICHT gelöscht werden
+    // (z.B. bei Kündigung müssen Stundennachweise & Rechnungen erhalten bleiben → stattdessen deaktivieren)
+    const stundenCount = await pool.query('SELECT COUNT(*)::int AS c FROM stunden WHERE lehrkraft_id=$1', [userId]);
+    let rechnungenCount = 0;
+    try {
+      const r = await pool.query('SELECT COUNT(*)::int AS c FROM rechnungen WHERE user_id=$1', [userId]);
+      rechnungenCount = r.rows[0].c;
+    } catch (e) { /* Tabelle evtl. nicht vorhanden */ }
+    if (stundenCount.rows[0].c > 0 || rechnungenCount > 0) {
+      return res.status(400).json({
+        error: 'Diese Lehrkraft hat bereits Stunden oder Rechnungen – diese Belege müssen erhalten bleiben und dürfen nicht gelöscht werden. Bitte die Lehrkraft stattdessen deaktivieren.'
+      });
+    }
+
+    // Nur ein Konto ohne Belege wird wirklich gelöscht (z.B. versehentliche Registrierung)
     await pool.query('DELETE FROM lehrkraft_schueler WHERE lehrkraft_id=$1', [userId]);
     await pool.query('DELETE FROM abwesenheiten WHERE user_id=$1', [userId]);
-    await pool.query('DELETE FROM stunden WHERE lehrkraft_id=$1', [userId]);
-    await pool.query('DELETE FROM rechnungen WHERE user_id=$1', [userId]).catch(()=>{});
     await pool.query('DELETE FROM notifications WHERE user_id=$1', [userId]).catch(()=>{});
-    
+
     // Jetzt User selbst löschen
     const result = await pool.query("DELETE FROM users WHERE id=$1 AND role!='admin' RETURNING id, name", [userId]);
     
