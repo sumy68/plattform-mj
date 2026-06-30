@@ -59,6 +59,7 @@ export default function Abrechnung() {
     const lehrkraefte = Object.values(byLehrkraft).map(lk => ({
       ...lk,
       gesamt: lk.stunden.length,
+      stunden_summe: lk.stunden.reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60, 0),
       abgerechnet: lk.stunden.filter(s => s.abgerechnet).length,
       offen: lk.stunden.filter(s => !s.abgerechnet).length,
       fahrtkosten_gesamt: lk.stunden.reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
@@ -325,7 +326,7 @@ export default function Abrechnung() {
                     <tr key={lk.id}>
                       <td><strong>{lk.name}</strong></td>
                       <td>{lk.stundensatz} €/Std.</td>
-                      <td>{lk.gesamt} Stunden</td>
+                      <td>{(lk.stunden_summe % 1 === 0 ? lk.stunden_summe : lk.stunden_summe.toFixed(1))} Stunden <small style={{color:'var(--text-light)'}}>({lk.gesamt} Einträge)</small></td>
                     </tr>
                   ))}
               </tbody>
