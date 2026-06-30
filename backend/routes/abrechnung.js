@@ -526,3 +526,20 @@ router.patch('/auszahlung/:id', auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Offene Honorarkraft-Stunden eines Monats als ausgezahlt markieren (Admin)
+router.patch('/honorar-ausgezahlt/:userId', auth, adminOnly, async (req, res) => {
+  try {
+    const { monat } = req.body;
+    if (!monat || !/^\d{4}-\d{2}$/.test(monat)) {
+      return res.status(400).json({ error: 'Gültiger Monat (YYYY-MM) erforderlich' });
+    }
+    const result = await pool.query(
+      "UPDATE stunden SET abgerechnet=true WHERE lehrkraft_id=$1 AND TO_CHAR(datum,'YYYY-MM')=$2 AND abgerechnet=false",
+      [req.params.userId, monat]
+    );
+    res.json({ success: true, aktualisiert: result.rowCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
