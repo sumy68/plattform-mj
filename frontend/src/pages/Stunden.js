@@ -25,6 +25,7 @@ export default function Stunden({ adminView }) {
   const [kmLaden, setKmLaden] = useState(false);
   const sigRef = useRef(null);
   const [filterSchueler, setFilterSchueler] = useState('');
+  const [filterLehrkraft, setFilterLehrkraft] = useState('');
   const [filterNurBut, setFilterNurBut] = useState(false);
   const [zipLoading, setZipLoading] = useState(false);
 
@@ -66,8 +67,15 @@ export default function Stunden({ adminView }) {
   };
   useEffect(() => { load(); }, [monat]);
 
+  const lehrkraefteListe = adminView
+    ? Array.from(new Map(stunden.filter(s => s.lehrkraft_id).map(s => [s.lehrkraft_id, s.lehrkraft_name])).entries())
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    : [];
+
   const gefilterteStunden = stunden.filter(st => {
     if (filterSchueler && String(st.schueler_id) !== String(filterSchueler)) return false;
+    if (filterLehrkraft && String(st.lehrkraft_id) !== String(filterLehrkraft)) return false;
     if (filterNurBut && !st.but_status) return false;
     return true;
   });
@@ -265,6 +273,16 @@ export default function Stunden({ adminView }) {
             <option value="">👤 Alle Schüler</option>
             {schueler.map(s => (
               <option key={s.id} value={s.id}>{s.ist_verwaltung ? '🗂️ Verwaltung' : `${s.vorname} ${s.nachname}`}</option>
+            ))}
+          </select>
+          <select
+            value={filterLehrkraft}
+            onChange={e=>setFilterLehrkraft(e.target.value)}
+            style={{padding:'8px 12px',borderRadius:8,border:'2px solid var(--border)',fontFamily:'inherit',fontSize:14}}
+          >
+            <option value="">🧑‍🏫 Alle Lehrkräfte</option>
+            {lehrkraefteListe.map(l => (
+              <option key={l.id} value={l.id}>{l.name}</option>
             ))}
           </select>
           <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontWeight:600,fontSize:14}}>
