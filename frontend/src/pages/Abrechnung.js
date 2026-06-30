@@ -24,6 +24,7 @@ export default function Abrechnung() {
   const [bereitsEingereicht, setBereitsEingereicht] = useState(false);
   const [meineAuszahlungen, setMeineAuszahlungen] = useState([]);
   const [auszahlungLoading, setAuszahlungLoading] = useState(false);
+  const [honorarBezahlt, setHonorarBezahlt] = useState([]);
 
   useEffect(() => {
     if (isAdmin) { loadAdminStats(); loadAuszahlungen(); }
@@ -38,10 +39,13 @@ export default function Abrechnung() {
   };
 
   const loadAdminStats = async () => {
-    const [stundenRes, usersRes] = await Promise.all([
-      axios.get(`${API}/api/stunden?monat=${monat === 'alle' ? new Date().toISOString().slice(0,7) : monat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
-      axios.get(`${API}/api/auth/users`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    const effMonat = monat === 'alle' ? new Date().toISOString().slice(0,7) : monat;
+    const [stundenRes, usersRes, bezahltRes] = await Promise.all([
+      axios.get(`${API}/api/stunden?monat=${effMonat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      axios.get(`${API}/api/auth/users`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      axios.get(`${API}/api/abrechnung/honorar-auszahlungen?monat=${effMonat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     ]);
+    setHonorarBezahlt(bezahltRes.data || []);
     const allStunden = stundenRes.data;
     const allUsers = usersRes.data.filter(u => u.role !== 'admin');
     const byLehrkraft = {};
@@ -192,6 +196,9 @@ export default function Abrechnung() {
     { name: 'Noch möglich', value: Math.max(0, MINIJOB_GRENZE - guthaben.bereits_abgerechnet), color: '#e8e0f5' },
   ] : [];
 
+  const effMonat = monat === 'alle' ? new Date().toISOString().slice(0,7) : monat;
+  const honorarBezahltIds = new Set(honorarBezahlt.map(h => h.user_id));
+
   // ===== ADMIN =====
   if (isAdmin) return (
     <div>
@@ -207,8 +214,8 @@ export default function Abrechnung() {
         <div className="stats-grid" style={{marginBottom:24}}>
           <div className="stat-card"><div className="stat-number">{adminStats.total_stunden}</div><div className="stat-label">Stunden gesamt</div></div>
           <div className="stat-card"><div className="stat-number" style={{color:'var(--danger)'}}>{(auszahlungen.reduce((sum,a)=>sum+parseFloat(a.betrag),0) + adminStats.honorar_kosten).toFixed(0)} €</div><div className="stat-label">Gesamtkosten</div></div>
-          <div className="stat-card"><div className="stat-number" style={{color:'var(--warning)'}}>{(auszahlungen.filter(a=>a.status!=='erledigt').reduce((sum,a)=>sum+parseFloat(a.betrag),0) + adminStats.honorarkraefte.reduce((sum,l)=>sum+l.betrag_offen,0)).toFixed(0)} €</div><div className="stat-label">Noch auszuzahlen</div></div>
-          <div className="stat-card"><div className="stat-number" style={{color:'var(--success)'}}>{(auszahlungen.filter(a=>a.status==='erledigt').reduce((sum,a)=>sum+parseFloat(a.betrag),0) + adminStats.honorarkraefte.reduce((sum,l)=>sum+(l.betrag_gesamt-l.betrag_offen),0)).toFixed(0)} €</div><div className="stat-label">Bereits ausgezahlt</div></div>
+          <div className="stat-card"><div className="stat-number" style={{color:'var(--warning)'}}>{(auszahlungen.filter(a=>a.status!=='erledigt').reduce((sum,a)=>sum+parseFloat(a.betrag),0) + adminStats.honorarkraefte.filter(l=>!honorarBezahltIds.has(l.id)).reduce((sum,l)=>sum+l.betrag_gesamt,0)).toFixed(0)} €</div><div className="stat-label">Noch auszuzahlen</div></div>
+          <div className="stat-card"><div className="stat-number" style={{color:'var(--success)'}}>{(auszahlungen.filter(a=>a.status==='erledigt').reduce((sum,a)=>sum+parseFloat(a.betrag),0) + adminStats.honorarkraefte.filter(l=>honorarBezahltIds.has(l.id)).reduce((sum,l)=>sum+l.betrag_gesamt,0)).toFixed(0)} €</div><div className="stat-label">Bereits ausgezahlt</div></div>
           <div className="stat-card"><div className="stat-number">{adminStats.honorarkraefte.length}</div><div className="stat-label">Aktive Honorarkräfte</div></div>
         </div>
         {auszahlungen.length > 0 && (
@@ -267,18 +274,28 @@ export default function Abrechnung() {
                       <td style={{fontSize:12,color:'var(--text-light)'}}>{lk.fahrtkosten_gesamt > 0 ? lk.fahrtkosten_gesamt.toFixed(2)+' €' : '–'}</td>
                       <td><strong>{lk.betrag_gesamt.toFixed(2)} €</strong></td>
                       <td>
-                        {lk.offen > 0
-                          ? <button className="btn btn-success btn-sm" onClick={async()=>{
-                              const m = monat === 'alle' ? new Date().toISOString().slice(0,7) : monat;
-                              if(!window.confirm(`Alle offenen Stunden von ${lk.name} (${lk.betrag_offen.toFixed(2)} €) als ausgezahlt markieren?`)) return;
+                        {honorarBezahltIds.has(lk.id)
+                          ? <span style={{display:'inline-flex',alignItems:'center',gap:8}}>
+                              <span className="badge" style={{background:'#e8f5e9',color:'#2e7d32'}}>✅ Ausgezahlt</span>
+                              <button className="btn btn-ghost btn-sm" title="Rückgängig" onClick={async()=>{
+                                if(!window.confirm(`Auszahlung von ${lk.name} (${effMonat}) wieder als offen markieren?`)) return;
+                                try {
+                                  await axios.delete(`${API}/api/abrechnung/honorar-ausgezahlt/${lk.id}?monat=${effMonat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                                  loadAdminStats();
+                                } catch(err) {
+                                  alert('Fehler: ' + (err.response?.data?.error || err.message));
+                                }
+                              }}>↩</button>
+                            </span>
+                          : <button className="btn btn-success btn-sm" onClick={async()=>{
+                              if(!window.confirm(`${lk.name}: ${lk.betrag_gesamt.toFixed(2)} € für ${effMonat} als ausgezahlt markieren?`)) return;
                               try {
-                                await axios.patch(`${API}/api/abrechnung/honorar-ausgezahlt/${lk.id}`, {monat:m}, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                                await axios.patch(`${API}/api/abrechnung/honorar-ausgezahlt/${lk.id}`, {monat:effMonat, betrag:lk.betrag_gesamt}, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                                 loadAdminStats();
                               } catch(err) {
                                 alert('Fehler: ' + (err.response?.data?.error || err.message));
                               }
                             }}>✅ Als ausgezahlt markieren</button>
-                          : <span className="badge" style={{background:'#e8f5e9',color:'#2e7d32'}}>✅ Ausgezahlt</span>
                         }
                       </td>
                     </tr>

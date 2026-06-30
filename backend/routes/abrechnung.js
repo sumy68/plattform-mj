@@ -527,18 +527,46 @@ router.patch('/auszahlung/:id', auth, async (req, res) => {
   }
 });
 
-// Offene Honorarkraft-Stunden eines Monats als ausgezahlt markieren (Admin)
+// Bereits ausgezahlte Honorarkräfte eines Monats (Admin)
+router.get('/honorar-auszahlungen', auth, adminOnly, async (req, res) => {
+  try {
+    const { monat } = req.query;
+    let query = 'SELECT user_id, monat, betrag FROM honorar_auszahlungen';
+    const params = [];
+    if (monat) { params.push(monat); query += ' WHERE monat=$1'; }
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Honorarkraft für einen Monat als ausgezahlt markieren (Admin)
+// Eigenständiger Bezahlt-Status, unabhängig von 'abgerechnet' (= Rechnung der Lehrkraft)
 router.patch('/honorar-ausgezahlt/:userId', auth, adminOnly, async (req, res) => {
   try {
-    const { monat } = req.body;
+    const { monat, betrag } = req.body;
     if (!monat || !/^\d{4}-\d{2}$/.test(monat)) {
       return res.status(400).json({ error: 'Gültiger Monat (YYYY-MM) erforderlich' });
     }
-    const result = await pool.query(
-      "UPDATE stunden SET abgerechnet=true WHERE lehrkraft_id=$1 AND TO_CHAR(datum,'YYYY-MM')=$2 AND abgerechnet=false",
-      [req.params.userId, monat]
+    await pool.query(
+      `INSERT INTO honorar_auszahlungen (user_id, monat, betrag) VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, monat) DO UPDATE SET betrag=EXCLUDED.betrag, created_at=NOW()`,
+      [req.params.userId, monat, parseFloat(betrag) || 0]
     );
-    res.json({ success: true, aktualisiert: result.rowCount });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Auszahlungs-Markierung einer Honorarkraft rückgängig machen (Admin)
+router.delete('/honorar-ausgezahlt/:userId', auth, adminOnly, async (req, res) => {
+  try {
+    const { monat } = req.query;
+    if (!monat) return res.status(400).json({ error: 'Monat erforderlich' });
+    await pool.query('DELETE FROM honorar_auszahlungen WHERE user_id=$1 AND monat=$2', [req.params.userId, monat]);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

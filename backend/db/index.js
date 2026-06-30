@@ -113,6 +113,15 @@ const initDB = async () => {
       status VARCHAR(50) DEFAULT 'offen',
       created_at TIMESTAMP DEFAULT NOW()
     )`);
+    // Bezahlt-Markierung für Honorarkräfte je Monat (getrennt von 'abgerechnet'/Rechnung)
+    await client.query(`CREATE TABLE IF NOT EXISTS honorar_auszahlungen (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      monat VARCHAR(7) NOT NULL,
+      betrag DECIMAL(10,2) NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(user_id, monat)
+    )`);
 
     // Migrations schueler
     await client.query(`ALTER TABLE schueler ADD COLUMN IF NOT EXISTS geburtsdatum DATE`);
