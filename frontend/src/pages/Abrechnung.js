@@ -60,6 +60,7 @@ export default function Abrechnung() {
       ...lk,
       gesamt: lk.stunden.length,
       stunden_summe: lk.stunden.reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60, 0),
+      stunden_summe_abgerechnet: lk.stunden.filter(s => s.abgerechnet).reduce((sum, s) => sum + (parseFloat(s.dauer_minuten) || 0) / 60, 0),
       abgerechnet: lk.stunden.filter(s => s.abgerechnet).length,
       offen: lk.stunden.filter(s => !s.abgerechnet).length,
       fahrtkosten_gesamt: lk.stunden.reduce((sum, s) => sum + (s.fahrt_km ? parseFloat(s.fahrt_km) * 0.38 : 0), 0),
@@ -318,7 +319,7 @@ export default function Abrechnung() {
           <div className="card-title">👩‍🏫 Festlehrkräfte</div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Name</th><th>Stundensatz</th><th>Stunden diesen Monat</th></tr></thead>
+              <thead><tr><th>Name</th><th>Stundensatz</th><th>Abgerechnete Stunden</th></tr></thead>
               <tbody>
                 {adminStats.festlehrkraefte.length === 0
                   ? <tr><td colSpan={3} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Lehrkräfte diesen Monat</td></tr>
@@ -326,7 +327,7 @@ export default function Abrechnung() {
                     <tr key={lk.id}>
                       <td><strong>{lk.name}</strong></td>
                       <td>{lk.stundensatz} €/Std.</td>
-                      <td>{(lk.stunden_summe % 1 === 0 ? lk.stunden_summe : lk.stunden_summe.toFixed(1))} Stunden <small style={{color:'var(--text-light)'}}>({lk.gesamt} Einträge)</small></td>
+                      <td>{(lk.stunden_summe_abgerechnet % 1 === 0 ? lk.stunden_summe_abgerechnet : lk.stunden_summe_abgerechnet.toFixed(1))} Stunden</td>
                     </tr>
                   ))}
               </tbody>
