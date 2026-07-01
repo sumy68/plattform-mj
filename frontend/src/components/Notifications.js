@@ -24,9 +24,37 @@ export default function Notifications() {
   };
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 60000); // Jede Minute aktualisieren
-    return () => clearInterval(interval);
+    let interval = null;
+
+    const startPolling = () => {
+      if (interval) return;
+      load(); // Sofort beim Start aktualisieren
+      interval = setInterval(load, 300000); // Alle 5 Minuten aktualisieren
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling(); // Kein Polling, wenn der Tab nicht sichtbar ist
+      } else {
+        startPolling();
+      }
+    };
+
+    // Nur pollen, wenn der Tab aktuell sichtbar ist
+    if (!document.hidden) startPolling();
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   useEffect(() => {
