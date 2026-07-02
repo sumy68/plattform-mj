@@ -80,6 +80,73 @@ export default function Stunden({ adminView }) {
     return true;
   });
 
+  // Dauer einer Stunde in Minuten (robust)
+  const dauerMinuten = (st) => {
+    if (st.dauer_minuten != null && st.dauer_minuten !== '') return parseInt(st.dauer_minuten, 10) || 0;
+    if (st.startzeit && st.endzeit) {
+      const [sh, sm] = st.startzeit.split(':').map(Number);
+      const [eh, em] = st.endzeit.split(':').map(Number);
+      const min = (eh * 60 + em) - (sh * 60 + sm);
+      return min > 0 ? min : 0;
+    }
+    return 0;
+  };
+
+  const minutenAlsStunden = (min) => (min / 60).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const gesamtMinuten = gefilterteStunden.reduce((sum, st) => sum + dauerMinuten(st), 0);
+
+  const unterschriftText = (st) => {
+    if (istVerwaltungStunde(st)) {
+      return st.genehmigung_status === 'genehmigt' ? 'Genehmigt' : st.genehmigung_status === 'abgelehnt' ? 'Abgelehnt' : 'Offen';
+    }
+    if (st.unterrichtsform === '2er' || st.unterrichtsform === '3er') {
+      const parts = [];
+      parts.push('S1: ' + (st.unterschrift_name || 'Ausstehend'));
+      parts.push('S2: ' + (st.unterschrift_name_2 || 'Ausstehend'));
+      if (st.unterrichtsform === '3er') parts.push('S3: ' + (st.unterschrift_name_3 || 'Ausstehend'));
+      return parts.join(' | ');
+    }
+    return st.unterschrift_name || 'Ausstehend';
+  };
+
+  // CSV/Excel-Export der aktuell gefilterten Stunden (mit Dauer + Gesamt-Zeile)
+  const downloadCsvGefiltert = () => {
+    if (gefilterteStunden.length === 0) return alert('Keine Stunden in der Auswahl.');
+    const cell = (v) => {
+      const s = (v == null ? '' : String(v));
+      return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const header = ['Datum', 'Schüler', 'Lehrkraft', 'Startzeit', 'Endzeit', 'Dauer (Min.)', 'Dauer (Std.)', 'Fach', 'Ort', 'BuT', 'Unterschrift'];
+    const rows = gefilterteStunden.map(st => {
+      const min = dauerMinuten(st);
+      const schuelerName = istVerwaltungStunde(st)
+        ? 'Verwaltung'
+        : (st.unterrichtsform && st.unterrichtsform !== 'einzel' && st.gruppe_schueler_namen ? st.schueler_name + ', ' + st.gruppe_schueler_namen : st.schueler_name);
+      return [
+        new Date(st.datum).toLocaleDateString('de-DE'),
+        schuelerName,
+        st.lehrkraft_name || '',
+        (st.startzeit || '').slice(0, 5),
+        (st.endzeit || '').slice(0, 5),
+        min,
+        minutenAlsStunden(min),
+        st.fach || '',
+        st.kurzfristige_absage ? 'Kurzfristige Absage' : (st.ort === 'online' ? 'Online' : 'Vor Ort'),
+        st.but_status ? 'Ja' : 'Nein',
+        unterschriftText(st),
+      ].map(cell).join(';');
+    });
+    const gesamtZeile = ['GESAMT', `${gefilterteStunden.length} Stunden`, '', '', '', gesamtMinuten, minutenAlsStunden(gesamtMinuten), '', '', '', ''].map(cell).join(';');
+    const csv = [header.map(cell).join(';'), ...rows, gesamtZeile].join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Stundenliste_${monat}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   const downloadZipGefiltert = async () => {
     setZipLoading(true);
     try {
@@ -290,10 +357,16 @@ export default function Stunden({ adminView }) {
             Nur BuT-Stunden
           </label>
           <button
+            className="btn btn-ghost"
+            onClick={downloadCsvGefiltert}
+            style={{marginLeft:'auto'}}
+          >
+            📊 CSV / Excel
+          </button>
+          <button
             className="btn btn-primary"
             onClick={downloadZipGefiltert}
             disabled={zipLoading}
-            style={{marginLeft:'auto'}}
           >
             {zipLoading ? '⏳ Lädt...' : '📦 PDFs als ZIP herunterladen'}
           </button>
@@ -380,6 +453,18 @@ export default function Stunden({ adminView }) {
               ))}
               {stunden.length===0 && <tr><td colSpan={10} style={{textAlign:'center',color:'var(--text-light)'}}>Keine Stunden gefunden</td></tr>}
             </tbody>
+            {gefilterteStunden.length > 0 && (
+              <tfoot>
+                <tr style={{fontWeight:700,background:'var(--purple-pale)',borderTop:'2px solid var(--purple)'}}>
+                  <td>Gesamt</td>
+                  <td>{gefilterteStunden.length} {gefilterteStunden.length === 1 ? 'Stunde' : 'Stunden'}</td>
+                  {adminView && <td></td>}
+                  <td></td>
+                  <td style={{color:'var(--purple-dark)'}}>{gesamtMinuten} Min. ({minutenAlsStunden(gesamtMinuten)} Std.)</td>
+                  <td></td><td></td><td></td><td></td><td></td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>

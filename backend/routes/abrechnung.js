@@ -317,18 +317,35 @@ router.get('/export/csv/:monat', auth, adminOnly, async (req, res) => {
        WHERE to_char(st.datum,'YYYY-MM')=$1 ORDER BY u.name, st.datum`, [monat]
     );
     const rows = result.rows;
-    const header = 'Lehrkraft;Rolle;Datum;Startzeit;Endzeit;Schüler;Fach;Ort;BuT;Stundensatz;Abgerechnet;Unterschrift';
-    const lines = rows.map(r => [
-      r.lehrkraft_name, r.lehrkraft_role,
-      new Date(r.datum).toLocaleDateString('de-DE'),
-      r.startzeit, r.endzeit, r.schueler_name,
-      r.fach || '', r.ort,
-      r.but_status ? 'Ja' : 'Nein',
-      r.stundensatz + ' €',
-      r.abgerechnet ? 'Ja' : 'Nein',
-      r.unterschrift_name || 'Ausstehend'
-    ].join(';'));
-    const csv = [header, ...lines].join('\n');
+    const dauerMin = (r) => {
+      if (r.dauer_minuten != null && r.dauer_minuten !== '') return parseInt(r.dauer_minuten, 10) || 0;
+      if (r.startzeit && r.endzeit) {
+        const [sh, sm] = String(r.startzeit).split(':').map(Number);
+        const [eh, em] = String(r.endzeit).split(':').map(Number);
+        const min = (eh * 60 + em) - (sh * 60 + sm);
+        return min > 0 ? min : 0;
+      }
+      return 0;
+    };
+    const alsStd = (min) => (min / 60).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const header = 'Lehrkraft;Rolle;Datum;Startzeit;Endzeit;Dauer (Min.);Dauer (Std.);Schüler;Fach;Ort;BuT;Stundensatz;Abgerechnet;Unterschrift';
+    const lines = rows.map(r => {
+      const min = dauerMin(r);
+      return [
+        r.lehrkraft_name, r.lehrkraft_role,
+        new Date(r.datum).toLocaleDateString('de-DE'),
+        r.startzeit, r.endzeit, min, alsStd(min),
+        r.schueler_name,
+        r.fach || '', r.ort,
+        r.but_status ? 'Ja' : 'Nein',
+        r.stundensatz + ' €',
+        r.abgerechnet ? 'Ja' : 'Nein',
+        r.unterschrift_name || 'Ausstehend'
+      ].join(';');
+    });
+    const gesamtMin = rows.reduce((sum, r) => sum + dauerMin(r), 0);
+    const gesamtZeile = ['GESAMT', '', '', '', '', gesamtMin, alsStd(gesamtMin), `${rows.length} Stunden`, '', '', '', '', '', ''].join(';');
+    const csv = [header, ...lines, gesamtZeile].join('\n');
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename=monatsübersicht-${monat}.csv`);
     res.send('\uFEFF' + csv);
